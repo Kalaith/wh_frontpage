@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 use Slim\Factory\AppFactory;
 use DI\Container;
+use Illuminate\Database\Capsule\Manager as Capsule;
 use Dotenv\Dotenv;
 use App\Middleware\CorsMiddleware;
 
@@ -14,8 +15,37 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
+// Database setup (optional for frontpage, but consistent with auth)
+if (isset($_ENV['DB_HOST'])) {
+    $capsule = new Capsule;
+    $capsule->addConnection([
+        'driver' => 'mysql',
+        'host' => $_ENV['DB_HOST'],
+        'port' => $_ENV['DB_PORT'],
+        'database' => $_ENV['DB_DATABASE'],
+        'username' => $_ENV['DB_USERNAME'],
+        'password' => $_ENV['DB_PASSWORD'],
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci',
+        'prefix' => '',
+    ]);
+
+    $capsule->setAsGlobal();
+    $capsule->bootEloquent();
+}
+
 // Container setup
 $container = new Container();
+
+// Register dependencies
+$container->set(\App\Controllers\ProjectController::class, function() {
+    return new \App\Controllers\ProjectController();
+});
+
+$container->set(\App\Middleware\JwtAuthMiddleware::class, function() {
+    return new \App\Middleware\JwtAuthMiddleware();
+});
+
 AppFactory::setContainer($container);
 
 // Create Slim app
@@ -25,7 +55,6 @@ $app = AppFactory::create();
 if (isset($_ENV['APP_BASE_PATH'])) {
     $app->setBasePath($_ENV['APP_BASE_PATH']);
 }
-// For local development, don't set a base path (empty string means root)
 
 // Add middleware
 $app->add(new CorsMiddleware());

@@ -1,0 +1,8 @@
+/* Minimal styles for ProjectsPage */
+.container { padding: 1rem; }
+.create-form { margin-bottom: 1.5rem; }
+.create-form form div { margin-bottom: 0.5rem; }
+.projects-list ul { list-style: none; padding: 0; }
+.project-item { display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #eee }
+.project-item .meta { color: #666; margin-left: 0.5rem; }
+.project-item button { background:#e53e3e; color:#fff; border:none; padding:0.3rem 0.6rem; border-radius:4px }

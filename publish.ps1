@@ -12,7 +12,9 @@ param(
 )
 
 # Configuration
-$SOURCE_DIR = "H:\WebHatchery\"
+# Use the script directory as the source root so publishing works when run from the project folder
+$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$SOURCE_DIR = $SCRIPT_DIR
 $PREVIEW_ROOT = "H:\xampp\htdocs"
 $PRODUCTION_ROOT = "F:\WebHatchery"
 
@@ -21,8 +23,8 @@ $DEST_ROOT = if ($Environment -eq 'preview') { $PREVIEW_ROOT } else { $PRODUCTIO
 
 # Deploy frontpage to /frontpage/ but make it accessible from root
 $DEST_DIR = Join-Path $DEST_ROOT "frontpage"
-$FRONTEND_SRC = "$SOURCE_DIR\frontend"
-$BACKEND_SRC = "$SOURCE_DIR\backend"
+$FRONTEND_SRC = Join-Path $SOURCE_DIR 'frontend'
+$BACKEND_SRC = Join-Path $SOURCE_DIR 'backend'
 $FRONTEND_DEST = $DEST_DIR  # Frontpage files go to /frontpage/
 $BACKEND_DEST = "$DEST_DIR\backend"
 
@@ -354,6 +356,28 @@ function Main {
             Write-Success "`n✅ Publishing completed successfully!"
             Write-Info "Files published to: $DEST_DIR"
             Write-Info "Ready for server sync."
+
+            # Create or update an index.html at the web root to redirect to /frontpage/
+            try {
+                $indexPath = Join-Path $DEST_ROOT 'index.html'
+                $indexHtml = @"
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="refresh" content="0; url=/frontpage/index.html" />
+        <title>Frontpage</title>
+    </head>
+    <body>
+        <p>If you are not redirected automatically, <a href="/frontpage/index.html">click here</a>.</p>
+    </body>
+</html>
+"@
+                Set-Content -Path $indexPath -Value $indexHtml -Force -Encoding UTF8
+                Write-Info "Wrote redirect index.html to $indexPath"
+            } catch {
+                Write-Warning "Failed to write index.html redirect: $_"
+            }
         } else {
             Write-Error "`n❌ Publishing failed!"
             exit 1
