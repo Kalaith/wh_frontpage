@@ -1,0 +1,67 @@
+# Composer dependencies
+vendor/
+composer.lock
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.preview
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Cache
+storage/cache/
+storage/logs/
+var/cache/
+var/logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Database
+*.sqlite
+*.db
+
+# PHP
+*.tmp
+*.bak
+
+# Apache
+.htaccess.bak
+
+# Session files
+storage/sessions/
+
+# Compiled files
+*.compiled
+
+# Debug files
+debug.log
+error.log
+
+# PHPUnit
+phpunit.xml
+.phpunit.result.cache
+
+# PHP CS Fixer
+.php_cs.cache
+
+# Psalm
+.psalm/
+
+# PHPStan
+.phpstan/
