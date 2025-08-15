@@ -8,7 +8,7 @@ param(
     [switch]$Clean,
     [switch]$Verbose,
     [ValidateSet('preview', 'production')]
-    [string]$Environment = 'preview'
+    [string]$env = 'preview'
 )
 
 # Configuration
@@ -19,7 +19,7 @@ $PREVIEW_ROOT = "H:\xampp\htdocs"
 $PRODUCTION_ROOT = "F:\WebHatchery"
 
 # Set destination based on environment
-$DEST_ROOT = if ($Environment -eq 'preview') { $PREVIEW_ROOT } else { $PRODUCTION_ROOT }
+$DEST_ROOT = if ($env -eq 'preview') { $PREVIEW_ROOT } else { $PRODUCTION_ROOT }
 
 # Deploy frontpage to /frontpage/ but make it accessible from root
 $DEST_DIR = Join-Path $DEST_ROOT "frontpage"
@@ -126,8 +126,8 @@ function Build-Frontend {
     }
     
     # Set up environment configuration
-    Write-Info "Setting up $Environment environment for frontend build..."
-    $envSrc = ".env.$Environment"
+    Write-Info "Setting up $env environment for frontend build..."
+    $envSrc = ".env.$env"
     $envTemp = ".env.local"
 
     # Use .env.production or .env.preview for correct base path
@@ -138,9 +138,9 @@ function Build-Frontend {
         Write-Warning "$envSrc not found - using default environment"
     }
 
-    Write-Info "Building frontend for $Environment..."
+    Write-Info "Building frontend for $env..."
     $env:NODE_ENV = "production"
-    if ($Environment -eq 'preview') {
+    if ($env -eq 'preview') {
         npx vite build --mode preview
     } else {
         npx vite build --mode production
@@ -271,8 +271,8 @@ function Publish-Backend {
     Copy-WithExclusions $BACKEND_SRC $BACKEND_DEST $excludePatterns
     
     # Handle environment configuration file
-    Write-Info "Setting up $Environment environment configuration..."
-    $envSrc = "$BACKEND_SRC\.env.$Environment"
+    Write-Info "Setting up $env environment configuration..."
+    $envSrc = "$BACKEND_SRC\.env.$env"
     $envDest = "$BACKEND_DEST\.env"
     
     if (Test-Path $envSrc) {
@@ -415,7 +415,7 @@ OPTIONS:
     -All         Publish both (default if no specific option given)
     -Clean       Clean destination directories before publishing
     -Verbose     Show detailed output during copying
-    -Environment Choose deployment environment ('preview' or 'production')
+    -env Choose deployment environment ('preview' or 'production')
                  preview: Deploy to H:\xampp\htdocs
                  production: Deploy to F:\WebHatchery
     -Help        Show this help message
@@ -424,8 +424,8 @@ EXAMPLES:
     .\publish.ps1                                       # Publish both to preview (H:\xampp\htdocs)
     .\publish.ps1 -Frontend                            # Publish only frontend to preview
     .\publish.ps1 -Backend                             # Publish only backend to preview
-    .\publish.ps1 -All -Clean -Environment production  # Clean and publish both to production
-    .\publish.ps1 -Frontend -Verbose -Environment preview # Publish frontend to preview with details
+    .\publish.ps1 -All -Clean -env production  # Clean and publish both to production
+    .\publish.ps1 -Frontend -Verbose -env preview # Publish frontend to preview with details
 
 DESCRIPTION:
     This script builds and publishes the Auth Portal to either the 
