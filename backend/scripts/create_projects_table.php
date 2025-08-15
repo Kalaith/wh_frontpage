@@ -28,7 +28,8 @@ $capsule->addConnection([
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-echo "Creating projects table...\n";
+$startupMsg = "Creating projects table...\n";
+if (php_sapi_name() === 'cli') { echo $startupMsg; } else { error_log($startupMsg); }
 
 try {
     Capsule::schema()->create('projects', function (Blueprint $table) {
@@ -50,9 +51,11 @@ try {
         $table->index('stage');
     });
     
-    echo "✅ Projects table created successfully!\n";
+    $msg = "✅ Projects table created successfully!\n";
+    if (php_sapi_name() === 'cli') { echo $msg; } else { error_log($msg); }
     
 } catch (Exception $e) {
-    echo "❌ Error creating projects table: " . $e->getMessage() . "\n";
+    $err = "❌ Error creating projects table: " . $e->getMessage() . "\n";
+    if (php_sapi_name() === 'cli') { echo $err; } else { error_log($err); }
     exit(1);
 }

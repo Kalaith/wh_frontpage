@@ -26,7 +26,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     
-    const token = localStorage.getItem('jwt_token');
+  const token = localStorage.getItem('token');
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -99,7 +99,7 @@ class ApiClient {
       body: JSON.stringify({ email, password })
     });
     if (res.success && res.data?.token) {
-      localStorage.setItem('jwt_token', res.data.token);
+      localStorage.setItem('token', res.data.token);
     }
     return res as ApiResponse<{ user: any; token: string }>;
   }
@@ -110,7 +110,7 @@ class ApiClient {
       body: JSON.stringify(userData)
     });
     if (res.success && res.data?.token) {
-      localStorage.setItem('jwt_token', res.data.token);
+      localStorage.setItem('token', res.data.token);
     }
     return res as ApiResponse<{ user: any; token: string }>;
   }

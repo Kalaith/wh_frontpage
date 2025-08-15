@@ -28,16 +28,19 @@ $capsule->addConnection([
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-echo "🚀 Initializing Frontpage Database (projects)...\n\n";
+$startupMsg = "🚀 Initializing Frontpage Database (projects)...\n\n";
+if (php_sapi_name() === 'cli') { echo $startupMsg; } else { error_log($startupMsg); }
 
 try {
     // Create projects table
     Project::createTable();
 
-    echo "\n✅ Projects table initialization completed successfully!\n";
-    echo "📊 You can now use the Frontpage API to manage projects.\n";
+    $msg = "\n✅ Projects table initialization completed successfully!\n";
+    $note = "📊 You can now use the Frontpage API to manage projects.\n";
+    if (php_sapi_name() === 'cli') { echo $msg; echo $note; } else { error_log($msg . $note); }
 
 } catch (Exception $e) {
-    echo "\n❌ Database initialization failed: " . $e->getMessage() . "\n";
+    $err = "\n❌ Database initialization failed: " . $e->getMessage() . "\n";
+    if (php_sapi_name() === 'cli') { echo $err; } else { error_log($err); }
     exit(1);
 }

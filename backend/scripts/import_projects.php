@@ -28,12 +28,14 @@ $capsule->addConnection([
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-echo "Importing projects from JSON...\n";
+$startupMsg = "Importing projects from JSON...\n";
+if (php_sapi_name() === 'cli') { echo $startupMsg; } else { error_log($startupMsg); }
 
 // Read the projects.json file
 $jsonPath = __DIR__ . '/../../frontend/public/projects.json';
 if (!file_exists($jsonPath)) {
-    echo "❌ Error: projects.json file not found at $jsonPath\n";
+    $err = "❌ Error: projects.json file not found at $jsonPath\n";
+    if (php_sapi_name() === 'cli') { echo $err; } else { error_log($err); }
     exit(1);
 }
 
@@ -41,7 +43,8 @@ $jsonContent = file_get_contents($jsonPath);
 $data = json_decode($jsonContent, true);
 
 if (!$data || !isset($data['groups'])) {
-    echo "❌ Error: Invalid JSON format\n";
+    $err = "❌ Error: Invalid JSON format\n";
+    if (php_sapi_name() === 'cli') { echo $err; } else { error_log($err); }
     exit(1);
 }
 
@@ -50,13 +53,15 @@ $importedCount = 0;
 try {
     // Clear existing projects
     Project::truncate();
-    echo "🗑️  Cleared existing projects\n";
+    $msg = "🗑️  Cleared existing projects\n";
+    if (php_sapi_name() === 'cli') { echo $msg; } else { error_log($msg); }
     
     foreach ($data['groups'] as $groupKey => $group) {
         $groupName = $groupKey;
         $isHidden = isset($group['hidden']) && $group['hidden'];
         
-        echo "📁 Processing group: $groupName\n";
+    $msg = "📁 Processing group: $groupName\n";
+    if (php_sapi_name() === 'cli') { echo $msg; } else { error_log($msg); }
         
         if (!isset($group['projects'])) {
             continue;
@@ -77,13 +82,16 @@ try {
             ]);
             
             $importedCount++;
-            echo "  ✅ Imported: {$projectData['title']}\n";
+            $msg = "  ✅ Imported: {$projectData['title']}\n";
+            if (php_sapi_name() === 'cli') { echo $msg; } else { error_log($msg); }
         }
     }
     
-    echo "\n🎉 Successfully imported $importedCount projects!\n";
+    $msg = "\n🎉 Successfully imported $importedCount projects!\n";
+    if (php_sapi_name() === 'cli') { echo $msg; } else { error_log($msg); }
     
 } catch (Exception $e) {
-    echo "❌ Error importing projects: " . $e->getMessage() . "\n";
+    $err = "❌ Error importing projects: " . $e->getMessage() . "\n";
+    if (php_sapi_name() === 'cli') { echo $err; } else { error_log($err); }
     exit(1);
 }

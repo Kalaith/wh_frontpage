@@ -114,21 +114,25 @@ export const register = async (userData: RegisterRequest): Promise<AuthUser> => 
  * First tries local token, then checks with central auth service
  */
 export const getCurrentUser = async (): Promise<AuthUser | null> => {
-  console.log('[AuthAPI] Checking current user...');
+  const AUTH_DEBUG = import.meta.env.DEV || import.meta.env.VITE_DEBUG_AUTH === 'true';
+  const authDebug = (...args: any[]) => { if (AUTH_DEBUG) console.log(...args); };
+  const authWarn = (...args: any[]) => { if (AUTH_DEBUG) console.warn(...args); };
+
+  authDebug('[AuthAPI] Checking current user...');
   
   try {
-    const token = getStoredToken();
-    console.log('[AuthAPI] Local token exists:', !!token);
+  const token = getStoredToken();
+  authDebug('[AuthAPI] Local token exists:', !!token);
     
     // First try with local token if available
     if (token) {
       try {
-        console.log('[AuthAPI] Trying local token validation...');
+  authDebug('[AuthAPI] Trying local token validation...');
         const data = await apiRequest<AuthUser>('/auth/user');
-        console.log('[AuthAPI] Local token validated successfully:', data);
+  authDebug('[AuthAPI] Local token validated successfully:', data);
         return data;
       } catch (error) {
-        console.log('[AuthAPI] Local token validation failed:', error);
+  authDebug('[AuthAPI] Local token validation failed:', error);
         // If local token is invalid, clear it and continue to check central auth
         if (error && typeof error === 'object' && 'code' in error && error.code === 'UNAUTHORIZED') {
           localStorage.removeItem('token');
@@ -138,7 +142,7 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
 
     // Try to get user info from central auth service (cross-domain check)
     try {
-      console.log('[AuthAPI] Trying central auth service check...');
+  authDebug('[AuthAPI] Trying central auth service check...');
       const centralHeaders: Record<string,string> = { 'Content-Type': 'application/json' };
       if (token) {
         centralHeaders['Authorization'] = `Bearer ${token}`;
@@ -149,30 +153,30 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
         headers: centralHeaders,
       });
 
-      console.log('[AuthAPI] Central auth response status:', response.status);
+  authDebug('[AuthAPI] Central auth response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('[AuthAPI] Central auth response data:', data);
+  authDebug('[AuthAPI] Central auth response data:', data);
         
         if (data.success && data.data) {
           // Store the token locally for future requests
           if (data.data.token) {
             localStorage.setItem('token', data.data.token);
-            console.log('[AuthAPI] Stored token from central auth');
+            authDebug('[AuthAPI] Stored token from central auth');
           }
           return data.data;
         }
       }
     } catch (centralAuthError) {
       // Central auth service not available or user not logged in there
-      console.log('[AuthAPI] Central auth check failed:', centralAuthError);
+      authDebug('[AuthAPI] Central auth check failed:', centralAuthError);
     }
 
-    console.log('[AuthAPI] No authentication found');
+    authDebug('[AuthAPI] No authentication found');
     return null;
   } catch (error) {
-    console.warn('[AuthAPI] Auth check failed:', error);
+    authWarn('[AuthAPI] Auth check failed:', error);
     return null;
   }
 };

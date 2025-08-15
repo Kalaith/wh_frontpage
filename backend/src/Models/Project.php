@@ -107,9 +107,19 @@ class Project extends Model
                 $table->index('hidden');
             });
 
-            echo "✅ Created 'projects' table\n";
+            $msg = "✅ Created 'projects' table\n";
+            if (php_sapi_name() === 'cli') {
+                echo $msg;
+            } else {
+                error_log($msg);
+            }
         } else {
-            echo "ℹ️  'projects' table already exists\n";
+            $msg = "ℹ️  'projects' table already exists\n";
+            if (php_sapi_name() === 'cli') {
+                echo $msg;
+            } else {
+                error_log($msg);
+            }
         }
     }
 }
