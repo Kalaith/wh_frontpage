@@ -9,7 +9,6 @@ interface QuickLinksProps {
 export const QuickLinks: React.FC<QuickLinksProps> = ({ data }) => {
   return (
     <nav className="quick-links">
-      <h2>Quick Access</h2>
       <div className="links">
         {Object.entries(data.groups).map(([groupId, group]) => {
           if (group.hidden) return null;

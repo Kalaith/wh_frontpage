@@ -19,15 +19,14 @@ export const Header: React.FC<HeaderProps> = ({ data }) => {
 
   return (
     <header>
+      {/* Top login bar: admin-only controls live here */}
+      <div className="login-bar" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.5rem' }}>
+        {isAdmin && (
+          <Link to="/projects">Manage Projects</Link>
+        )}
+      </div>
       <h1>Welcome to WebHatchery.au</h1>
       <p className="tagline">Where ideas hatch into websites.</p>
-      <nav style={{ marginTop: '0.5rem' }}>
-        {isAdmin && (
-          <>
-            <Link to="/projects">Manage Projects</Link>
-          </>
-        )}
-      </nav>
       <p className="description">
         {data.description || 'This is a development landing page for web experiments, game previews, and digital prototypes.'}
       </p>

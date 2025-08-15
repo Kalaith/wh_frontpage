@@ -372,6 +372,12 @@ function Main {
                 $htaccessContent = @"
 RewriteEngine On
 
+# If the site root is requested, internally rewrite to the frontpage app
+RewriteRule ^/?$ /frontpage/ [L,QSA]
+
+# Prefer frontpage index as DirectoryIndex fallback
+DirectoryIndex /frontpage/index.html
+
 # If the requested resource exists (file or directory) in the webroot, serve it directly
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
