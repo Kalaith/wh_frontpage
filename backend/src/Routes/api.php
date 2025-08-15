@@ -69,6 +69,7 @@ $app->group('/api', function (RouteCollectorProxy $group) {
     // Proxy auth endpoints to central Auth app
     $group->post('/auth/login', [\App\Controllers\AuthProxyController::class, 'login']);
     $group->post('/auth/register', [\App\Controllers\AuthProxyController::class, 'register']);
+    $group->get('/auth/user', [\App\Controllers\AuthProxyController::class, 'getCurrentUser']);
     
     // Protected Routes (JWT Authentication Required)
     $group->group('', function (RouteCollectorProxy $protected) {

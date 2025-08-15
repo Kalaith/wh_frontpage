@@ -6,11 +6,13 @@ import { QuickLinks } from '../components/QuickLinks';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
+import AuthStatus from '../components/AuthStatus';
 
 const HomePage: React.FC = () => {
   const [projectsData, setProjectsData] = useState<ProjectsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // auth status handled by AuthStatus component
 
   useEffect(() => {
     const loadProjectsData = async () => {
@@ -50,6 +52,11 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="container">
+      {/* Top-right login status */}
+      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+        <AuthStatus />
+      </div>
+
       <Header data={projectsData} />
       <QuickLinks data={projectsData} />
       <ProjectLegend />
