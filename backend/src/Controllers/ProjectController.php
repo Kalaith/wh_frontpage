@@ -28,7 +28,7 @@ class ProjectController
 
             $data = [
                 'version' => '2.0.0',
-                'description' => 'WebHatchery Projects and Build Configuration',
+                'description' => 'WebHatchery Projects',
                 'groups' => $groupedProjects
             ];
 

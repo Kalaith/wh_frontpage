@@ -181,14 +181,14 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
  * Logout user (client-side only)
  */
 export const logout = (): void => {
-  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('token');
 };
 
 /**
  * Check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {
-  return !!localStorage.getItem('jwt_token');
+  return !!getStoredToken();
 };
 
 export default {

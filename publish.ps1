@@ -357,26 +357,39 @@ function Main {
             Write-Info "Files published to: $DEST_DIR"
             Write-Info "Ready for server sync."
 
-            # Create or update an index.html at the web root to redirect to /frontpage/
+            # Ensure the webroot serves the /frontpage/ directory via an internal rewrite
             try {
+                # Remove any existing index.html redirect file at webroot so .htaccess can control routing
                 $indexPath = Join-Path $DEST_ROOT 'index.html'
-                $indexHtml = @"
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="refresh" content="0; url=/frontpage/index.html" />
-        <title>Frontpage</title>
-    </head>
-    <body>
-        <p>If you are not redirected automatically, <a href="/frontpage/index.html">click here</a>.</p>
-    </body>
-</html>
+                if (Test-Path $indexPath) {
+                    Remove-Item $indexPath -Force -ErrorAction SilentlyContinue
+                    Write-Info "Removed existing root index.html: $indexPath"
+                }
+
+                # Write a webroot .htaccess that internally rewrites unknown paths to /frontpage/<path>
+                # This ensures SPA client routes (e.g. /projects) work on refresh by serving the frontpage app.
+                $webrootHtaccess = Join-Path $DEST_ROOT '.htaccess'
+                $htaccessContent = @"
+RewriteEngine On
+
+# If the requested resource exists (file or directory) in the webroot, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Avoid rewriting requests that already target the frontpage paths or API/backend
+RewriteCond %{REQUEST_URI} !^/frontpage/
+RewriteCond %{REQUEST_URI} !^/frontpage/api/
+RewriteCond %{REQUEST_URI} !^/frontpage/backend/
+RewriteCond %{REQUEST_URI} !^/assets/
+
+# Internally rewrite everything else to the frontpage directory preserving the original path
+RewriteRule ^(.*)$ /frontpage/$1 [L,QSA]
 "@
-                Set-Content -Path $indexPath -Value $indexHtml -Force -Encoding UTF8
-                Write-Info "Wrote redirect index.html to $indexPath"
+                Set-Content -Path $webrootHtaccess -Value $htaccessContent -Force -Encoding UTF8
+                Write-Info "Wrote webroot .htaccess to $webrootHtaccess"
             } catch {
-                Write-Warning "Failed to write index.html redirect: $_"
+                Write-Warning "Failed to write webroot .htaccess: $_"
             }
         } else {
             Write-Error "`n❌ Publishing failed!"

@@ -33,32 +33,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        if (authApi.isAuthenticated()) {
-          const user = await authApi.getCurrentUser();
-          if (user) {
-            setState({
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-          } else {
-            // Token exists but user fetch failed, clear auth
-            authApi.logout();
-            setState({
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-              error: null,
-            });
-          }
+        // Always attempt to retrieve current user from central auth.
+        const user = await authApi.getCurrentUser();
+        if (user) {
+          setState({ user, isAuthenticated: true, isLoading: false, error: null });
         } else {
-          setState({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-          });
+          setState({ user: null, isAuthenticated: false, isLoading: false, error: null });
         }
       } catch (error) {
         console.error('Auth initialization failed:', error);

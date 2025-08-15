@@ -1,9 +1,9 @@
 RewriteEngine On
 
-# Set the base path
+# Set the base path for this frontpage directory
 RewriteBase /frontpage/
 
-# Route API requests to backend (handle both 'backend' and 'api' folder names)
+# Route API requests to backend public front controller when present
 RewriteCond %{REQUEST_URI} ^/frontpage/api/
 RewriteCond %{DOCUMENT_ROOT}/frontpage/backend/public/index.php -f
 RewriteRule ^api/(.*)$ backend/public/index.php [QSA,L]
@@ -12,9 +12,14 @@ RewriteCond %{REQUEST_URI} ^/frontpage/api/
 RewriteCond %{DOCUMENT_ROOT}/frontpage/api/public/index.php -f
 RewriteRule ^api/(.*)$ api/public/index.php [QSA,L]
 
-# Handle client-side routing for React app
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# If the requested file or directory exists, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Exclude backend and api paths from SPA rewrite
 RewriteCond %{REQUEST_URI} !^/frontpage/backend/
 RewriteCond %{REQUEST_URI} !^/frontpage/api/
-RewriteRule . index.html [L]
+
+# For everything else under /frontpage, serve index.html (client-side routing)
+RewriteRule ^ index.html [L]

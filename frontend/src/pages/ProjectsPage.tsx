@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Project } from '../types/projects';
 import api from '../api/api';
 import { ProjectForm } from '../components/ProjectForm';
@@ -96,6 +97,9 @@ const ProjectsPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <nav className="mb-4 text-sm text-sky-600">
+        <Link to="/">← Back to Home</Link>
+      </nav>
       <h2 className="text-2xl font-semibold mb-4">Manage Projects</h2>
 
       <section className="mb-6 bg-white shadow-sm rounded p-4">
