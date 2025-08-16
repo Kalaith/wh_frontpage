@@ -375,8 +375,9 @@ RewriteEngine On
 # If the site root is requested, internally rewrite to the frontpage app
 RewriteRule ^/?$ /frontpage/ [L,QSA]
 
-# Prefer frontpage index as DirectoryIndex fallback
-DirectoryIndex /frontpage/index.html
+                # Do not force a global DirectoryIndex to the frontpage app
+                # (this caused other sites like /anime_prompt_gen/ to load the frontpage index)
+                # Root requests are still internally rewritten to /frontpage/ by the rule above.
 
 # If the requested resource exists (file or directory) in the webroot, serve it directly
 RewriteCond %{REQUEST_FILENAME} -f [OR]
