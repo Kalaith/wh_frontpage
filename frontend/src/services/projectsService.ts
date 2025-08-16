@@ -37,4 +37,43 @@ export class ProjectsService {
   public clearCache(): void {
     this.projectsData = null;
   }
+
+  // Create a project via API and clear cache so callers can re-fetch fresh data
+  public async createProject(projectData: Partial<any>): Promise<any> {
+    const res = await api.createProject(projectData);
+    if (res.success && res.data) {
+      this.clearCache();
+      return res.data;
+    }
+    throw new Error(res.error?.message || 'Failed to create project');
+  }
+
+  // Update a project via API and clear cache
+  public async updateProject(projectId: number, projectData: Partial<any>): Promise<any> {
+    const res = await api.updateProject(projectId, projectData);
+    if (res.success && res.data) {
+      this.clearCache();
+      return res.data;
+    }
+    throw new Error(res.error?.message || 'Failed to update project');
+  }
+
+  // Delete a project via API and clear cache
+  public async deleteProject(projectId: number): Promise<void> {
+    const res = await api.deleteProject(projectId);
+    if (res.success) {
+      this.clearCache();
+      return;
+    }
+    throw new Error(res.error?.message || 'Failed to delete project');
+  }
+
+  // Utility to flatten ProjectsData into a simple Project[] list
+  public static flattenProjectsData(data: ProjectsData): Array<any> {
+    const flat: Array<any> = [];
+    Object.values(data.groups || {}).forEach((grp: any) => {
+      grp.projects.forEach((p: any) => flat.push(p));
+    });
+    return flat;
+  }
 }

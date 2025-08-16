@@ -1,0 +1,1 @@
+export { groupProjectsByName } from './projectGrouping';

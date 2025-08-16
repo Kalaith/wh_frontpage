@@ -2,6 +2,7 @@
 import type { ProjectsData, Project } from '../types/projects';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const DEFAULT_TIMEOUT_MS = 10_000; // 10s
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -22,37 +23,59 @@ class ApiClient {
 
   private async request<T = any>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    timeoutMs: number = DEFAULT_TIMEOUT_MS
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
-    
-  const token = localStorage.getItem('token');
+
+    const token = localStorage.getItem('token');
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
       const response = await fetch(url, {
         ...options,
+        signal,
         headers: {
           ...defaultHeaders,
           ...options.headers,
         },
       });
 
+      clearTimeout(timer);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // try to parse error body if possible
+        let errBody: any = null;
+        try { errBody = await response.json(); } catch (_) { /* ignore */ }
+        return {
+          success: false,
+          error: {
+            message: errBody?.error?.message || `HTTP ${response.status}: ${response.statusText}`,
+            details: errBody,
+          },
+        };
       }
 
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('API request failed:', error);
+      // safe parse JSON, tolerate empty body
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : { success: true, data: null };
+      return data as ApiResponse<T>;
+    } catch (error: any) {
+      clearTimeout(timer);
+      const message = error?.name === 'AbortError' ? 'Request timed out' : (error instanceof Error ? error.message : 'Unknown error');
+      console.error('API request failed:', message, error);
       return {
         success: false,
         error: {
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          message,
         },
       };
     }
