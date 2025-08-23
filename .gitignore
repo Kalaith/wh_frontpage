@@ -1,27 +1,95 @@
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# =========================
+# WebHatchery combined .gitignore
+# Merges backend, frontend and root ignore rules
+# =========================
 
-# OS
+# --- OS ---
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
 
-# Temporary files
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+debug.log
+error.log
+
+# --- Node / Frontend ---
+node_modules/
+dist/
+dist-ssr/
+build/
+*.tgz
+.npm
+.nyc_output
+.eslintcache
+coverage/
+*.lcov
+/.yarn-integrity
+
+# Environment files (do not commit secrets)
+*.env.*
+.env
+.env.local
+.env.production.local
+.env.development.local
+.env.test.local
+frontend/.env
+
+# --- Composer / PHP ---
+vendor/
+composer.lock
+
+# PHP runtime / cache / sessions
+storage/cache/
+storage/logs/
+storage/sessions/
+var/cache/
+var/logs/
 tmp/
 temp/
-
-# Backup files
+*.sqlite
+*.db
+*.tmp
 *.bak
-*.backup
 
-# Deployment artifacts
+# PHPUnit / test caches
+phpunit.xml
+.phpunit.result.cache
+
+# PHP CS Fixer / static analysis
+.php_cs.cache
+.psalm/
+.phpstan/
+
+# --- Deployment / build artifacts ---
 deploy/
 releases/
+*.compiled
 
-# Local configuration
-local.config.*
+# --- Backup / misc ---
+*.backup
+.htaccess.bak
+
+# Optional npm cache
+.npm/
+
+# Ignore compiled assets & IDE project files that may be created by editors
+/.idea/
+.vscode/*
+
