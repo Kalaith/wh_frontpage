@@ -147,7 +147,8 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       if (token) {
         centralHeaders['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch('http://127.0.0.1/auth/api/user', {
+  const CENTRAL_AUTH_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://127.0.0.1/auth/api';
+  const response = await fetch(`${CENTRAL_AUTH_URL}/user`, {
         method: 'GET',
         credentials: 'include', // Include cookies for cross-domain auth
         headers: centralHeaders,

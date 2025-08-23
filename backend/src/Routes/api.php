@@ -3,6 +3,7 @@
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ProjectController;
 use App\Middleware\JwtAuthMiddleware;
+use App\Models\Project;
 
 // API Routes
 $app->group('/api', function (RouteCollectorProxy $group) {
@@ -70,6 +71,37 @@ $app->group('/api', function (RouteCollectorProxy $group) {
     $group->post('/auth/login', [\App\Controllers\AuthProxyController::class, 'login']);
     $group->post('/auth/register', [\App\Controllers\AuthProxyController::class, 'register']);
     $group->get('/auth/user', [\App\Controllers\AuthProxyController::class, 'getCurrentUser']);
+
+    // Temporary secure admin endpoint to initialize the database.
+    // Requires an 'X-Init-Key' header matching the INIT_DB_KEY environment variable.
+    // Remove or restrict this endpoint after use.
+    $group->post('/admin/init-db', function ($request, $response) {
+        $envKey = $_ENV['INIT_DB_KEY'] ?? null;
+        $providedKey = $request->getHeaderLine('X-Init-Key');
+
+        if (!$envKey) {
+            $payload = json_encode(['success' => false, 'message' => 'INIT_DB_KEY not configured on server']);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+        }
+
+        if (!$providedKey || !hash_equals($envKey, $providedKey)) {
+            $payload = json_encode(['success' => false, 'message' => 'Invalid init key']);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+        }
+
+        try {
+            Project::createTable();
+            $payload = json_encode(['success' => true, 'message' => 'Database initialized (projects table created or already exists)']);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $payload = json_encode(['success' => false, 'message' => 'Initialization failed', 'error' => $e->getMessage()]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    });
     
     // Protected Routes (JWT Authentication Required)
     $group->group('', function (RouteCollectorProxy $protected) {
