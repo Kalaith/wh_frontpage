@@ -3,7 +3,7 @@
  */
 
 // Auth store
-export { useAuthStore, useAuth, useAuthInitialization } from './authStore';
+export { useAuthStore, useAuth } from './authStore';
 
 // Projects store
 export {

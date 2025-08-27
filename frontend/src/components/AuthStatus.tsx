@@ -1,31 +1,26 @@
-import React, { useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react';
+import { useAuth } from '../stores/authStore';
 
 export const AuthStatus: React.FC = () => {
-  const { isLoading, isAuthenticated, user, checkAuth, logout } = useAuth();
-
-  useEffect(() => {
-    // AuthProvider performs the initial auth check; avoid duplicating it here.
-  }, []);
+  const { isLoading, isAuthenticated, user, logout } = useAuth();
 
   if (isLoading) {
     return (
-      <div style={{ padding: '0.25rem 0.6rem', borderRadius: 6 }}>
-        <span style={{ fontSize: '0.9rem' }}>Checking authentication…</span>
+      <div className="px-2 py-1 rounded">
+        <span className="text-sm">Checking authentication…</span>
       </div>
     );
   }
 
   if (isAuthenticated && user) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <div style={{ padding: '0.25rem 0.6rem', borderRadius: 6 }}>
+      <div className="flex items-center gap-2">
+        <div className="px-2 py-1 rounded text-sm">
           Hi {user.firstName || user.displayName || user.email}
         </div>
         <button
           onClick={logout}
-          className="btn btn-secondary"
-          style={{ padding: '0.25rem 0.6rem', fontSize: '0.85rem' }}
+          className="px-2 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
         >
           Logout
         </button>
@@ -37,21 +32,13 @@ export const AuthStatus: React.FC = () => {
     import.meta.env.VITE_AUTH_APP_URL || 'http://127.0.0.1/auth';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <div className="flex items-center gap-2">
       <a
         href={`${AUTH_APP_URL}/login`}
-        className="btn btn-primary"
-        style={{ padding: '0.25rem 0.6rem', textDecoration: 'none' }}
+        className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded no-underline transition-colors"
       >
         Log in
       </a>
-      <button
-        onClick={() => checkAuth()}
-        className="btn"
-        style={{ padding: '0.25rem 0.6rem', fontSize: '0.85rem' }}
-      >
-        Retry
-      </button>
     </div>
   );
 };

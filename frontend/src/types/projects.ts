@@ -38,6 +38,8 @@ export interface ProjectsData {
   version: string;
   description: string;
   groups: Record<string, ProjectGroup>;
+  projects: Project[];
+  grouped: Record<string, Project[]>;
   global?: {
     repository?: {
       name?: string;

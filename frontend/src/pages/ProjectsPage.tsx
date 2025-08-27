@@ -2,18 +2,16 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Project } from '../types/projects';
 import ProjectForm from '../components/ProjectForm';
-import useProjects from '../hooks/useProjects';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '../hooks/useProjectsQuery';
 
 const ProjectsPage: React.FC = () => {
-  const {
-    grouped,
-    loading,
-    error,
-    createProject,
-    updateProject,
-    deleteProject,
-    projects,
-  } = useProjects();
+  const { data: projectsData, isLoading: loading, error } = useProjects();
+  const createProjectMutation = useCreateProject();
+  const updateProjectMutation = useUpdateProject();
+  const deleteProjectMutation = useDeleteProject();
+  
+  const projects = projectsData?.projects || [];
+  const grouped = projectsData?.grouped || {};
   const [createData, setCreateData] = useState<Partial<Project>>({
     title: '',
     group_name: 'other',
@@ -22,7 +20,7 @@ const ProjectsPage: React.FC = () => {
   const [editingData, setEditingData] = useState<Partial<Project> | null>(null);
 
   const handleCreate = async (data: Partial<Project>) => {
-    await createProject(data);
+    await createProjectMutation.mutateAsync(data);
     setCreateData({ title: '', group_name: 'other' });
   };
 
@@ -33,14 +31,14 @@ const ProjectsPage: React.FC = () => {
 
   const handleUpdate = async (updates: Partial<Project>) => {
     if (!editingId) return;
-    await updateProject(editingId, updates);
+    await updateProjectMutation.mutateAsync({ id: editingId, data: updates });
     setEditingId(null);
     setEditingData(null);
   };
 
   const handleDelete = async (projectId?: number) => {
     if (!projectId) return;
-    await deleteProject(projectId);
+    await deleteProjectMutation.mutateAsync(projectId);
   };
 
   if (loading)
@@ -52,7 +50,7 @@ const ProjectsPage: React.FC = () => {
   if (error)
     return (
       <div className="max-w-4xl mx-auto p-4">
-        <p className="text-red-600">Error: {error}</p>
+        <p className="text-red-600">Error: {error.message}</p>
       </div>
     );
 

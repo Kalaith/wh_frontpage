@@ -1,36 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import type { ProjectsData } from '../types/projects';
-import { ProjectsService } from '../services/projectsService';
+import React, { useEffect } from 'react';
 import { Header } from '../components/Header';
 import { QuickLinks } from '../components/QuickLinks';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
 import AuthStatus from '../components/AuthStatus';
+import { useProjects } from '../hooks/useProjectsQuery';
 
 const HomePage: React.FC = () => {
-  const [projectsData, setProjectsData] = useState<ProjectsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // auth status handled by AuthStatus component
-
-  useEffect(() => {
-    const loadProjectsData = async () => {
-      try {
-        const projectsService = ProjectsService.getInstance();
-        const data = await projectsService.getProjectsData();
-        setProjectsData(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to load projects data'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProjectsData();
-  }, []);
+  const { data: projectsData, isLoading: loading, error } = useProjects();
 
   // Inject Ko-fi overlay widget
   useEffect(() => {
@@ -77,9 +55,9 @@ const HomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container">
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>Loading WebHatchery projects...</p>
+      <div className="max-w-6xl mx-auto p-8">
+        <div className="text-center py-8">
+          <p className="text-lg text-gray-600">Loading WebHatchery projects...</p>
         </div>
       </div>
     );
@@ -87,18 +65,18 @@ const HomePage: React.FC = () => {
 
   if (error || !projectsData) {
     return (
-      <div className="container">
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>Error: {error || 'Failed to load projects data'}</p>
+      <div className="max-w-6xl mx-auto p-8">
+        <div className="text-center py-8">
+          <p className="text-lg text-red-600">Error: {error?.message || 'Failed to load projects data'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
+    <div className="max-w-6xl mx-auto p-8 bg-gray-50 min-h-screen">
       {/* Top-right login status */}
-      <div style={{ position: 'absolute', top: 12, right: 12 }}>
+      <div className="fixed top-3 right-3 z-10">
         <AuthStatus />
       </div>
 

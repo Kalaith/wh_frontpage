@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig(() => {
   // Fixed base path for frontpage deployment
-  const base = '/frontpage';
+  const base = '/';
 
   return {
     base,
