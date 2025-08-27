@@ -4,8 +4,9 @@
  */
 import type { AuthUser, LoginRequest, RegisterRequest } from '../entities/Auth';
 
-// Use the existing API base URL from the main API client
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/frontpage/api';
+// Base URL for the central auth service (auth app)
+// Prefer an explicit env var VITE_AUTH_SERVICE_URL; fall back to the auth app path on the same host
+const API_BASE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || '/auth/api';
 
 /**
  * Custom error handler to provide more descriptive error messages
@@ -82,7 +83,8 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 export const login = async (_credentials: LoginRequest): Promise<AuthUser> => {
   // For centralized auth, redirect to the auth portal with return URL
   const returnUrl = encodeURIComponent(window.location.href);
-  window.location.href = `http://127.0.0.1/auth/login?returnUrl=${returnUrl}`;
+  const AUTH_APP_URL = import.meta.env.VITE_AUTH_APP_URL || 'http://127.0.0.1/auth';
+  window.location.href = `${AUTH_APP_URL}/login?returnUrl=${returnUrl}`;
   
   // This will never execute due to redirect, but needed for TypeScript
   throw new Error('Redirecting to auth service...');
@@ -93,7 +95,8 @@ export const login = async (_credentials: LoginRequest): Promise<AuthUser> => {
  */
 export const register = async (userData: RegisterRequest): Promise<AuthUser> => {
   try {
-    const data = await apiRequest<AuthUser>('/auth/register', {
+  // register should hit the central auth service (e.g. /auth/api/register)
+  const data = await apiRequest<AuthUser>('/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -128,7 +131,8 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     if (token) {
       try {
   authDebug('[AuthAPI] Trying local token validation...');
-        const data = await apiRequest<AuthUser>('/auth/user');
+  // validate token against central auth service (/auth/api/user)
+  const data = await apiRequest<AuthUser>('/user');
   authDebug('[AuthAPI] Local token validated successfully:', data);
         return data;
       } catch (error) {
@@ -147,8 +151,8 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       if (token) {
         centralHeaders['Authorization'] = `Bearer ${token}`;
       }
-  const CENTRAL_AUTH_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://127.0.0.1/auth/api';
-  const response = await fetch(`${CENTRAL_AUTH_URL}/user`, {
+      // reuse API_BASE_URL for central service checks
+      const response = await fetch(`${API_BASE_URL}/user`, {
         method: 'GET',
         credentials: 'include', // Include cookies for cross-domain auth
         headers: centralHeaders,
