@@ -51,9 +51,18 @@ AppFactory::setContainer($container);
 // Create Slim app
 $app = AppFactory::create();
 
+// Debug: Log request information
+error_log("Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'not set'));
+error_log("Script Name: " . ($_SERVER['SCRIPT_NAME'] ?? 'not set'));
+error_log("Path Info: " . ($_SERVER['PATH_INFO'] ?? 'not set'));
+error_log("APP_BASE_PATH: " . ($_ENV['APP_BASE_PATH'] ?? 'not set'));
+
 // Set base path for subdirectory deployment
-if (isset($_ENV['APP_BASE_PATH'])) {
+if (isset($_ENV['APP_BASE_PATH']) && !empty($_ENV['APP_BASE_PATH'])) {
     $app->setBasePath($_ENV['APP_BASE_PATH']);
+    error_log("Slim base path set to: " . $_ENV['APP_BASE_PATH']);
+} else {
+    error_log("No base path set");
 }
 
 // Add middleware

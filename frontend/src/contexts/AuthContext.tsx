@@ -9,7 +9,12 @@ import * as authApi from '../api/authApi';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: { email: string; password: string; firstName: string; lastName: string }) => Promise<void>;
+  register: (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -36,9 +41,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Always attempt to retrieve current user from central auth.
         const user = await authApi.getCurrentUser();
         if (user) {
-          setState({ user, isAuthenticated: true, isLoading: false, error: null });
+          setState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
         } else {
-          setState({ user: null, isAuthenticated: false, isLoading: false, error: null });
+          setState({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
         }
       } catch (error) {
         console.error('Auth initialization failed:', error);
@@ -56,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<void> => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       const user = await authApi.login({ email, password });
       setState({
@@ -75,9 +90,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: { email: string; password: string; firstName: string; lastName: string }): Promise<void> => {
+  const register = async (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<void> => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       const user = await authApi.register(userData);
       setState({
@@ -111,7 +131,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({ ...prev, isLoading: true }));
       const user = await authApi.getCurrentUser();
       if (user) {
-        setState(prev => ({ ...prev, user, isAuthenticated: true, isLoading: false }));
+        setState(prev => ({
+          ...prev,
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+        }));
       } else {
         logout();
       }

@@ -13,19 +13,25 @@ export const ProjectLegend: React.FC = () => {
               <Badge variant="status" className="status-non-working">
                 🚧 Non-Working
               </Badge>
-              <span className="legend-desc">In development, not yet functional</span>
+              <span className="legend-desc">
+                In development, not yet functional
+              </span>
             </div>
             <div className="legend-item">
               <Badge variant="status" className="status-mvp">
                 ⚡ MVP
               </Badge>
-              <span className="legend-desc">Minimum viable product, basic features working</span>
+              <span className="legend-desc">
+                Minimum viable product, basic features working
+              </span>
             </div>
             <div className="legend-item">
               <Badge variant="status" className="status-fully-working">
                 ✅ Fully Working
               </Badge>
-              <span className="legend-desc">Version 1.0+, production ready</span>
+              <span className="legend-desc">
+                Version 1.0+, production ready
+              </span>
             </div>
           </div>
         </div>

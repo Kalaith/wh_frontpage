@@ -1,11 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --primary: #3e8ed0;
   --bg: #f9f9f9;
   --text: #333;
   --accent: #5bc0be;
-  --shadow: rgba(0,0,0,0.1);
+  --shadow: rgba(0, 0, 0, 0.1);
   --radius: 8px;
   --transition: all 0.3s ease;
 }
@@ -35,10 +35,14 @@ h1 {
 
 /* New site header/banner */
 .site-header {
-  background: linear-gradient(180deg, rgba(62,142,208,0.06), transparent 60%);
+  background: linear-gradient(
+    180deg,
+    rgba(62, 142, 208, 0.06),
+    transparent 60%
+  );
   padding: 2.5rem 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
   margin-bottom: 2rem;
 }
 
@@ -107,8 +111,12 @@ p {
   display: inline-block;
   padding: 0.28rem 0.7rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(62,142,208,0.08), rgba(91,192,190,0.03));
-  box-shadow: 0 6px 18px rgba(62,142,208,0.06);
+  background: linear-gradient(
+    90deg,
+    rgba(62, 142, 208, 0.08),
+    rgba(91, 192, 190, 0.03)
+  );
+  box-shadow: 0 6px 18px rgba(62, 142, 208, 0.06);
 }
 
 .link-items {
@@ -222,15 +230,15 @@ header {
 }
 
 .nav-link:hover {
-  background-color: rgba(62,142,208,0.06);
+  background-color: rgba(62, 142, 208, 0.06);
   transform: translateY(-2px);
-  border-color: rgba(62,142,208,0.12);
+  border-color: rgba(62, 142, 208, 0.12);
 }
 
 .admin-link {
   background: linear-gradient(90deg, var(--primary), var(--accent));
   color: white !important;
-  box-shadow: 0 4px 12px rgba(62,142,208,0.18);
+  box-shadow: 0 4px 12px rgba(62, 142, 208, 0.18);
 }
 
 .admin-link:hover {
@@ -452,7 +460,7 @@ header {
 
 .project-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .project-header {
@@ -565,13 +573,13 @@ header {
   border-radius: var(--radius);
   transition: var(--transition);
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .main-github-link:hover {
   background: linear-gradient(135deg, #24292e, #1e2125);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .github-link {
@@ -605,17 +613,17 @@ header {
     padding: 0.6rem 1.2rem;
     font-size: 0.9rem;
   }
-  
+
   .github-link {
     padding: 0.3rem 0.6rem;
     font-size: 0.8rem;
   }
-  
+
   .main-github-link .github-icon {
     width: 18px;
     height: 18px;
   }
-  
+
   .github-link .github-icon {
     width: 14px;
     height: 14px;
@@ -628,21 +636,21 @@ header {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .project-link {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .deployment-info {
     margin-top: 0.5rem;
   }
-  
+
   .quick-links .link-items {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .quick-links .link-items a {
     width: 100%;
     max-width: 280px;

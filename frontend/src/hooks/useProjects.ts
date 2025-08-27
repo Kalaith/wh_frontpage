@@ -40,17 +40,22 @@ export const useProjects = () => {
     }
   }, []);
 
-  const updateProject = useCallback(async (id: number, updates: Partial<Project>) => {
-    try {
-      const svc = ProjectsService.getInstance();
-      const updated = await svc.updateProject(id, updates as any);
-      setProjects(prev => prev.map(p => (p.id === id ? (updated as Project) : p)));
-      return updated;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      throw err;
-    }
-  }, []);
+  const updateProject = useCallback(
+    async (id: number, updates: Partial<Project>) => {
+      try {
+        const svc = ProjectsService.getInstance();
+        const updated = await svc.updateProject(id, updates as any);
+        setProjects(prev =>
+          prev.map(p => (p.id === id ? (updated as Project) : p))
+        );
+        return updated;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        throw err;
+      }
+    },
+    []
+  );
 
   const deleteProject = useCallback(async (id: number) => {
     try {

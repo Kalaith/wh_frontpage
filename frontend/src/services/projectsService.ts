@@ -21,13 +21,15 @@ export class ProjectsService {
 
     try {
       const apiResponse = await api.getProjects();
-      
+
       if (apiResponse.success && apiResponse.data) {
         this.projectsData = apiResponse.data;
         return this.projectsData;
       }
-      
-      throw new Error(apiResponse.error?.message || 'Failed to fetch projects from API');
+
+      throw new Error(
+        apiResponse.error?.message || 'Failed to fetch projects from API'
+      );
     } catch (error) {
       console.error('Error loading projects data:', error);
       throw error;
@@ -49,7 +51,10 @@ export class ProjectsService {
   }
 
   // Update a project via API and clear cache
-  public async updateProject(projectId: number, projectData: Partial<any>): Promise<any> {
+  public async updateProject(
+    projectId: number,
+    projectData: Partial<any>
+  ): Promise<any> {
     const res = await api.updateProject(projectId, projectData);
     if (res.success && res.data) {
       this.clearCache();

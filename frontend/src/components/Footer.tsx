@@ -15,13 +15,15 @@ export const Footer: React.FC<FooterProps> = ({ data }) => {
         {data.global?.buildTools && (
           <div className="tech-requirements">
             <small>
-              Platform Requirements: {' '}
-              {Object.entries(data.global.buildTools).map(([tool, version], index) => (
-                <span key={tool}>
-                  {index > 0 && ' '}
-                  {tool} {version}
-                </span>
-              ))}
+              Platform Requirements:{' '}
+              {Object.entries(data.global.buildTools).map(
+                ([tool, version], index) => (
+                  <span key={tool}>
+                    {index > 0 && ' '}
+                    {tool} {version}
+                  </span>
+                )
+              )}
             </small>
           </div>
         )}

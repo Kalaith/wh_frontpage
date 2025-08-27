@@ -1,31 +1,47 @@
-# Auth Portal Publishing Script
+# Game Publishing Script
 # Publishes frontend and PHP backend to F:\WebHatchery for server sync
 
 param(
+    [Alias('f')]
     [switch]$Frontend,
+    [Alias('b')]
     [switch]$Backend,
+    [Alias('a')]
     [switch]$All,
+    [Alias('c')]
     [switch]$Clean,
+    [Alias('v')]
     [switch]$Verbose,
-    [ValidateSet('preview', 'production')]
-    [string]$env = 'preview'
+    [Alias('p')]
+    [switch]$Production
 )
 
-# Configuration
-# Use the script directory as the source root so publishing works when run from the project folder
-$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$SOURCE_DIR = $SCRIPT_DIR
-$PREVIEW_ROOT = "H:\xampp\htdocs"
-$PRODUCTION_ROOT = "F:\WebHatchery"
+# Auto-detect project name from current directory
+$PROJECT_NAME = Split-Path -Leaf $PSScriptRoot
 
-# Set destination based on environment
-$DEST_ROOT = if ($env -eq 'preview') { $PREVIEW_ROOT } else { $PRODUCTION_ROOT }
+# Load .env file
+$envFile = Join-Path $PSScriptRoot ".env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match "^(\w+)=(.*)$") {
+            $name = $matches[1]
+            $value = $matches[2]
+            Set-Variable -Name $name -Value $value -Scope Script
+        }
+    }
+} else {
+    Write-Error ".env file not found! Please create a .env file in the project root with the following content:"
+    Write-Host "PREVIEW_ROOT=" -ForegroundColor Yellow
+    Write-Host "PRODUCTION_ROOT=" -ForegroundColor Yellow
+    exit 1
+}
 
-# Deploy frontpage to /frontpage/ but make it accessible from root
-$DEST_DIR = Join-Path $DEST_ROOT "frontpage"
-$FRONTEND_SRC = Join-Path $SOURCE_DIR 'frontend'
-$BACKEND_SRC = Join-Path $SOURCE_DIR 'backend'
-$FRONTEND_DEST = $DEST_DIR  # Frontpage files go to /frontpage/
+# Set destination based on Production flag
+$DEST_ROOT = if ($Production) { $PRODUCTION_ROOT } else { $PREVIEW_ROOT }
+$DEST_DIR = Join-Path $DEST_ROOT $PROJECT_NAME
+$FRONTEND_SRC = "$PSScriptRoot\frontend"
+$BACKEND_SRC = "$PSScriptRoot\backend"
+$FRONTEND_DEST = $DEST_DIR  # Frontend goes to root, not subdirectory
 $BACKEND_DEST = "$DEST_DIR\backend"
 
 # Color output functions
@@ -126,37 +142,47 @@ function Build-Frontend {
     }
     
     # Set up environment configuration
-    Write-Info "Setting up $env environment for frontend build..."
-    $envSrc = ".env.$env"
+    $environment = if ($Production) { "production" } else { "preview" }
+    Write-Info "Setting up $environment environment for frontend build..."
+    $envSrc = ".env.$environment"
     $envTemp = ".env.local"
-
-    # Use .env.production or .env.preview for correct base path
+    
     if (Test-Path $envSrc) {
+        # Copy environment file to .env.local to ensure it's used during build
         Copy-Item $envSrc $envTemp -Force
         Write-Info "Using $envSrc for frontend build"
     } else {
         Write-Warning "$envSrc not found - using default environment"
     }
-
-    Write-Info "Building frontend for $env..."
+    
+    # Build the frontend
+    Write-Info "Building frontend for production..."
     $env:NODE_ENV = "production"
-    if ($env -eq 'preview') {
-        npx vite build --mode preview
-    } else {
+    
+    # Set base path based on environment
+    if ($Production) {
+        # Production uses root path
+        $env:VITE_BASE_PATH = "/"
         npx vite build --mode production
+    } else {
+        Write-Info "Setting base path for preview environment..."
+        $env:VITE_BASE_PATH = "/$PROJECT_NAME/"
+        # Build with preview mode to use .env.preview
+        npx vite build --mode preview
     }
-
+    
     $buildResult = $LASTEXITCODE
-
+    
+    # Clean up temporary env file
     if (Test-Path $envTemp) {
         Remove-Item $envTemp -Force
     }
-
+    
     if ($buildResult -ne 0) {
         Write-Error "Failed to build frontend"
         return $false
     }
-
+    
     Write-Success "Frontend build completed"
     return $true
 }
@@ -172,35 +198,46 @@ function Publish-Frontend {
     
     # Clean destination if requested (but preserve backend directory)
     if ($Clean) {
-        Write-Warning "Cleaning frontend files from /frontpage/ directory (preserving backend)..."
+        Write-Warning "Cleaning frontend files from root directory (preserving backend)..."
+        # Clean only frontend files, not the backend directory
         Get-ChildItem -Path $FRONTEND_DEST -Exclude "backend" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
         Write-Success "Frontend files cleaned"
     }
-
-    # Copy built files (dist folder) to /frontpage/
+    
+    # Copy built files (dist folder) to root
     $distPath = "$FRONTEND_SRC\dist"
     if (Test-Path $distPath) {
-        Write-Info "Copying built frontend files to /frontpage/ directory..."
+        Write-Info "Copying built frontend files to root directory..."
+        
+        # Get all items from the dist folder
         Get-ChildItem -Path $distPath | ForEach-Object {
             $sourceItem = $_.FullName
             $itemName = $_.Name
             $destPath = Join-Path $FRONTEND_DEST $itemName
+            
+            # Don't overwrite backend directory
             if ($itemName -ne "backend") {
+                # If destination exists and it's a directory, remove it first to prevent nesting
                 if ((Test-Path $destPath) -and (Get-Item $destPath).PSIsContainer) {
                     Write-Verbose "Removing existing directory: $destPath"
                     Remove-Item $destPath -Recurse -Force -ErrorAction SilentlyContinue
                 }
+                
+                # Copy the item
                 if ($_.PSIsContainer) {
+                    # For directories, copy contents
                     Copy-Item $sourceItem $destPath -Recurse -Force
                 } else {
+                    # For files, copy directly
                     Copy-Item $sourceItem $destPath -Force
                 }
+                
                 if ($Verbose) {
                     Write-Host "  Copied: $itemName" -ForegroundColor Gray
                 }
             }
         }
-        Write-Success "Frontend published to $FRONTEND_DEST (/frontpage/)"
+        Write-Success "Frontend published to $FRONTEND_DEST (root)"
         return $true
     } else {
         Write-Error "Frontend build output not found at $distPath"
@@ -222,7 +259,7 @@ function Install-BackendDependencies {
     }
     
     # Install dependencies
-    composer update --no-dev --optimize-autoloader
+    composer install --no-dev --optimize-autoloader
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to install PHP dependencies"
         return $false
@@ -264,26 +301,36 @@ function Publish-Backend {
         "vendor\*\.git\*",
         "*.md",
         "composer.lock",
-        "phpunit.xml"
+        "phpunit.xml",
+        "init-db.ps1",
+        "debug_bet.php",
+        "debug_bet_api.php",
+        "test-di.php",
+        "install.php",
+        "NODE_TO_PHP_MIGRATION_GUIDE.md",
+        "DI_IMPLEMENTATION.md",
+        "improvement.md",
+        "codereview.md"
     )
     
     # Copy backend files with exclusions
     Copy-WithExclusions $BACKEND_SRC $BACKEND_DEST $excludePatterns
     
     # Handle environment configuration file
-    Write-Info "Setting up $env environment configuration..."
-    $envSrc = "$BACKEND_SRC\.env.$env"
+    $environment = if ($Production) { "production" } else { "preview" }
+    Write-Info "Setting up $environment environment configuration..."
+    $envSrc = "$BACKEND_SRC\.env.$environment"
     $envDest = "$BACKEND_DEST\.env"
     
     if (Test-Path $envSrc) {
         Copy-Item $envSrc $envDest -Force
-        Write-Success "Copied $envSrc to .env for $Environment use"
+        Write-Success "Copied $envSrc to .env for $environment use"
     } else {
         Write-Warning "$envSrc not found in source - copying base .env file"
         $baseEnvSrc = "$BACKEND_SRC\.env"
         if (Test-Path $baseEnvSrc) {
             Copy-Item $baseEnvSrc $envDest -Force
-            Write-Info "Copied base .env file to $Environment deployment"
+            Write-Info "Copied base .env file to $environment deployment"
         } else {
             Write-Error "No .env file found in source directory!"
             return $false
@@ -316,34 +363,39 @@ function Publish-Backend {
 
 # Main execution
 function Main {
-    Write-Info "Frontpage Publishing Script"
-    Write-Info "============================="
-
-    # Ensure frontpage directory exists
+    Write-Info "$PROJECT_NAME Publishing Script"
+    Write-Info "=========================="
+    
+    # Ensure WebHatchery directory exists
     Ensure-Directory $DEST_DIR
-
+    
     $success = $true
-
+    
     # Determine what to publish
     if ($All -or (!$Frontend -and !$Backend)) {
         Write-Info "Publishing both frontend and backend..."
         $Frontend = $true
         $Backend = $true
     }
-
+    
+    # Store original location
     $originalLocation = Get-Location
-
+    
     try {
+        # Publish frontend
         if ($Frontend) {
             if (!(Publish-Frontend)) {
                 $success = $false
             }
         }
+        
+        # Publish backend
         if ($Backend) {
             if (!(Publish-Backend)) {
                 $success = $false
             }
         }
+        
         if ($success) {
             # Copy root .htaccess file for URL rewriting
             $rootHtaccessSrc = "$SOURCE_DIR\.htaccess"
@@ -352,58 +404,17 @@ function Main {
                 Copy-Item $rootHtaccessSrc $rootHtaccessDest -Force
                 Write-Info "Copied root .htaccess file for URL rewriting"
             }
-
+            
             Write-Success "`n✅ Publishing completed successfully!"
             Write-Info "Files published to: $DEST_DIR"
             Write-Info "Ready for server sync."
-
-            # Ensure the webroot serves the /frontpage/ directory via an internal rewrite
-            try {
-                # Remove any existing index.html redirect file at webroot so .htaccess can control routing
-                $indexPath = Join-Path $DEST_ROOT 'index.html'
-                if (Test-Path $indexPath) {
-                    Remove-Item $indexPath -Force -ErrorAction SilentlyContinue
-                    Write-Info "Removed existing root index.html: $indexPath"
-                }
-
-                # Write a webroot .htaccess that internally rewrites unknown paths to /frontpage/<path>
-                # This ensures SPA client routes (e.g. /projects) work on refresh by serving the frontpage app.
-                $webrootHtaccess = Join-Path $DEST_ROOT '.htaccess'
-                $htaccessContent = @"
-RewriteEngine On
-
-# If the site root is requested, internally rewrite to the frontpage app
-RewriteRule ^/?$ /frontpage/ [L,QSA]
-
-                # Do not force a global DirectoryIndex to the frontpage app
-                # (this caused other sites like /anime_prompt_gen/ to load the frontpage index)
-                # Root requests are still internally rewritten to /frontpage/ by the rule above.
-
-# If the requested resource exists (file or directory) in the webroot, serve it directly
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# Avoid rewriting requests that already target the frontpage paths or API/backend
-RewriteCond %{REQUEST_URI} !^/frontpage/
-RewriteCond %{REQUEST_URI} !^/frontpage/api/
-RewriteCond %{REQUEST_URI} !^/frontpage/backend/
-RewriteCond %{REQUEST_URI} !^/assets/
-
-# Internally rewrite everything else to the frontpage directory preserving the original path
-RewriteRule ^(.*)$ /frontpage/$1 [L,QSA]
-"@
-                Set-Content -Path $webrootHtaccess -Value $htaccessContent -Force -Encoding UTF8
-                Write-Info "Wrote webroot .htaccess to $webrootHtaccess"
-            } catch {
-                Write-Warning "Failed to write webroot .htaccess: $_"
-            }
         } else {
             Write-Error "`n❌ Publishing failed!"
             exit 1
         }
-
+        
     } finally {
+        # Return to original location
         Set-Location $originalLocation
     }
 }
@@ -411,38 +422,38 @@ RewriteRule ^(.*)$ /frontpage/$1 [L,QSA]
 # Show help
 function Show-Help {
     Write-Host @"
-Auth Portal Publishing Script
-=============================
+$PROJECT_NAME Publishing Script
+==========================
 
 Usage: .\publish.ps1 [OPTIONS]
 
 OPTIONS:
-    -Frontend    Publish only the frontend
-    -Backend     Publish only the PHP backend  
-    -All         Publish both (default if no specific option given)
-    -Clean       Clean destination directories before publishing
-    -Verbose     Show detailed output during copying
-    -env Choose deployment environment ('preview' or 'production')
-                 preview: Deploy to H:\xampp\htdocs
-                 production: Deploy to F:\WebHatchery
-    -Help        Show this help message
+    -Frontend, -f    Publish only the frontend
+    -Backend, -b     Publish only the PHP backend  
+    -All, -a         Publish both (default if no specific option given)
+    -Clean, -c       Clean destination directories before publishing
+    -Verbose, -v     Show detailed output during copying
+    -Production, -p  Deploy to production environment (F:\WebHatchery)
+                     Default: Deploy to preview environment (H:\xampp\htdocs)
+    -Help            Show this help message
 
 EXAMPLES:
     .\publish.ps1                                       # Publish both to preview (H:\xampp\htdocs)
-    .\publish.ps1 -Frontend                            # Publish only frontend to preview
-    .\publish.ps1 -Backend                             # Publish only backend to preview
-    .\publish.ps1 -All -Clean -env production  # Clean and publish both to production
-    .\publish.ps1 -Frontend -Verbose -env preview # Publish frontend to preview with details
+    .\publish.ps1 -f                                   # Publish only frontend to preview
+    .\publish.ps1 -b                                   # Publish only backend to preview
+    .\publish.ps1 -f -p                               # Publish frontend to production
+    .\publish.ps1 -a -c -p                            # Clean and publish both to production
+    .\publish.ps1 -Frontend -Verbose -Production       # Publish frontend to production with details
 
 DESCRIPTION:
-    This script builds and publishes the Auth Portal to either the 
+    This script builds and publishes the $PROJECT_NAME web game to either the 
     preview environment (H:\xampp\htdocs) or production environment (F:\WebHatchery).
     The frontend is built using npm and deployed to the root directory, while
     the PHP backend is deployed to the backend/ subdirectory with dependencies
     optimized for the target environment.
     
     Deployment Structure (for both environments):
-    <root>\auth\
+    <root>\$PROJECT_NAME\
     ├── index.html          # Frontend files (root)
     ├── assets\             # Frontend assets
     └── backend\            # PHP backend

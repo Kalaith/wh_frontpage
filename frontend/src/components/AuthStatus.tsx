@@ -22,21 +22,34 @@ export const AuthStatus: React.FC = () => {
         <div style={{ padding: '0.25rem 0.6rem', borderRadius: 6 }}>
           Hi {user.firstName || user.displayName || user.email}
         </div>
-        <button onClick={logout} className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.85rem' }}>
+        <button
+          onClick={logout}
+          className="btn btn-secondary"
+          style={{ padding: '0.25rem 0.6rem', fontSize: '0.85rem' }}
+        >
           Logout
         </button>
       </div>
     );
   }
 
-  const AUTH_APP_URL = import.meta.env.VITE_AUTH_APP_URL || 'http://127.0.0.1/auth';
+  const AUTH_APP_URL =
+    import.meta.env.VITE_AUTH_APP_URL || 'http://127.0.0.1/auth';
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <a href={`${AUTH_APP_URL}/login`} className="btn btn-primary" style={{ padding: '0.25rem 0.6rem', textDecoration: 'none' }}>
+      <a
+        href={`${AUTH_APP_URL}/login`}
+        className="btn btn-primary"
+        style={{ padding: '0.25rem 0.6rem', textDecoration: 'none' }}
+      >
         Log in
       </a>
-      <button onClick={() => checkAuth()} className="btn" style={{ padding: '0.25rem 0.6rem', fontSize: '0.85rem' }}>
+      <button
+        onClick={() => checkAuth()}
+        className="btn"
+        style={{ padding: '0.25rem 0.6rem', fontSize: '0.85rem' }}
+      >
         Retry
       </button>
     </div>

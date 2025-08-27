@@ -21,7 +21,9 @@ const HomePage: React.FC = () => {
         const data = await projectsService.getProjectsData();
         setProjectsData(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load projects data');
+        setError(
+          err instanceof Error ? err.message : 'Failed to load projects data'
+        );
       } finally {
         setLoading(false);
       }
@@ -33,7 +35,9 @@ const HomePage: React.FC = () => {
   // Inject Ko-fi overlay widget
   useEffect(() => {
     const scriptSrc = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
-    let scriptEl: HTMLScriptElement | null = document.querySelector(`script[src="${scriptSrc}"]`);
+    let scriptEl: HTMLScriptElement | null = document.querySelector(
+      `script[src="${scriptSrc}"]`
+    );
 
     const initWidget = () => {
       try {
@@ -43,7 +47,7 @@ const HomePage: React.FC = () => {
             type: 'floating-chat',
             'floating-chat.donateButton.text': 'Support me',
             'floating-chat.donateButton.background-color': '#00b9fe',
-            'floating-chat.donateButton.text-color': '#fff'
+            'floating-chat.donateButton.text-color': '#fff',
           });
         }
       } catch (e) {

@@ -3,6 +3,7 @@
 # Merges backend, frontend and root ignore rules
 # =========================
 
+.env*
 # --- OS ---
 .DS_Store
 Thumbs.db

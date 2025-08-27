@@ -7,8 +7,8 @@ import './styles/global.css'; // Ensure global styles are imported
 
 const App: React.FC = () => {
   // basename is / because in this case we are using the htaccess to redirect / to /frontpage
-  const basename = '/'
- 
+  const basename = '/';
+
   return (
     <AuthProvider>
       <BrowserRouter basename={basename}>

@@ -12,16 +12,13 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ data }) => {
       <h2>Project Portfolio</h2>
       {Object.entries(data.groups).map(([groupId, group]) => {
         if (group.hidden) return null;
-        
+
         return (
           <section key={groupId} className="group" id={groupId}>
             <h3>{group.name}</h3>
             <div className="project-grid">
               {group.projects.map((project, index) => (
-                <ProjectCard 
-                  key={`${groupId}-${index}`} 
-                  project={project} 
-                />
+                <ProjectCard key={`${groupId}-${index}`} project={project} />
               ))}
             </div>
           </section>

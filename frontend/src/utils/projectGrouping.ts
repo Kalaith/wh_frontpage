@@ -10,7 +10,9 @@ export const groupProjectsByName = (projects: Project[]) => {
 
   // sort projects within groups by title
   Object.keys(groups).forEach(k => {
-    groups[k] = groups[k].slice().sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    groups[k] = groups[k]
+      .slice()
+      .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
   });
 
   return groups;

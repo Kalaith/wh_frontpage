@@ -1,0 +1,418 @@
+{
+  "version": "2.0.0",
+  "description": "WebHatchery Projects and Build Configuration",
+  "groups": {
+    "fiction": {
+      "name": "Fiction Projects",
+      "projects": [
+        {
+          "title": "Stories",
+          "path": "stories/",
+          "description": "Collection of interactive stories and creative writing projects with immersive web presentations.",
+          "stage": "Static",
+          "status": "fully-working",
+          "version": "1.2.0"
+        },
+        {
+          "title": "Mature Stories",
+          "path": "storiesx/",
+          "description": "Story collection that may contain explicit language and adult themes.",
+          "stage": "Static",
+          "status": "fully-working",
+          "version": "1.1.0"
+        },
+        {
+          "title": "Anime Hub",
+          "path": "anime/",
+          "description": "Character analysis and development charts for popular anime series including Dragon Ball and Granblue Fantasy."
+        },
+        {
+          "title": "AI Portrait Gallery",
+          "path": "gallery/",
+          "description": "Beautiful AI-generated anime character portrait gallery featuring various animal-themed characters with interactive viewing and modal display capabilities."
+        }
+      ]
+    },
+    "apps": {
+      "name": "Web Applications",
+      "projects": [
+        {
+          "title": "Is It Done Yet?",
+          "path": "apps/isitdoneyet/",
+          "description": "A full-stack web application for project tracking and status monitoring with real-time updates.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/isitdoneyet"
+          }
+        },
+        {
+          "title": "Auth Portal",
+          "path": "apps/auth/",
+          "description": "User Authentication Portal for managing user accounts, roles, and permissions with secure login and registration features.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/auth"
+          },
+          "stage": "Auth",
+          "status": "MVP",
+          "version": "1.0.0"
+        },
+        {
+          "title": "Meme Generator",
+          "path": "apps/meme_generator/",
+          "description": "Interactive tool for creating custom memes with various templates and text customization options.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/meme_generator"
+          },
+          "stage": "React",
+          "status": "MVP",
+          "version": "0.8.0"
+        },
+        {
+          "title": "Project Management",
+          "path": "apps/project_management/",
+          "description": "Comprehensive project management dashboard with stakeholder tracking and report generation features."
+        },
+        {
+          "title": "LitRPG Studio",
+          "path": "apps/litrpg_studio/frontend/",
+          "description": "A specialized writing tool designed for LitRPG authors to create and manage game mechanics in their stories.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/LitrpgStudio"
+          }
+        },
+        {
+          "title": "Monster Maker",
+          "path": "apps/monster_maker/",
+          "description": "D\u0026D monster creation tool with challenge rating calculator and stat progression charts."
+        },
+        {
+          "title": "Name Generator API",
+          "path": "apps/name_generator/frontend/",
+          "description": "Comprehensive name generation tool with multiple algorithms for creating people, place, event, and title names using Markov chains, phonetic patterns, and cultural linguistics.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/name_generator"
+          }
+        },
+        {
+          "title": "Story Forge",
+          "path": "apps/story_forge/frontend/",
+          "description": "Creative writing assistant tool that helps authors develop characters, plotlines, settings, and narrative arcs with an intuitive interface and visualization capabilities.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/story_forge"
+          }
+        },
+        {
+          "title": "Anime Prompt Generator",
+          "path": "apps/anime_prompt_gen/frontend/",
+          "description": "React-based anime prompt generator with modular extensibility for animal girls, monster girls, and monsters.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/PromptGenerator"
+          }
+        },
+        {
+          "title": "Campaign Chronicle",
+          "path": "apps/campaign_chronicle/frontend/",
+          "description": "D\u0026D Campaign Companion for managing campaigns, characters, locations, items, relationships, and session notes with an intuitive interface and local storage.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/CampaignChronicle"
+          }
+        },
+        {
+          "title": "Quest Generator",
+          "path": "apps/quest_generator/",
+          "description": "Fantasy quest generator with comprehensive adventure creation tools for RPG campaigns, featuring multiple quest types and customizable difficulty levels.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/quest_generator"
+          }
+        },
+        {
+          "title": "WH Tracker",
+          "path": "apps/wh_tracker/frontend/",
+          "description": "WebHatchery project tracking and monitoring application with real-time status updates and analytics dashboard.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/wh_tracker"
+          },
+          "stage": "React",
+          "status": "MVP",
+          "version": "0.9.0"
+        },
+        {
+          "title": "WebHatchery Frontpage",
+          "path": "frontpage/frontend/",
+          "description": "React version of the main WebHatchery landing page with project portfolio, status badges, and interactive navigation.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/wh_frontpage"
+          },
+          "stage": "React",
+          "status": "MVP",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    "games": {
+      "name": "Games \u0026 Game Design",
+      "projects": [
+        {
+          "title": "Dragons Den",
+          "path": "game_apps/dragons_den/frontend/",
+          "description": "Fantasy dragon management game with breeding and exploration mechanics.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/DragonsDen"
+          },
+          "stage": "React",
+          "status": "non-working",
+          "version": "0.3.0"
+        },
+        {
+          "title": "Magical Girl",
+          "path": "game_apps/magical_girl/frontend/",
+          "description": "Magical girl transformation and adventure game with character progression.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/magical_girl"
+          }
+        },
+        {
+          "title": "Xenomorph Park",
+          "path": "game_apps/xenomorph_park/frontend/",
+          "description": "Xenomorph Park is a sci-fi park management and survival game built with React. Manage alien creatures, containment systems, and visitor safety in a modern, interactive web app.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/xenomorph_park"
+          }
+        },
+        {
+          "title": "Dungeon Core",
+          "path": "game_apps/dungeon_core/frontend/",
+          "description": "Dungeon management game with a React frontend, detailed JSON-based monster evolution trees, trait system, unlock conditions, and a comprehensive GDD. Features persistent adventurer parties, mana/trap economy, room themes, monster breeds/evolution, and advanced UI/gameplay systems. All monster, trait, and unlock data is modular and up-to-date.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/dungeon_core"
+          }
+        },
+        {
+          "title": "Emoji Tower",
+          "path": "game_apps/emoji_tower/",
+          "description": "Casual tower-building puzzle game featuring emoji-based construction elements with physics simulation, progressive difficulty levels, and unlockable special emoji blocks with unique properties."
+        },
+        {
+          "title": "Planet Trader",
+          "path": "game_apps/planet_trader/frontend/",
+          "description": "Sci-fi trading and exploration game where players manage resources, trade between planets, and upgrade their ship in a dynamic universe. Built with a modern React frontend.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/planet_trader"
+          }
+        },
+        {
+          "title": "Kingdom Wars",
+          "path": "game_apps/kingdom_wars/frontend/",
+          "description": "A comprehensive text-based war game featuring kingdom management, military strategy, resource allocation, and tactical combat with dynamic events and progression systems.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/kingdom_wars"
+          }
+        },
+        {
+          "title": "Adventurer Guild",
+          "path": "game_apps/adventurer_guild/frontend/",
+          "description": "React-based adventurer guild management app with quest tracking and character progression.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/adventurer_guild"
+          }
+        },
+        {
+          "title": "Kemo Simulator",
+          "path": "game_apps/kemo_sim/frontend/",
+          "description": "React-based simulation game featuring animal-themed characters and dynamic interactions.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/kemo_sim"
+          }
+        },
+        {
+          "title": "Interstellar Romance",
+          "path": "game_apps/interstellar_romance/frontend/",
+          "description": "Sci-fi romance simulation game featuring relationship building, space exploration, and character interactions across different alien civilizations.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/interstellar_romance"
+          }
+        },
+        {
+          "title": "Ashes of Aeloria",
+          "path": "game_apps/ashes_of_aeloria/frontend/",
+          "description": "High-fantasy node-based strategy game that blends classic commander-driven warfare with modern tactical gameplay. Players control elite commanders across a connected network of strategic nodes, building armies, managing resources, and engaging in large-scale battles to conquer the realm of Aeloria.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/AshesOfAeloria"
+          }
+        },
+        {
+          "title": "Mytherra",
+          "path": "game_apps/mytherra/frontend/",
+          "description": "Fantasy MMO-inspired game with crafting, exploration, and character progression systems.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/dawurth/Mytherra"
+          }
+        },
+        {
+          "title": "TB Realms",
+          "path": "game_apps/tb_realms/frontend/",
+          "description": "Turn-based strategy game with realm management and tactical combat systems.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/dawurth/stock_management"
+          }
+        },
+        {
+          "title": "Blacksmith Forge",
+          "path": "game_apps/blacksmith_forge/frontend/",
+          "description": "Fantasy blacksmithing simulation game with crafting mechanics, resource management, and equipment creation systems.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/BlacksmithForge"
+          }
+        },
+        {
+          "title": "Dungeon Master",
+          "path": "game_apps/dungeon_master/frontend/",
+          "description": "Reverse RPG experience where players take on the role of a dungeon master, managing monsters, traps, and defending against adventuring parties.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/dungeon_master"
+          }
+        },
+        {
+          "title": "Hive Mind",
+          "path": "game_apps/hive_mind/",
+          "description": "Strategic idle colony game where players manage a hive mind collective with expanding influence and resource management.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/hive_mind"
+          }
+        },
+        {
+          "title": "Infestium",
+          "path": "game_apps/infestium/frontend/",
+          "description": "Horror-themed infestation management game with strategic gameplay and survival mechanics.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/infestium"
+          }
+        },
+        {
+          "title": "MMO Sandbox",
+          "path": "game_apps/mmo_sandbox/frontend/",
+          "description": "Sandbox MMO-style game with world building, player interactions, and persistent universe mechanics.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/mmo_sandbox"
+          }
+        },
+        {
+          "title": "Monster Farm",
+          "path": "game_apps/monster_farm/",
+          "description": "Monster breeding and farming simulation game with creature collection and management systems.",
+          "repository": {
+            "type": "git",
+            "url": "https://github.com/Kalaith/monster_farm"
+          }
+        },
+        {
+          "title": "Robot Battler",
+          "path": "game_apps/robot_battler/",
+          "description": "Turn-based robot combat game featuring customizable mechs, strategic battles, and progression systems."
+        }
+      ]
+    },
+    "private": {
+      "name": "Private Projects",
+      "hidden": true,
+      "projects": [
+        {
+          "title": "SES",
+          "path": "web/ses/frontend/",
+          "description": "Session Emulation System"
+        }
+      ]
+    },
+    "game_design": {
+      "name": "Game Design",
+      "projects": [
+        {
+          "title": "Kaiju Simulator",
+          "path": "gdd/kaiju_simulator/",
+          "description": "Game Design Document for a Kaiju breeding and battle simulator featuring detailed progression systems, combat mechanics, and creature management concepts."
+        },
+        {
+          "title": "Echo of the Many",
+          "path": "gdd/echo_of_the_many/",
+          "description": "Fantasy strategy game where players control a mage who creates magical clones to infiltrate and influence a medieval city\u0027s political landscape. Features comprehensive React implementation plan with mobile-first PWA design."
+        },
+        {
+          "title": "Settlement Builder",
+          "path": "gdd/settlement/",
+          "description": "Medieval settlement building and management game design document featuring city planning, resource management, and citizen happiness mechanics."
+        },
+        {
+          "title": "Space Colony Simulator",
+          "path": "gdd/space_sim/",
+          "description": "Space colony management simulator with resource management and exploration systems."
+        },
+        {
+          "title": "Tactics Game",
+          "path": "gdd/tactics_game/",
+          "description": "Turn-based tactical combat game with grid-based movement, character classes, and strategic battle mechanics."
+        }
+      ]
+    }
+  },
+  "rootFiles": {
+    "name": "Root Level Files",
+    "description": "Individual files to deploy to the root directory"
+  },
+  "global": {
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/Kalaith/webhatchery",
+      "name": "WebHatchery"
+    },
+    "favicon": {
+      "enabled": true,
+      "sourcePath": "favicon/",
+      "description": "Automatically copy favicon files to all deployed projects unless skipFavicon is set to true in project deployment config"
+    },
+    "excludePatterns": [
+      ".git",
+      ".gitignore",
+      "node_modules",
+      ".env.example",
+      "*.log",
+      "*.tmp",
+      ".DS_Store",
+      "Thumbs.db",
+      "*.bak",
+      "*.log"
+    ],
+    "buildTools": {
+      "node": "\u003e=18.0.0",
+      "npm": "\u003e=8.0.0",
+      "php": "\u003e=8.1.0",
+      "composer": "\u003e=2.0.0"
+    }
+  }
+}
