@@ -22,7 +22,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T = any>(
+  public async request<T = any>(
     endpoint: string,
     options: RequestInit = {},
     timeoutMs: number = DEFAULT_TIMEOUT_MS
@@ -131,6 +131,7 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
 
   // Auth via frontpage proxy -> auth app
   async login(

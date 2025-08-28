@@ -42,6 +42,10 @@ $container->set(\App\Controllers\ProjectController::class, function() {
     return new \App\Controllers\ProjectController();
 });
 
+$container->set(\App\Controllers\TrackerController::class, function() {
+    return new \App\Controllers\TrackerController();
+});
+
 $container->set(\App\Middleware\JwtAuthMiddleware::class, function() {
     return new \App\Middleware\JwtAuthMiddleware();
 });
@@ -116,7 +120,14 @@ $app->get('/', function ($request, $response) {
             'GET /api/health' => 'Health check with detailed info',
             'GET /api/projects' => 'Get all projects',
             'GET /api/projects/{group}' => 'Get projects by group',
-            'POST /api/projects' => 'Create new project'
+            'POST /api/projects' => 'Create new project',
+            'GET /api/tracker/stats' => 'Get tracker statistics',
+            'GET /api/tracker/feature-requests' => 'Get feature requests',
+            'GET /api/tracker/project-suggestions' => 'Get project suggestions',
+            'GET /api/tracker/activity' => 'Get activity feed',
+            'POST /api/tracker/feature-requests' => 'Create feature request',
+            'POST /api/tracker/project-suggestions' => 'Create project suggestion',
+            'POST /api/tracker/vote' => 'Vote on item'
         ],
         'timestamp' => date('c')
     ]);

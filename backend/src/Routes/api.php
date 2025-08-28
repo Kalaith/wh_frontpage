@@ -2,6 +2,10 @@
 
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ProjectController;
+use App\Controllers\TrackerController;
+use App\Controllers\FeatureRequestController;
+use App\Controllers\UserController;
+use App\Controllers\AdminController;
 use App\Middleware\JwtAuthMiddleware;
 use App\Models\Project;
 
@@ -67,10 +71,28 @@ $app->group('/api', function (RouteCollectorProxy $group) {
     // Public Projects Routes (No Auth Required)
     $group->get('/projects', [ProjectController::class, 'getProjects']);
     $group->get('/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
-    // Proxy auth endpoints to central Auth app
-    $group->post('/auth/login', [\App\Controllers\AuthProxyController::class, 'login']);
-    $group->post('/auth/register', [\App\Controllers\AuthProxyController::class, 'register']);
-    $group->get('/auth/user', [\App\Controllers\AuthProxyController::class, 'getCurrentUser']);
+    
+    // Public Feature Request Routes (No Auth Required for viewing)
+    $group->get('/features', [FeatureRequestController::class, 'getAllFeatures']);
+    $group->get('/features/stats', [FeatureRequestController::class, 'getStats']);
+    $group->get('/features/{id}', [FeatureRequestController::class, 'getFeatureById']);
+    
+    // Public Tracker Routes (Legacy - No Auth Required)
+    $group->get('/tracker/stats', [TrackerController::class, 'getStats']);
+    $group->get('/tracker/feature-requests', [TrackerController::class, 'getFeatureRequests']);
+    $group->get('/tracker/project-suggestions', [TrackerController::class, 'getProjectSuggestions']);
+    $group->get('/tracker/activity', [TrackerController::class, 'getActivityFeed']);
+    $group->post('/tracker/feature-requests', [TrackerController::class, 'createFeatureRequest']);
+    $group->post('/tracker/project-suggestions', [TrackerController::class, 'createProjectSuggestion']);
+    $group->post('/tracker/vote', [TrackerController::class, 'vote']);
+    // Local auth endpoints
+    $group->post('/auth/login', [UserController::class, 'login']);
+    $group->post('/auth/register', [UserController::class, 'register']);
+    
+    // Proxy auth endpoints to central Auth app (backup)
+    $group->post('/auth/proxy/login', [\App\Controllers\AuthProxyController::class, 'login']);
+    $group->post('/auth/proxy/register', [\App\Controllers\AuthProxyController::class, 'register']);
+    $group->get('/auth/proxy/user', [\App\Controllers\AuthProxyController::class, 'getCurrentUser']);
 
     // Temporary (UNSECURED) admin endpoint to initialize the database for production
     // WARNING: This endpoint is intentionally unprotected. Remove it after use.
@@ -91,7 +113,30 @@ $app->group('/api', function (RouteCollectorProxy $group) {
     $group->group('', function (RouteCollectorProxy $protected) {
         // Protected project management routes
         $protected->post('/projects', [ProjectController::class, 'createProject']);
-    $protected->put('/projects/{id}', [ProjectController::class, 'updateProject']);
-    $protected->delete('/projects/{id}', [ProjectController::class, 'deleteProject']);
+        $protected->put('/projects/{id}', [ProjectController::class, 'updateProject']);
+        $protected->delete('/projects/{id}', [ProjectController::class, 'deleteProject']);
+        
+        // Protected feature request routes
+        $protected->post('/features', [FeatureRequestController::class, 'createFeature']);
+        $protected->post('/features/vote', [FeatureRequestController::class, 'voteOnFeature']);
+        $protected->get('/users/{user_id}/features', [FeatureRequestController::class, 'getUserFeatures']);
+        $protected->get('/users/{user_id}/votes', [FeatureRequestController::class, 'getUserVotes']);
+        
+        // User routes
+        $protected->get('/user/profile', [UserController::class, 'getProfile']);
+        $protected->put('/user/profile', [UserController::class, 'updateProfile']);
+        $protected->post('/user/claim-daily-eggs', [UserController::class, 'claimDailyEggs']);
+        $protected->get('/user/transactions', [UserController::class, 'getTransactions']);
+        $protected->get('/user/dashboard', [UserController::class, 'getDashboard']);
+        
+        // Admin routes
+        $protected->get('/admin/features/pending', [AdminController::class, 'getPendingFeatures']);
+        $protected->post('/admin/features/{id}/approve', [AdminController::class, 'approveFeature']);
+        $protected->post('/admin/features/{id}/reject', [AdminController::class, 'rejectFeature']);
+        $protected->put('/admin/features/{id}/status', [AdminController::class, 'updateFeatureStatus']);
+        $protected->post('/admin/features/bulk-approve', [AdminController::class, 'bulkApproveFeatures']);
+        $protected->post('/admin/users/{id}/eggs', [AdminController::class, 'adjustUserEggs']);
+        $protected->get('/admin/stats', [AdminController::class, 'getAdminStats']);
+        $protected->get('/admin/users', [AdminController::class, 'getUserManagement']);
     })->add(JwtAuthMiddleware::class);
 });

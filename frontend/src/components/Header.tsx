@@ -2,34 +2,40 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { ProjectsData } from '../types/projects';
 import { GitHubIcon } from './GitHubIcon';
-import { useAuth } from '../stores/authStore';
+import { useFeatureRequestUser, useIsFeatureAuthenticated } from '../stores/featureRequestStore';
 
 interface HeaderProps {
   data: ProjectsData;
 }
 
 export const Header: React.FC<HeaderProps> = ({ data }) => {
-  const { user, isAuthenticated } = useAuth();
-  // Some auth responses include a 'membershipType' field, others return a 'roles' array.
-  const hasAdminRole =
-    isAuthenticated &&
-    (user?.membershipType === 'admin' ||
-      (Array.isArray((user as any)?.roles) &&
-        (user as any).roles.includes('admin')));
-  const isAdmin = !!hasAdminRole;
+  const user = useFeatureRequestUser();
+  const isAuthenticated = useIsFeatureAuthenticated();
+  // Check if user is admin using the feature request user model
+  const isAdmin = isAuthenticated && user?.role === 'admin';
 
   return (
     <header className="text-center mb-12">
-      {/* Top login bar: admin-only controls live here */}
-      <div className="flex justify-end gap-2 mb-2">
-        {isAdmin && (
+      {/* Top navigation bar */}
+      <div className="flex justify-between items-center mb-2">
+        <nav className="flex gap-2">
           <Link 
-            to="/projects" 
+            to="/tracker" 
             className="px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition-colors"
           >
-            Manage Projects
+            Tracker
           </Link>
-        )}
+        </nav>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <Link 
+              to="/projects" 
+              className="px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition-colors"
+            >
+              Manage Projects
+            </Link>
+          )}
+        </div>
       </div>
       <h1 className="text-4xl font-bold mb-4 text-blue-600">Welcome to WebHatchery.au</h1>
       <p className="text-lg italic text-teal-500 mb-4">Where ideas hatch into websites.</p>
