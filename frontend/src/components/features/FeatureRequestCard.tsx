@@ -2,23 +2,31 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FeatureRequest } from '../../types/featureRequest';
 import { VoteModal } from './VoteModal';
-import { useIsFeatureAuthenticated } from '../../stores/featureRequestStore';
+import { useIsFeatureAuthenticated, useIsFeatureAdmin } from '../../stores/featureRequestStore';
 
 interface FeatureRequestCardProps {
   feature: FeatureRequest;
   onVote?: (featureId: number, eggs: number) => void;
+  onApprove?: (featureId: number, notes?: string) => void;
+  onReject?: (featureId: number, notes?: string) => void;
   showProject?: boolean;
   compact?: boolean;
 }
 
 export const FeatureRequestCard = ({ 
   feature, 
-  onVote, 
+  onVote,
+  onApprove,
+  onReject, 
   showProject = true, 
   compact = false 
 }: FeatureRequestCardProps) => {
   const [showVoteModal, setShowVoteModal] = useState(false);
+  const [showApprovalNote, setShowApprovalNote] = useState(false);
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const isAuthenticated = useIsFeatureAuthenticated();
+  const isAdmin = useIsFeatureAdmin();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -41,6 +49,26 @@ export const FeatureRequestCard = ({
   };
 
   const canVote = feature.status === 'approved' && isAuthenticated;
+  const canModerate = isAdmin && feature.status === 'pending';
+
+  const handleAdminAction = (action: 'approve' | 'reject') => {
+    setActionType(action);
+    setShowApprovalNote(true);
+  };
+
+  const submitAdminAction = () => {
+    if (!actionType) return;
+    
+    if (actionType === 'approve' && onApprove) {
+      onApprove(feature.id, approvalNotes || undefined);
+    } else if (actionType === 'reject' && onReject) {
+      onReject(feature.id, approvalNotes || undefined);
+    }
+    
+    setShowApprovalNote(false);
+    setApprovalNotes('');
+    setActionType(null);
+  };
 
   return (
     <>
@@ -115,6 +143,23 @@ export const FeatureRequestCard = ({
               </button>
             )}
             
+            {canModerate && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleAdminAction('approve')}
+                  className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleAdminAction('reject')}
+                  className="px-3 py-1 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+            
             <span className="text-xs text-gray-400">
               {new Date(feature.created_at).toLocaleDateString()}
             </span>
@@ -163,6 +208,55 @@ export const FeatureRequestCard = ({
             setShowVoteModal(false);
           }}
         />
+      )}
+
+      {showApprovalNote && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">
+              {actionType === 'approve' ? 'Approve' : 'Reject'} Feature Request
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {actionType === 'approve' 
+                ? 'This will approve the feature request and allow users to vote on it.'
+                : 'This will reject the feature request and prevent further voting.'}
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notes (optional)
+              </label>
+              <textarea
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                rows={3}
+                placeholder="Add any notes about this decision..."
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowApprovalNote(false);
+                  setApprovalNotes('');
+                  setActionType(null);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitAdminAction}
+                className={`px-4 py-2 text-white rounded-md ${
+                  actionType === 'approve'
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {actionType === 'approve' ? 'Approve' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

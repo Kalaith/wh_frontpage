@@ -51,10 +51,6 @@ class User extends Model
         return $this->hasMany(EggTransaction::class, 'user_id');
     }
 
-    public function preferences()
-    {
-        return $this->hasOne(UserPreference::class, 'user_id');
-    }
 
     // Methods
     public function isAdmin()

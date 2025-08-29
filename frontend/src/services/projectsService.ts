@@ -1,5 +1,6 @@
 import type { ProjectsData } from '../types/projects';
 import api from '../api/api';
+import { getAllProjects } from '../utils/projectUtils';
 
 export class ProjectsService {
   private static instance: ProjectsService;
@@ -75,10 +76,6 @@ export class ProjectsService {
 
   // Utility to flatten ProjectsData into a simple Project[] list
   public static flattenProjectsData(data: ProjectsData): Array<any> {
-    const flat: Array<any> = [];
-    Object.values(data.groups || {}).forEach((grp: any) => {
-      grp.projects.forEach((p: any) => flat.push(p));
-    });
-    return flat;
+    return getAllProjects(data);
   }
 }

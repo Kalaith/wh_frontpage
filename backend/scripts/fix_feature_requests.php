@@ -34,7 +34,7 @@ try {
     if (!$adminUser) {
         $adminId = Capsule::table('users')->insertGetId([
             'username' => 'admin',
-            'email' => 'admin@webhatchery.com',
+            'email' => 'admin@webhatchery.au',
             'password_hash' => password_hash('admin123', PASSWORD_DEFAULT),
             'display_name' => 'Admin User',
             'role' => 'admin',

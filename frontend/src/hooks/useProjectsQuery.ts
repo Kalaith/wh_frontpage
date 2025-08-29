@@ -26,6 +26,19 @@ export const useProjects = () => {
   });
 };
 
+export const useHomepageProjects = () => {
+  return useQuery({
+    queryKey: [...projectKeys.all, 'homepage'],
+    queryFn: async () => {
+      const response = await api.getHomepageProjects();
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Failed to fetch homepage projects');
+      }
+      return response.data!;
+    },
+  });
+};
+
 export const useProjectsByGroup = (group: string) => {
   return useQuery({
     queryKey: projectKeys.byGroup(group),

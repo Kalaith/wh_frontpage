@@ -5,6 +5,7 @@ import RequestCard from '../components/tracker/RequestCard';
 import ActivityFeed from '../components/tracker/ActivityFeed';
 import { useProjects } from '../hooks/useProjectsQuery';
 import { useTrackerStats, useFeatureRequests, useActivityFeed } from '../hooks/useTrackerQuery';
+import { getAllProjects } from '../utils/projectUtils';
 
 const TrackerDashboard: React.FC = () => {
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
@@ -182,7 +183,7 @@ const TrackerDashboard: React.FC = () => {
                 >
                   All Projects
                 </button>
-                {projectsData && Object.values(projectsData.groups || {}).flatMap(group => group.projects).map((project) => (
+                {getAllProjects(projectsData).map((project) => (
                   <button
                     key={project.id}
                     type="button"

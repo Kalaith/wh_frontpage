@@ -11,8 +11,6 @@ export const QuickLinks: React.FC<QuickLinksProps> = ({ data }) => {
     <nav className="mb-12">
       <div className="flex flex-wrap justify-center gap-8 mb-2">
         {Object.entries(data.groups).map(([groupId, group]) => {
-          if (group.hidden) return null;
-
           return (
             <div key={groupId} className="text-center mb-8">
               <h3 className="inline-block px-3 py-1 mb-4 text-sm font-bold text-blue-600 uppercase tracking-wide bg-gradient-to-r from-blue-50 to-teal-25 rounded-full shadow-sm">

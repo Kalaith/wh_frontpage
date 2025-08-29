@@ -23,7 +23,7 @@ async function apiRequest<T>(
   endpoint: string, 
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem('feature_auth_token');
+  const token = localStorage.getItem('token');
   
   const config: RequestInit = {
     headers: {
@@ -295,6 +295,13 @@ export const featureRequestApi = {
     
     const response = await apiRequest<User[]>(`/admin/users?${queryParams}`);
     return response.data || [];
+  },
+
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    const response = await apiRequest<{ success: boolean; message: string }>('/user/delete-account', {
+      method: 'DELETE',
+    });
+    return response.data!;
   },
 };
 

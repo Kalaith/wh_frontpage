@@ -62,12 +62,14 @@ error_log("Path Info: " . ($_SERVER['PATH_INFO'] ?? 'not set'));
 error_log("APP_BASE_PATH: " . ($_ENV['APP_BASE_PATH'] ?? 'not set'));
 
 // Set base path for subdirectory deployment
-if (isset($_ENV['APP_BASE_PATH']) && !empty($_ENV['APP_BASE_PATH'])) {
-    $app->setBasePath($_ENV['APP_BASE_PATH']);
-    error_log("Slim base path set to: " . $_ENV['APP_BASE_PATH']);
-} else {
-    error_log("No base path set");
-}
+// Commented out to allow direct access to /api routes without /frontpage prefix
+// if (isset($_ENV['APP_BASE_PATH']) && !empty($_ENV['APP_BASE_PATH'])) {
+//     $app->setBasePath($_ENV['APP_BASE_PATH']);
+//     error_log("Slim base path set to: " . $_ENV['APP_BASE_PATH']);
+// } else {
+//     error_log("No base path set");
+// }
+error_log("Base path disabled - direct API access enabled");
 
 // Add middleware
 $app->add(new CorsMiddleware());

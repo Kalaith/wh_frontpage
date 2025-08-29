@@ -46,7 +46,7 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
           const { user, token } = response;
           
           // Store token in localStorage for API requests
-          localStorage.setItem('feature_auth_token', token);
+          localStorage.setItem('token', token);
           
           set({
             user,
@@ -90,7 +90,7 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
       },
 
       logout: () => {
-        localStorage.removeItem('feature_auth_token');
+        localStorage.removeItem('token');
         set({
           user: null,
           token: null,
@@ -182,7 +182,7 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
       onRehydrateStorage: () => (state) => {
         // Restore token to localStorage on app load
         if (state?.token) {
-          localStorage.setItem('feature_auth_token', state.token);
+          localStorage.setItem('token', state.token);
         }
       },
     }
@@ -192,6 +192,7 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
 // Helper hooks with proper memoization
 export const useFeatureRequestUser = () => useFeatureRequestStore((state) => state.user);
 export const useIsFeatureAuthenticated = () => useFeatureRequestStore((state) => state.isAuthenticated);
+export const useIsFeatureAdmin = () => useFeatureRequestStore((state) => state.user?.role === 'admin');
 
 // Individual action hooks to prevent re-render issues
 export const useFeatureLogin = () => useFeatureRequestStore((state) => state.login);

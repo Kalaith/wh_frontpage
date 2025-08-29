@@ -80,8 +80,6 @@ export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
     // Store token for future requests
     if (data.data.token) {
       localStorage.setItem('token', data.data.token);
-      // Also store it for the feature request API
-      localStorage.setItem('auth_token', data.data.token);
     }
 
     // Convert our User format to AuthUser format for login response
@@ -203,7 +201,6 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
         if (response.status === 401) {
           // Token is invalid, clear it
           localStorage.removeItem('token');
-          localStorage.removeItem('auth_token');
           authDebug('[AuthAPI] Token invalid, cleared storage');
           return null;
         }
@@ -232,7 +229,6 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     } catch (error) {
       authDebug('[AuthAPI] Token validation failed:', error);
       localStorage.removeItem('token');
-      localStorage.removeItem('auth_token');
       return null;
     }
 
@@ -249,7 +245,6 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
  */
 export const logout = (): void => {
   localStorage.removeItem('token');
-  localStorage.removeItem('auth_token');
 };
 
 /**

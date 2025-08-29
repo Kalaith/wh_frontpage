@@ -13,8 +13,6 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({ data }) => {
         Project Portfolio
       </h2>
       {Object.entries(data.groups).map(([groupId, group]) => {
-        if (group.hidden) return null;
-
         return (
           <section key={groupId} className="mb-16" id={groupId}>
             <h3 className="text-xl font-semibold text-center text-blue-600 mb-8 pb-2 border-b-2 border-teal-500">

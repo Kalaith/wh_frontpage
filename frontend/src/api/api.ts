@@ -30,6 +30,7 @@ class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
 
     const token = localStorage.getItem('token');
+    
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -101,6 +102,10 @@ class ApiClient {
   // Projects API
   async getProjects(): Promise<ApiResponse<ProjectsData>> {
     return this.request<ProjectsData>('/projects');
+  }
+  
+  async getHomepageProjects(): Promise<ApiResponse<ProjectsData>> {
+    return this.request<ProjectsData>('/projects/homepage');
   }
 
   async getProjectsByGroup(group: string): Promise<ApiResponse<Project[]>> {

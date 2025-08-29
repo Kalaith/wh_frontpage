@@ -58,6 +58,51 @@ class ProjectController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
+
+    /**
+     * Get projects for homepage (only those with show_on_homepage = true)
+     */
+    public function getHomepageProjects(Request $request, Response $response): Response
+    {
+        try {
+            // Determine if the requesting user is an admin
+            $userRole = $request->getAttribute('user_role', 'user');
+            $isAdmin = strtolower((string)$userRole) === 'admin';
+
+            $groupedProjects = \App\Models\Project::getHomepageProjects($isAdmin);
+
+            // Create flat arrays for frontend compatibility
+            $allProjects = [];
+            $groupedArray = [];
+            
+            foreach ($groupedProjects as $groupName => $group) {
+                // Add projects to flat array
+                foreach ($group['projects'] as $project) {
+                    $allProjects[] = $project;
+                }
+                
+                // Create grouped array (just projects, not the group wrapper)
+                $groupedArray[$groupName] = $group['projects'];
+            }
+
+            $data = [
+                'version' => '2.0.0',
+                'description' => 'WebHatchery Homepage Projects',
+                'groups' => $groupedProjects,
+                'projects' => $allProjects,
+                'grouped' => $groupedArray
+            ];
+
+            $payload = json_encode(['success' => true, 'data' => $data]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to fetch homepage projects', 'details' => $e->getMessage()]]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
     
     /**
      * Get projects by group

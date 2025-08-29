@@ -81,6 +81,7 @@ export const AppHeader: React.FC = () => {
               <option value="/">Home</option>
               <option value="/tracker">Tracker</option>
               <option value="/features">🥚 Feature Requests</option>
+              {isAuthenticated && <option value="/profile">Profile</option>}
               {isAdmin && <option value="/projects">Manage Projects</option>}
             </select>
           </div>

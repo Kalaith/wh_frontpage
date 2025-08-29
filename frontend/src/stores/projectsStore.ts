@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import type { ProjectsData } from '../types/projects';
 import api from '../api/api';
+import { getAllProjects } from '../utils/projectUtils';
 
 // Projects error interface
 interface ProjectsError {
@@ -216,15 +217,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   // Utilities
   getFlattenedProjects: () => {
     const { projectsData } = get();
-    if (!projectsData) return [];
-
-    const flat: Array<any> = [];
-    Object.values(projectsData.groups || {}).forEach((grp: any) => {
-      if (grp.projects) {
-        grp.projects.forEach((p: any) => flat.push(p));
-      }
-    });
-    return flat;
+    return getAllProjects(projectsData);
   },
 }));
 

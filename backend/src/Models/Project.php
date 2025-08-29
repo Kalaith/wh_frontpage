@@ -18,11 +18,11 @@ class Project extends Model
         'group_name',
         'repository_type',
         'repository_url',
-        'hidden'
+        'show_on_homepage'
     ];
     
     protected $casts = [
-        'hidden' => 'boolean',
+        'show_on_homepage' => 'boolean',
     ];
     
     public $timestamps = true;
@@ -32,7 +32,7 @@ class Project extends Model
      */
     public static function getGroupedProjects(bool $includePrivate = false)
     {
-        $projects = self::where('hidden', false)->get();
+        $projects = self::all();
         
         $grouped = [];
         foreach ($projects as $project) {
@@ -58,6 +58,62 @@ class Project extends Model
                 'stage' => $project->stage,
                 'status' => $project->status,
                 'version' => $project->version,
+                'show_on_homepage' => $project->show_on_homepage,
+            ];
+            
+            if ($project->path) {
+                $projectData['path'] = $project->path;
+            }
+            
+            if ($project->repository_url) {
+                $repo = [
+                    'url' => $project->repository_url
+                ];
+                if ($project->repository_type) {
+                    $repo['type'] = $project->repository_type;
+                }
+                $projectData['repository'] = $repo;
+            }
+            
+            $grouped[$groupName]['projects'][] = $projectData;
+        }
+        
+        return $grouped;
+    }
+
+    /**
+     * Get projects that should be shown on the homepage
+     */
+    public static function getHomepageProjects(bool $includePrivate = false)
+    {
+        $projects = self::where('show_on_homepage', true)
+                       ->get();
+        
+        $grouped = [];
+        foreach ($projects as $project) {
+            $groupName = $project->group_name;
+
+            // Skip private group when caller did not request private projects
+            if (!$includePrivate && strtolower($groupName) === 'private') {
+                continue;
+            }
+            
+            if (!isset($grouped[$groupName])) {
+                $grouped[$groupName] = [
+                    'name' => ucwords(str_replace('_', ' ', $groupName)),
+                    'projects' => []
+                ];
+            }
+            
+            $projectData = [
+                'id' => $project->id,
+                'group_name' => $groupName,
+                'title' => $project->title,
+                'description' => $project->description,
+                'stage' => $project->stage,
+                'status' => $project->status,
+                'version' => $project->version,
+                'show_on_homepage' => $project->show_on_homepage,
             ];
             
             if ($project->path) {
@@ -99,12 +155,12 @@ class Project extends Model
                 $table->string('group_name')->default('other');
                 $table->string('repository_type')->nullable();
                 $table->text('repository_url')->nullable();
-                $table->boolean('hidden')->default(false);
+                $table->boolean('show_on_homepage')->default(true);
                 $table->timestamps();
 
                 // Indexes
                 $table->index('group_name');
-                $table->index('hidden');
+                $table->index('show_on_homepage');
             });
 
             $msg = "✅ Created 'projects' table\n";

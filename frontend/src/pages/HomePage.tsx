@@ -3,10 +3,10 @@ import { QuickLinks } from '../components/QuickLinks';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
-import { useProjects } from '../hooks/useProjectsQuery';
+import { useHomepageProjects } from '../hooks/useProjectsQuery';
 
 const HomePage: React.FC = () => {
-  const { data: projectsData, isLoading: loading, error } = useProjects();
+  const { data: projectsData, isLoading: loading, error } = useHomepageProjects();
 
   // Inject Ko-fi overlay widget
   useEffect(() => {

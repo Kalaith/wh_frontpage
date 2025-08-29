@@ -31,10 +31,10 @@ class JwtAuthMiddleware implements MiddlewareInterface
 
             // Add user information to request attributes
             $request = $request
-                ->withAttribute('user_id', $decoded->sub)
+                ->withAttribute('user_id', $decoded->user_id)
                 ->withAttribute('user_email', $decoded->email ?? '')
-                ->withAttribute('user_role', isset($decoded->roles) && !empty($decoded->roles) ? $decoded->roles[0] : 'user')
-                ->withAttribute('user_roles', $decoded->roles ?? []);
+                ->withAttribute('user_role', $decoded->role ?? 'user')
+                ->withAttribute('user_roles', [$decoded->role ?? 'user']);
 
             return $handler->handle($request);
             

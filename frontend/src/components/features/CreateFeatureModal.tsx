@@ -17,11 +17,6 @@ const FEATURE_TYPES = [
   { value: 'performance', label: 'Performance', icon: '🚀' },
 ];
 
-const PRIORITY_LEVELS = [
-  { value: 'low', label: 'Low', color: 'bg-green-500' },
-  { value: 'medium', label: 'Medium', color: 'bg-yellow-500' },
-  { value: 'high', label: 'High', color: 'bg-red-500' },
-];
 
 export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateFeatureModalProps) => {
   const user = useFeatureRequestUser();
@@ -31,10 +26,6 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
   const [formData, setFormData] = useState<CreateFeatureRequest>({
     title: '',
     description: '',
-    category: '',
-    use_case: '',
-    expected_benefits: '',
-    priority_level: 'medium',
     feature_type: 'enhancement',
     project_id: undefined,
     tags: [],
@@ -59,6 +50,16 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
 
     if (!formData.title.trim() || !formData.description.trim()) {
       setError('Title and description are required');
+      return;
+    }
+
+    if (projects.length === 0) {
+      setError('No projects available. Contact an admin to create projects first.');
+      return;
+    }
+
+    if (!formData.project_id) {
+      setError('Please select a project for this feature request');
       return;
     }
 
@@ -177,11 +178,11 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
               </div>
 
               {/* Project Selection */}
-              {projects.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Project <span className="text-red-500">*</span>
+                </label>
+                {projects.length > 0 ? (
                   <select
                     value={formData.project_id || ''}
                     onChange={(e) => setFormData(prev => ({ 
@@ -189,58 +190,41 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                       project_id: e.target.value ? parseInt(e.target.value) : undefined 
                     }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
                   >
-                    <option value="">Select a project (optional)</option>
+                    <option value="">Select a project</option>
                     {projects.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.title}
                       </option>
                     ))}
                   </select>
-                </div>
-              )}
+                ) : (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 text-sm">
+                    No projects available. Contact an admin to create projects.
+                  </div>
+                )}
+              </div>
 
-              {/* Type and Priority */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Feature Type
-                  </label>
-                  <select
-                    value={formData.feature_type}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      feature_type: e.target.value as any 
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {FEATURE_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.icon} {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority Level
-                  </label>
-                  <select
-                    value={formData.priority_level}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      priority_level: e.target.value as any 
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {PRIORITY_LEVELS.map((priority) => (
-                      <option key={priority.value} value={priority.value}>
-                        {priority.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Feature Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Feature Type
+                </label>
+                <select
+                  value={formData.feature_type}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    feature_type: e.target.value as any 
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {FEATURE_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.icon} {type.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Description */}
@@ -258,47 +242,6 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                 />
               </div>
 
-              {/* Use Case */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Use Case
-                </label>
-                <textarea
-                  value={formData.use_case}
-                  onChange={(e) => setFormData(prev => ({ ...prev, use_case: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="How will this feature be used? What problem does it solve?"
-                />
-              </div>
-
-              {/* Expected Benefits */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expected Benefits
-                </label>
-                <textarea
-                  value={formData.expected_benefits}
-                  onChange={(e) => setFormData(prev => ({ ...prev, expected_benefits: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="What benefits will this feature provide to users or the project?"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., UI/UX, Performance, Integration, etc."
-                />
-              </div>
 
               {/* Tags */}
               <div>

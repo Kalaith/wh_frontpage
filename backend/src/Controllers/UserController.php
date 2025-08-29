@@ -18,7 +18,7 @@ class UserController
         try {
             $userId = $this->getUserIdFromToken($request);
             
-            $user = User::with('preferences')->find($userId);
+            $user = User::find($userId);
             if (!$user) {
                 $payload = json_encode([
                     'success' => false,
@@ -454,6 +454,49 @@ class UserController
             $payload = json_encode([
                 'success' => false,
                 'message' => 'Login failed',
+                'error' => $e->getMessage()
+            ]);
+
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    public function deleteAccount(Request $request, Response $response): Response
+    {
+        try {
+            $userId = $this->getUserIdFromToken($request);
+            
+            $user = User::find($userId);
+            if (!$user) {
+                $payload = json_encode([
+                    'success' => false,
+                    'message' => 'User not found'
+                ]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+            }
+
+            // Delete related data first (due to foreign key constraints)
+            FeatureRequest::where('user_id', $userId)->delete();
+            FeatureVote::where('user_id', $userId)->delete();
+            EggTransaction::where('user_id', $userId)->delete();
+            
+            // Delete the user
+            $user->delete();
+
+            $payload = json_encode([
+                'success' => true,
+                'message' => 'Account deleted successfully'
+            ]);
+
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            $payload = json_encode([
+                'success' => false,
+                'message' => 'Failed to delete account',
                 'error' => $e->getMessage()
             ]);
 

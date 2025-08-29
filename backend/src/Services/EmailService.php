@@ -18,7 +18,7 @@ class EmailService
     public function __construct()
     {
         // Load email configuration from environment
-        $this->fromEmail = $_ENV['EMAIL_FROM'] ?? 'noreply@webhatchery.com';
+        $this->fromEmail = $_ENV['EMAIL_FROM'] ?? 'noreply@webhatchery.au';
         $this->fromName = $_ENV['EMAIL_FROM_NAME'] ?? 'WebHatchery';
         $this->smtpHost = $_ENV['SMTP_HOST'] ?? '';
         $this->smtpPort = $_ENV['SMTP_PORT'] ?? 587;

@@ -70,6 +70,7 @@ $app->group('/api', function (RouteCollectorProxy $group) {
 
     // Public Projects Routes (No Auth Required)
     $group->get('/projects', [ProjectController::class, 'getProjects']);
+    $group->get('/projects/homepage', [ProjectController::class, 'getHomepageProjects']);
     $group->get('/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
     
     // Public Feature Request Routes (No Auth Required for viewing)
@@ -128,6 +129,7 @@ $app->group('/api', function (RouteCollectorProxy $group) {
         $protected->post('/user/claim-daily-eggs', [UserController::class, 'claimDailyEggs']);
         $protected->get('/user/transactions', [UserController::class, 'getTransactions']);
         $protected->get('/user/dashboard', [UserController::class, 'getDashboard']);
+        $protected->delete('/user/delete-account', [UserController::class, 'deleteAccount']);
         
         // Admin routes
         $protected->get('/admin/features/pending', [AdminController::class, 'getPendingFeatures']);

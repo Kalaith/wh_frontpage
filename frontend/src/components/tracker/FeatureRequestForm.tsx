@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useProjects } from '../../hooks/useProjectsQuery';
+import { getAllProjects } from '../../utils/projectUtils';
 
 interface FeatureRequestData {
   title: string;
@@ -73,7 +74,7 @@ const FeatureRequestForm: React.FC<FeatureRequestFormProps> = ({
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Select a project (optional)</option>
-          {projectsData?.projects?.map((project) => (
+          {getAllProjects(projectsData).map((project) => (
             <option key={project.id} value={project.id}>
               {project.title} {project.group_name && `(${project.group_name})`}
             </option>

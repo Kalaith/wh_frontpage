@@ -7,6 +7,7 @@ import TrackerDashboard from './pages/TrackerDashboard';
 import FeatureRequestsPage from './pages/FeatureRequestsPage';
 import ProjectSuggestionsPage from './pages/ProjectSuggestionsPage';
 import { FeatureRequestDashboard } from './pages/FeatureRequestDashboard';
+import { UserProfile } from './pages/UserProfile';
 import './styles/global.css'; // Ensure global styles are imported
 
 const App: React.FC = () => {
@@ -25,6 +26,7 @@ const App: React.FC = () => {
             <Route path="/tracker/requests" element={<FeatureRequestsPage />} />
             <Route path="/tracker/suggestions" element={<ProjectSuggestionsPage />} />
             <Route path="/features" element={<FeatureRequestDashboard />} />
+            <Route path="/profile" element={<UserProfile />} />
           </Routes>
         </main>
       </div>

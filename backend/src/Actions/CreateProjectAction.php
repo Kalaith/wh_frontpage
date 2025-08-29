@@ -18,7 +18,7 @@ class CreateProjectAction
             'group_name' => $data['group_name'] ?? 'other',
             'repository_type' => $data['repository']['type'] ?? null,
             'repository_url' => $data['repository']['url'] ?? null,
-            'hidden' => $data['hidden'] ?? false
+            'show_on_homepage' => $data['show_on_homepage'] ?? true
         ]);
 
         $created = [

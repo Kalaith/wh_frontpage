@@ -4,6 +4,7 @@ import RequestCard from '../components/tracker/RequestCard';
 import FeatureRequestForm from '../components/tracker/FeatureRequestForm';
 import { useFeatureRequests, useCreateFeatureRequest } from '../hooks/useTrackerQuery';
 import { useProjects } from '../hooks/useProjectsQuery';
+import { getAllProjects } from '../utils/projectUtils';
 
 const FeatureRequestsPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
@@ -144,7 +145,7 @@ const FeatureRequestsPage: React.FC = () => {
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Projects</option>
-          {projectsData?.projects?.map((project) => (
+          {getAllProjects(projectsData).map((project) => (
             <option key={project.id} value={project.id}>
               {project.title}
             </option>

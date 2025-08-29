@@ -18,7 +18,6 @@ class GetProjectsByGroupAction
         }
 
         $projects = Project::where('group_name', $groupName)
-            ->where('hidden', false)
             ->get();
 
         return $projects->map(function ($project) use ($groupName) {

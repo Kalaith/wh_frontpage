@@ -23,7 +23,7 @@ export interface Project {
   status: string;
   version: string;
   group_name?: string;
-  hidden?: boolean;
+  show_on_homepage?: boolean;
   repository?: ProjectRepository;
   deployment?: ProjectDeployment;
 }
@@ -31,7 +31,6 @@ export interface Project {
 export interface ProjectGroup {
   name: string;
   projects: Project[];
-  hidden?: boolean;
 }
 
 export interface ProjectsData {

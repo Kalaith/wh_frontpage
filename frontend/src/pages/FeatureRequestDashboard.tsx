@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FeatureRequestCard } from '../components/features/FeatureRequestCard';
 import { CreateFeatureModal } from '../components/features/CreateFeatureModal';
-import { useFeatureRequestUser, useIsFeatureAuthenticated, useFeatureRefreshProfile } from '../stores/featureRequestStore';
+import { useFeatureRequestUser, useIsFeatureAuthenticated, useFeatureRefreshProfile, useIsFeatureAdmin } from '../stores/featureRequestStore';
 import { featureRequestApi } from '../api/featureRequestApi';
+import api from '../api/api';
 import type { FeatureRequest, CreateFeatureRequest } from '../types/featureRequest';
+import type { Project } from '../types/projects';
 
 export const FeatureRequestDashboard = () => {
   const [features, setFeatures] = useState<FeatureRequest[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,10 +19,20 @@ export const FeatureRequestDashboard = () => {
   const isAuthenticated = useIsFeatureAuthenticated();
   const user = useFeatureRequestUser();
   const refreshProfile = useFeatureRefreshProfile();
+  const isAdmin = useIsFeatureAdmin();
 
   useEffect(() => {
+    // Reset filter if non-admin user somehow has 'pending' selected
+    if (filter === 'pending' && !isAdmin) {
+      setFilter('approved');
+      return;
+    }
     loadFeatures();
-  }, [filter]);
+  }, [filter, isAdmin]);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   const loadFeatures = async () => {
     try {
@@ -43,6 +56,18 @@ export const FeatureRequestDashboard = () => {
       console.error('Failed to load features:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      const response = await api.getProjects();
+      if (response.success && response.data) {
+        setProjects(response.data.projects || []);
+      }
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+      // Don't show error for projects, it's optional
     }
   };
 
@@ -73,6 +98,26 @@ export const FeatureRequestDashboard = () => {
     } catch (error: any) {
       console.error('Failed to vote:', error);
       throw new Error(error.message || 'Failed to cast vote');
+    }
+  };
+
+  const handleApprove = async (featureId: number, notes?: string) => {
+    try {
+      await featureRequestApi.approveFeature(featureId, notes);
+      await loadFeatures(); // Reload to show updated status
+    } catch (error: any) {
+      console.error('Failed to approve feature:', error);
+      alert('Failed to approve feature: ' + (error.message || 'Unknown error'));
+    }
+  };
+
+  const handleReject = async (featureId: number, notes?: string) => {
+    try {
+      await featureRequestApi.rejectFeature(featureId, notes);
+      await loadFeatures(); // Reload to show updated status
+    } catch (error: any) {
+      console.error('Failed to reject feature:', error);
+      alert('Failed to reject feature: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -115,7 +160,7 @@ export const FeatureRequestDashboard = () => {
         {/* Filters */}
         <div className="flex items-center gap-4 mb-6">
           <span className="text-sm font-medium text-gray-700">Filter:</span>
-          {(['all', 'approved', 'pending'] as const).map((filterOption) => (
+          {(['all', 'approved'] as const).map((filterOption) => (
             <button
               key={filterOption}
               onClick={() => setFilter(filterOption)}
@@ -128,6 +173,18 @@ export const FeatureRequestDashboard = () => {
               {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
             </button>
           ))}
+          {isAdmin && (
+            <button
+              onClick={() => setFilter('pending')}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                filter === 'pending'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Pending
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -171,6 +228,8 @@ export const FeatureRequestDashboard = () => {
                 <FeatureRequestCard
                   feature={feature}
                   onVote={handleVote}
+                  onApprove={isAdmin ? handleApprove : undefined}
+                  onReject={isAdmin ? handleReject : undefined}
                   showProject={true}
                   compact={false}
                 />
@@ -184,6 +243,7 @@ export const FeatureRequestDashboard = () => {
           <CreateFeatureModal
             onClose={() => setShowCreateModal(false)}
             onCreate={handleCreateFeature}
+            projects={projects.map(p => ({ id: p.id!, title: p.title }))}
           />
         )}
     </div>

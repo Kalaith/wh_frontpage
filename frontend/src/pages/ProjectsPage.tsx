@@ -4,6 +4,7 @@ import type { Project } from '../types/projects';
 import ProjectForm from '../components/ProjectForm';
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '../hooks/useProjectsQuery';
 import { useFeatureRequests } from '../hooks/useTrackerQuery';
+import { getProjectCount, getGroupedProjects } from '../utils/projectUtils';
 
 const ProjectsPage: React.FC = () => {
   const { data: projectsData, isLoading: loading, error } = useProjects();
@@ -12,8 +13,8 @@ const ProjectsPage: React.FC = () => {
   const updateProjectMutation = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
   
-  const projects = projectsData?.projects || [];
-  const grouped = projectsData?.grouped || {};
+  const projectCount = getProjectCount(projectsData);
+  const grouped = getGroupedProjects(projectsData);
   
   // Create a map of project ID to feature request counts
   const featureRequestCounts = React.useMemo(() => {
@@ -102,7 +103,7 @@ const ProjectsPage: React.FC = () => {
 
       <section className="mb-6">
         <h3 className="text-lg font-medium mb-3">
-          Existing Projects ({projects.length})
+          Existing Projects ({projectCount})
         </h3>
 
         {Object.keys(grouped)
@@ -125,6 +126,11 @@ const ProjectsPage: React.FC = () => {
                           <span className="text-sm text-gray-500">
                             {p.group_name}
                           </span>
+                          {!p.show_on_homepage && (
+                            <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-800 rounded border border-orange-200">
+                              Not on Homepage
+                            </span>
+                          )}
                         </div>
                         {p.description && (
                           <p className="text-sm text-gray-600 mb-2">

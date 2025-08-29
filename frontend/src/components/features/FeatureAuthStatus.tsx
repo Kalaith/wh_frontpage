@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useFeatureRequestUser, useIsFeatureAuthenticated, useFeatureLogout, useFeatureClaimDailyEggs } from '../../stores/featureRequestStore';
 import { AuthModal } from './AuthModal';
 
@@ -80,6 +81,12 @@ export const FeatureAuthStatus: React.FC = () => {
               </span>
             )}
           </div>
+          <Link
+            to="/profile"
+            className="px-2 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
+          >
+            Profile
+          </Link>
           <button
             onClick={logout}
             className="px-2 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
