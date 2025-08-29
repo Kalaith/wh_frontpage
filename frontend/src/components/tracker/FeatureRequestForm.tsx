@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useProjects } from '../../hooks/useProjectsQuery';
 
 interface FeatureRequestData {
   title: string;
@@ -6,6 +7,7 @@ interface FeatureRequestData {
   category: string;
   priority: string;
   tags: string;
+  project_id?: number;
 }
 
 interface FeatureRequestFormProps {
@@ -17,12 +19,14 @@ const FeatureRequestForm: React.FC<FeatureRequestFormProps> = ({
   onSubmit,
   onCancel
 }) => {
+  const { data: projectsData } = useProjects();
   const [formData, setFormData] = useState<FeatureRequestData>({
     title: '',
     description: '',
     category: 'Bug Fix',
     priority: 'Low',
-    tags: ''
+    tags: '',
+    project_id: undefined
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,8 +34,13 @@ const FeatureRequestForm: React.FC<FeatureRequestFormProps> = ({
     onSubmit?.(formData);
   };
 
-  const handleChange = (field: keyof FeatureRequestData, value: string) => {
+  const handleChange = (field: keyof FeatureRequestData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleProjectChange = (value: string) => {
+    const projectId = value ? parseInt(value) : undefined;
+    setFormData(prev => ({ ...prev, project_id: projectId }));
   };
 
   return (
@@ -55,6 +64,21 @@ const FeatureRequestForm: React.FC<FeatureRequestFormProps> = ({
           rows={4} 
           required
         />
+      </div>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project</label>
+        <select 
+          value={formData.project_id?.toString() || ''}
+          onChange={(e) => handleProjectChange(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Select a project (optional)</option>
+          {projectsData?.projects?.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.title} {project.group_name && `(${project.group_name})`}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="flex gap-4">
         <div className="flex-1 space-y-2">

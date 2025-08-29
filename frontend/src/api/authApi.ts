@@ -6,7 +6,7 @@ import type { AuthUser, LoginRequest, RegisterRequest } from '../entities/Auth';
 
 // Base URL for the local auth service (feature request system)
 // Use the local backend API instead of the centralized auth service
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 /**
  * Custom error handler to provide more descriptive error messages
@@ -44,46 +44,6 @@ const getStoredToken = (): string | null => {
   return localStorage.getItem('token');
 };
 
-// Note: This function is kept for potential future use with other endpoints
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const apiRequest = async <T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  const token = getStoredToken();
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw {
-      code: response.status === 401 ? 'UNAUTHORIZED' : 'API_ERROR',
-      message:
-        errorData.error?.message ||
-        `HTTP ${response.status}: ${response.statusText}`,
-      details: errorData,
-    };
-  }
-
-  const data = await response.json();
-
-  if (!data.success) {
-    throw {
-      code: data.error?.code || 'API_ERROR',
-      message: data.error?.message || 'API request failed',
-      details: data.error?.details,
-    };
-  }
-
-  return data.data;
-};
 
 /**
  * Login user with credentials - uses local auth system

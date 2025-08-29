@@ -11,7 +11,7 @@ export interface FeatureRequest {
   approval_notes?: string;
   total_eggs: number;
   vote_count: number;
-  tags: string[];
+  tags?: string[];
   project_id?: number;
   approved_at?: string;
   created_at: string;

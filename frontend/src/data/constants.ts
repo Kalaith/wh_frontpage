@@ -4,8 +4,7 @@
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL:
-    process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000',
+  BASE_URL: '',
   ENDPOINTS: {
     PROJECTS: '/api/projects',
     AUTH: '/api/auth',

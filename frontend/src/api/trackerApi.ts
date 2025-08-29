@@ -7,11 +7,16 @@ export interface FeatureRequest {
   category: string;
   priority: string;
   status: string;
-  tags: string[];
+  tags?: string[];
   votes: number;
   submitted_by?: string;
   created_at: string;
   updated_at: string;
+  project?: {
+    id: number;
+    title: string;
+    group_name?: string;
+  };
 }
 
 export interface ProjectSuggestion {

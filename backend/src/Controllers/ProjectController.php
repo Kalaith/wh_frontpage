@@ -26,10 +26,26 @@ class ProjectController
 
             $groupedProjects = $action->execute($isAdmin);
 
+            // Create flat arrays for frontend compatibility
+            $allProjects = [];
+            $groupedArray = [];
+            
+            foreach ($groupedProjects as $groupName => $group) {
+                // Add projects to flat array
+                foreach ($group['projects'] as $project) {
+                    $allProjects[] = $project;
+                }
+                
+                // Create grouped array (just projects, not the group wrapper)
+                $groupedArray[$groupName] = $group['projects'];
+            }
+
             $data = [
                 'version' => '2.0.0',
                 'description' => 'WebHatchery Projects',
-                'groups' => $groupedProjects
+                'groups' => $groupedProjects,
+                'projects' => $allProjects,
+                'grouped' => $groupedArray
             ];
 
             $payload = json_encode(['success' => true, 'data' => $data]);

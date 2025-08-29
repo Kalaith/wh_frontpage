@@ -3,15 +3,42 @@ import { Link } from 'react-router-dom';
 import type { Project } from '../types/projects';
 import ProjectForm from '../components/ProjectForm';
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '../hooks/useProjectsQuery';
+import { useFeatureRequests } from '../hooks/useTrackerQuery';
 
 const ProjectsPage: React.FC = () => {
   const { data: projectsData, isLoading: loading, error } = useProjects();
+  const { data: allFeatureRequests } = useFeatureRequests({});
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
   
   const projects = projectsData?.projects || [];
   const grouped = projectsData?.grouped || {};
+  
+  // Create a map of project ID to feature request counts
+  const featureRequestCounts = React.useMemo(() => {
+    if (!allFeatureRequests || !Array.isArray(allFeatureRequests)) return {};
+    
+    const counts: Record<number, { total: number; open: number; completed: number }> = {};
+    
+    allFeatureRequests.forEach((request) => {
+      const projectId = request.project?.id;
+      if (projectId) {
+        if (!counts[projectId]) {
+          counts[projectId] = { total: 0, open: 0, completed: 0 };
+        }
+        counts[projectId].total++;
+        
+        if (request.status === 'Open' || request.status === 'open') {
+          counts[projectId].open++;
+        } else if (request.status === 'Completed' || request.status === 'completed') {
+          counts[projectId].completed++;
+        }
+      }
+    });
+    
+    return counts;
+  }, [allFeatureRequests]);
   const [createData, setCreateData] = useState<Partial<Project>>({
     title: '',
     group_name: 'other',
@@ -92,17 +119,47 @@ const ProjectsPage: React.FC = () => {
                     className="bg-white rounded mb-3 shadow-sm"
                   >
                     <div className="flex justify-between items-start p-3">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-col flex-1">
+                        <div className="flex items-center gap-3 mb-2">
                           <strong className="text-gray-900">{p.title}</strong>
                           <span className="text-sm text-gray-500">
                             {p.group_name}
                           </span>
                         </div>
                         {p.description && (
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-600 mb-2">
                             {p.description}
                           </p>
+                        )}
+                        {/* Feature Request Summary */}
+                        {p.id && featureRequestCounts[p.id] && (
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500">Features:</span>
+                              <span className="font-medium">{featureRequestCounts[p.id].total} total</span>
+                              {featureRequestCounts[p.id].open > 0 && (
+                                <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs">
+                                  {featureRequestCounts[p.id].open} open
+                                </span>
+                              )}
+                              {featureRequestCounts[p.id].completed > 0 && (
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                                  {featureRequestCounts[p.id].completed} completed
+                                </span>
+                              )}
+                            </div>
+                            <Link
+                              to={`/feature-requests?project=${p.id}`}
+                              className="text-blue-600 hover:text-blue-800 underline text-sm"
+                            >
+                              View Features →
+                            </Link>
+                          </div>
+                        )}
+                        {p.id && !featureRequestCounts[p.id] && (
+                          <div className="text-sm text-gray-400">
+                            No feature requests yet
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center gap-2">

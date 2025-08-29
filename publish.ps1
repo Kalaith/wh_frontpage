@@ -38,10 +38,11 @@ if (Test-Path $envFile) {
 
 # Set destination based on Production flag
 $DEST_ROOT = if ($Production) { $PRODUCTION_ROOT } else { $PREVIEW_ROOT }
-$DEST_DIR = Join-Path $DEST_ROOT $PROJECT_NAME
+# Frontpage project goes to root directory, not subdirectory
+$DEST_DIR = $DEST_ROOT
 $FRONTEND_SRC = "$PSScriptRoot\frontend"
 $BACKEND_SRC = "$PSScriptRoot\backend"
-$FRONTEND_DEST = $DEST_DIR  # Frontend goes to root, not subdirectory
+$FRONTEND_DEST = $DEST_DIR  # Frontend goes to root
 $BACKEND_DEST = "$DEST_DIR\backend"
 
 # Color output functions
@@ -159,14 +160,13 @@ function Build-Frontend {
     Write-Info "Building frontend for production..."
     $env:NODE_ENV = "production"
     
-    # Set base path based on environment
+    # Set base path for frontpage project (always root since it deploys to root)
+    Write-Info "Setting base path to root for frontpage project..."
+    $env:VITE_BASE_PATH = "/"
+    
     if ($Production) {
-        # Production uses root path
-        $env:VITE_BASE_PATH = "/"
         npx vite build --mode production
     } else {
-        Write-Info "Setting base path for preview environment..."
-        $env:VITE_BASE_PATH = "/$PROJECT_NAME/"
         # Build with preview mode to use .env.preview
         npx vite build --mode preview
     }
@@ -196,12 +196,21 @@ function Publish-Frontend {
         return $false
     }
     
-    # Clean destination if requested (but preserve backend directory)
+    # Clean destination if requested (only remove files that frontend will create)
     if ($Clean) {
-        Write-Warning "Cleaning frontend files from root directory (preserving backend)..."
-        # Clean only frontend files, not the backend directory
-        Get-ChildItem -Path $FRONTEND_DEST -Exclude "backend" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Success "Frontend files cleaned"
+        Write-Warning "Cleaning specific frontend files from root directory..."
+        
+        # Only remove files/folders that the frontend build will create
+        $frontendFiles = @("index.html", "assets")
+        
+        foreach ($item in $frontendFiles) {
+            $itemPath = Join-Path $FRONTEND_DEST $item
+            if (Test-Path $itemPath) {
+                Write-Info "Removing existing: $item"
+                Remove-Item -Path $itemPath -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        Write-Success "Frontend files cleaned (selective)"
     }
     
     # Copy built files (dist folder) to root
@@ -398,7 +407,7 @@ function Main {
         
         if ($success) {
             # Copy root .htaccess file for URL rewriting
-            $rootHtaccessSrc = "$SOURCE_DIR\.htaccess"
+            $rootHtaccessSrc = "$PSScriptRoot\.htaccess"
             $rootHtaccessDest = "$DEST_DIR\.htaccess"
             if (Test-Path $rootHtaccessSrc) {
                 Copy-Item $rootHtaccessSrc $rootHtaccessDest -Force
@@ -438,22 +447,22 @@ OPTIONS:
     -Help            Show this help message
 
 EXAMPLES:
-    .\publish.ps1                                       # Publish both to preview (H:\xampp\htdocs)
-    .\publish.ps1 -f                                   # Publish only frontend to preview
-    .\publish.ps1 -b                                   # Publish only backend to preview
-    .\publish.ps1 -f -p                               # Publish frontend to production
-    .\publish.ps1 -a -c -p                            # Clean and publish both to production
-    .\publish.ps1 -Frontend -Verbose -Production       # Publish frontend to production with details
+    .\publish.ps1                                       # Publish both to preview (H:\xampp\htdocs root)
+    .\publish.ps1 -f                                   # Publish only frontend to preview root
+    .\publish.ps1 -b                                   # Publish only backend to preview root/backend
+    .\publish.ps1 -f -p                               # Publish frontend to production root
+    .\publish.ps1 -a -c -p                            # Clean and publish both to production root
+    .\publish.ps1 -Frontend -Verbose -Production       # Publish frontend to production root with details
 
 DESCRIPTION:
-    This script builds and publishes the $PROJECT_NAME web game to either the 
+    This script builds and publishes the $PROJECT_NAME (frontpage) web application to either the 
     preview environment (H:\xampp\htdocs) or production environment (F:\WebHatchery).
     The frontend is built using npm and deployed to the root directory, while
     the PHP backend is deployed to the backend/ subdirectory with dependencies
     optimized for the target environment.
     
-    Deployment Structure (for both environments):
-    <root>\$PROJECT_NAME\
+    Deployment Structure (frontpage deploys to root):
+    <root>\
     ├── index.html          # Frontend files (root)
     ├── assets\             # Frontend assets
     └── backend\            # PHP backend

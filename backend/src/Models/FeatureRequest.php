@@ -93,6 +93,17 @@ class FeatureRequest extends Model
     // Get formatted data for API response
     public function toApiArray(): array
     {
+        // Ensure tags is always an array
+        $tags = $this->tags;
+        if (!is_array($tags)) {
+            if (is_string($tags)) {
+                $decoded = json_decode($tags, true);
+                $tags = is_array($decoded) ? $decoded : [];
+            } else {
+                $tags = [];
+            }
+        }
+
         $data = [
             'id' => $this->id,
             'title' => $this->title,
@@ -106,7 +117,7 @@ class FeatureRequest extends Model
             'approval_notes' => $this->approval_notes,
             'total_eggs' => $this->total_eggs,
             'vote_count' => $this->vote_count,
-            'tags' => $this->tags ?? [],
+            'tags' => $tags,
             'project_id' => $this->project_id,
             'approved_at' => $this->approved_at ? $this->approved_at->format('M j, Y') : null,
             'created_at' => $this->created_at ? $this->created_at->format('M j, Y') : null,

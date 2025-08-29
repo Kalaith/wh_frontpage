@@ -1,22 +1,59 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import RequestCard from '../components/tracker/RequestCard';
 import FeatureRequestForm from '../components/tracker/FeatureRequestForm';
 import { useFeatureRequests, useCreateFeatureRequest } from '../hooks/useTrackerQuery';
+import { useProjects } from '../hooks/useProjectsQuery';
 
 const FeatureRequestsPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
     category: '',
+    project_id: '',
     sort_by: 'votes'
   });
 
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const projectFromUrl = searchParams.get('project');
+    const statusFromUrl = searchParams.get('status');
+    const priorityFromUrl = searchParams.get('priority');
+    const categoryFromUrl = searchParams.get('category');
+    
+    setFilters(prev => ({
+      ...prev,
+      project_id: projectFromUrl || '',
+      status: statusFromUrl || '',
+      priority: priorityFromUrl || '',
+      category: categoryFromUrl || ''
+    }));
+  }, [searchParams]);
+
+  // Helper function to update filters and URL
+  const updateFilter = (key: string, value: string) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    
+    // Update URL parameters
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (value) {
+      newSearchParams.set(key === 'project_id' ? 'project' : key, value);
+    } else {
+      newSearchParams.delete(key === 'project_id' ? 'project' : key);
+    }
+    setSearchParams(newSearchParams);
+  };
+
   const { data: requests, isLoading, error } = useFeatureRequests({
     ...filters,
+    project_id: filters.project_id ? parseInt(filters.project_id) : undefined,
     sort_direction: 'desc'
   });
+  
+  const { data: projectsData } = useProjects();
 
   const createRequestMutation = useCreateFeatureRequest();
 
@@ -102,8 +139,20 @@ const FeatureRequestsPage: React.FC = () => {
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-2">
         <select 
+          value={filters.project_id}
+          onChange={(e) => updateFilter('project_id', e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Projects</option>
+          {projectsData?.projects?.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.title}
+            </option>
+          ))}
+        </select>
+        <select 
           value={filters.status}
-          onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+          onChange={(e) => updateFilter('status', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Status</option>
@@ -114,7 +163,7 @@ const FeatureRequestsPage: React.FC = () => {
         </select>
         <select 
           value={filters.priority}
-          onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}
+          onChange={(e) => updateFilter('priority', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Priority</option>
@@ -125,7 +174,7 @@ const FeatureRequestsPage: React.FC = () => {
         </select>
         <select 
           value={filters.category}
-          onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+          onChange={(e) => updateFilter('category', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Categories</option>
@@ -136,7 +185,7 @@ const FeatureRequestsPage: React.FC = () => {
         </select>
         <select 
           value={filters.sort_by}
-          onChange={(e) => setFilters(prev => ({ ...prev, sort_by: e.target.value }))}
+          onChange={(e) => updateFilter('sort_by', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="votes">Sort by Votes</option>
@@ -159,6 +208,7 @@ const FeatureRequestsPage: React.FC = () => {
               category={request.category}
               tags={request.tags}
               date={request.created_at}
+              project={request.project}
             />
           ))
         ) : (

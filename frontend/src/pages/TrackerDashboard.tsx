@@ -7,17 +7,100 @@ import { useProjects } from '../hooks/useProjectsQuery';
 import { useTrackerStats, useFeatureRequests, useActivityFeed } from '../hooks/useTrackerQuery';
 
 const TrackerDashboard: React.FC = () => {
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
 
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
   const { data: trackerStats, isLoading: statsLoading, error: statsError } = useTrackerStats();
+  // Fetch all feature requests for stats calculation
+  const { data: allFeatureRequests } = useFeatureRequests({});
+  
+  // Fetch top requests - if only one project selected, filter by it; otherwise show all
   const { data: topRequests, isLoading: requestsLoading } = useFeatureRequests({ 
     sort_by: 'votes', 
     sort_direction: 'desc', 
-    limit: 3,
-    project_id: selectedProjectId || undefined
+    limit: selectedProjectIds.length > 0 ? 10 : 3, // Get more if filtering client-side
+    project_id: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined
   });
-  const { data: recentActivity, isLoading: activityLoading } = useActivityFeed(5, selectedProjectId || undefined);
+
+  // Filter top requests for multiple selected projects (client-side)
+  const filteredTopRequests = topRequests ? (
+    selectedProjectIds.length > 1 
+      ? topRequests
+          .filter(request => request.project?.id && selectedProjectIds.includes(request.project.id))
+          .slice(0, 3)
+      : topRequests.slice(0, 3)
+  ) : [];
+  
+  // For activity feed - fetch more activities if multiple projects selected to filter client-side
+  const { data: allRecentActivity, isLoading: activityLoading } = useActivityFeed(
+    selectedProjectIds.length > 1 ? 20 : 5, // Get more if we need to filter
+    selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined
+  );
+
+  // Create a mapping of feature request IDs to projects for activity filtering
+  const featureToProjectMap = React.useMemo(() => {
+    if (!allFeatureRequests) return {};
+    const map: Record<number, { id: number; title: string; group_name?: string }> = {};
+    allFeatureRequests.forEach(request => {
+      if (request.id && request.project) {
+        map[request.id] = request.project;
+      }
+    });
+    return map;
+  }, [allFeatureRequests]);
+
+  // Filter activities for selected projects
+  const filteredRecentActivity = allRecentActivity ? (
+    selectedProjectIds.length > 0 
+      ? allRecentActivity
+          .filter(activity => {
+            // If it's a feature request activity, check if it belongs to selected projects
+            if (activity.reference_type === 'feature_request' && activity.reference_id) {
+              const project = featureToProjectMap[activity.reference_id];
+              return project && selectedProjectIds.includes(project.id);
+            }
+            // For other activity types, include them if no specific project filtering is needed
+            // or if we can't determine the project association
+            return selectedProjectIds.length === 0;
+          })
+          .slice(0, 5)
+      : allRecentActivity.slice(0, 5)
+  ) : [];
+
+  // Calculate project-specific stats
+  const calculateProjectStats = () => {
+    if (!allFeatureRequests || selectedProjectIds.length === 0) {
+      // No projects selected, use global stats
+      return {
+        totalProjects: trackerStats?.projects?.total || 0,
+        totalRequests: trackerStats?.feature_requests?.total || 0,
+        openRequests: trackerStats?.feature_requests?.open || 0,
+        completedRequests: trackerStats?.feature_requests?.completed || 0
+      };
+    }
+    
+    // Filter requests for selected projects
+    const filteredRequests = allFeatureRequests.filter(request => 
+      request.project?.id && selectedProjectIds.includes(request.project.id)
+    );
+    
+    const openCount = filteredRequests.filter(r => 
+      r.status === 'Open' || r.status === 'open' || r.status === 'pending'
+    ).length;
+    
+    const completedCount = filteredRequests.filter(r => 
+      r.status === 'Completed' || r.status === 'completed'
+    ).length;
+    
+    return {
+      totalProjects: selectedProjectIds.length,
+      totalRequests: filteredRequests.length,
+      openRequests: openCount,
+      completedRequests: completedCount
+    };
+  };
+
+  const stats = calculateProjectStats();
 
   // Debug logging
   console.log('TrackerDashboard Debug:', {
@@ -25,21 +108,18 @@ const TrackerDashboard: React.FC = () => {
     projectsLoading,
     trackerStats,
     statsLoading,
-    selectedProjectId,
+    selectedProjectIds,
+    allFeatureRequests,
+    calculatedStats: stats,
     topRequests,
     requestsLoading,
-    recentActivity,
+    allRecentActivity,
+    filteredRecentActivity,
     activityLoading
   });
 
   const isLoading = statsLoading;
   const error = statsError;
-
-  // Get stats from tracker API (including project count)
-  const totalProjects = trackerStats?.projects?.total || 0;
-  const totalRequests = trackerStats?.feature_requests?.total || 0;
-  const openRequests = trackerStats?.feature_requests?.open || 0;
-  const completedRequests = trackerStats?.feature_requests?.completed || 0;
 
   if (isLoading) {
     return (
@@ -69,11 +149,6 @@ const TrackerDashboard: React.FC = () => {
     );
   }
 
-  const selectedProject = selectedProjectId && projectsData
-    ? Object.values(projectsData.groups || {})
-        .flatMap(group => group.projects)
-        .find(p => p.id === selectedProjectId)
-    : null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -96,11 +171,11 @@ const TrackerDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('All Projects clicked, setting selectedProjectId to null');
-                    setSelectedProjectId(null);
+                    console.log('All Projects clicked, clearing selected projects');
+                    setSelectedProjectIds([]);
                   }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                    selectedProjectId === null
+                    selectedProjectIds.length === 0
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
@@ -112,16 +187,30 @@ const TrackerDashboard: React.FC = () => {
                     key={project.id}
                     type="button"
                     onClick={() => {
-                      console.log(`Project clicked: ${project.title} (ID: ${project.id})`);
-                      setSelectedProjectId(project.id);
+                      const projectId = project.id;
+                      if (!projectId) return;
+                      
+                      console.log(`Project clicked: ${project.title} (ID: ${projectId})`);
+                      setSelectedProjectIds(prev => {
+                        if (prev.includes(projectId)) {
+                          // Remove from selection
+                          return prev.filter(id => id !== projectId);
+                        } else {
+                          // Add to selection
+                          return [...prev, projectId];
+                        }
+                      });
                     }}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
-                      selectedProjectId === project.id
+                      selectedProjectIds.includes(project.id ?? -1)
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {project.title}
+                    {selectedProjectIds.includes(project.id ?? -1) && (
+                      <span className="ml-1 text-xs">✓</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -130,25 +219,14 @@ const TrackerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Project Context */}
-      {selectedProject && (
-        <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h2 className="font-semibold text-blue-900">
-            Current Project: {selectedProject.title}
-          </h2>
-          <p className="text-sm text-blue-700 mt-1">
-            Feature requests and development tracking for {selectedProject.title}
-          </p>
-        </div>
-      )}
       
       {/* Stats Grid */}
       <div className="mb-8">
         <StatsGrid
-          totalProjects={totalProjects}
-          totalRequests={totalRequests}
-          openRequests={openRequests}
-          completedRequests={completedRequests}
+          totalProjects={stats.totalProjects}
+          totalRequests={stats.totalRequests}
+          openRequests={stats.openRequests}
+          completedRequests={stats.completedRequests}
         />
       </div>
       
@@ -170,11 +248,11 @@ const TrackerDashboard: React.FC = () => {
           {requestsLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-gray-500">Loading requests...</p>
+              <p className="text-gray-600">Loading requests...</p>
             </div>
-          ) : topRequests && topRequests.length > 0 ? (
+          ) : filteredTopRequests && filteredTopRequests.length > 0 ? (
             <div className="space-y-4">
-              {topRequests.map((request) => (
+              {filteredTopRequests.map((request) => (
                 <RequestCard
                   key={request.id}
                   title={request.title}
@@ -185,13 +263,14 @@ const TrackerDashboard: React.FC = () => {
                   category={request.category}
                   tags={request.tags}
                   date={request.created_at}
+                  project={request.project}
                 />
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
               <div className="text-gray-400 text-4xl mb-4">📋</div>
-              <p className="text-gray-500 mb-2">No feature requests yet.</p>
+              <p className="text-gray-600 mb-2">No feature requests yet.</p>
               <Link to="/tracker/requests" className="text-blue-600 hover:text-blue-700 font-medium">
                 Be the first to submit one!
               </Link>
@@ -205,23 +284,28 @@ const TrackerDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">
               Recent Activity
             </h2>
-            {selectedProject && (
-              <p className="text-sm text-gray-500 mt-1">
-                {selectedProject.title}
-              </p>
-            )}
+            <p className="text-sm text-gray-500 mt-1">
+              {selectedProjectIds.length === 0 
+                ? 'All projects' 
+                : selectedProjectIds.length === 1 
+                  ? 'Selected project' 
+                  : `${selectedProjectIds.length} selected projects`}
+            </p>
           </div>
           {activityLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-gray-500">Loading activity...</p>
+              <p className="text-gray-600">Loading activity...</p>
             </div>
-          ) : recentActivity && recentActivity.length > 0 ? (
-            <ActivityFeed activities={recentActivity} />
+          ) : filteredRecentActivity && filteredRecentActivity.length > 0 ? (
+            <ActivityFeed 
+              activities={filteredRecentActivity} 
+              featureToProjectMap={featureToProjectMap}
+            />
           ) : (
             <div className="text-center py-8">
               <div className="text-gray-400 text-4xl mb-4">📊</div>
-              <p className="text-gray-500">No recent activity.</p>
+              <p className="text-gray-600">No recent activity.</p>
             </div>
           )}
         </div>

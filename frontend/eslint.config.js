@@ -12,6 +12,10 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -23,8 +27,32 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      // Critical rules set to error per WebHatchery standards
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
+      
+      // Naming conventions for WebHatchery
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'variableLike',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+        },
+        {
+          selector: 'typeLike',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'function',
+          format: ['camelCase'],
+        },
+      ],
+      
+      // Additional strict TypeScript rules
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-optional-chain': 'warn',
+      '@typescript-eslint/strict-boolean-expressions': 'off',
     },
   },
 )

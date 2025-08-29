@@ -2,7 +2,7 @@
 import type { ProjectsData, Project } from '../types/projects';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+  import.meta.env.VITE_API_BASE_URL || '/api';
 const DEFAULT_TIMEOUT_MS = 10_000; // 10s
 
 export interface ApiResponse<T = any> {

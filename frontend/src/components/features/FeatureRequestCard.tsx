@@ -122,7 +122,7 @@ export const FeatureRequestCard = ({
         </div>
 
         {/* Tags */}
-        {feature.tags && feature.tags.length > 0 && (
+        {Array.isArray(feature.tags) && feature.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-100">
             {feature.tags.map((tag, index) => (
               <span

@@ -10,7 +10,7 @@ import {
   ApiResponse 
 } from '../types/featureRequest';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 class FeatureRequestApiError extends Error {
   constructor(public status: number, message: string, public response?: any) {
