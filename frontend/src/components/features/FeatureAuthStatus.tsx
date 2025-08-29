@@ -1,29 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { useFeatureRequestUser, useIsFeatureAuthenticated, useFeatureLogout, useFeatureClaimDailyEggs } from '../../stores/featureRequestStore';
-import { AuthModal } from './AuthModal';
+import { useAuth } from '../../utils/AuthContext';
+import { featureRequestApi } from '../../api/featureRequestApi';
 
 export const FeatureAuthStatus: React.FC = () => {
-  const isAuthenticated = useIsFeatureAuthenticated();
-  const user = useFeatureRequestUser();
-  const logout = useFeatureLogout();
-  const claimDailyEggs = useFeatureClaimDailyEggs();
+  const { isAuthenticated, user, isLoading, loginWithRedirect, logout, refreshUserInfo } = useAuth();
   
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [isClaimingEggs, setIsClaimingEggs] = useState(false);
+  const [isClaimingEggs, setIsClaimingEggs] = React.useState(false);
 
   const handleClaimDaily = async () => {
+    if (!user) return;
+    
     setIsClaimingEggs(true);
     try {
-      const result = await claimDailyEggs();
-      if (result.success && result.eggsEarned) {
+      const result = await featureRequestApi.claimDailyEggs();
+      if (result.eggs_earned) {
         // Show a nice notification
-        alert(`🥚 Claimed ${result.eggsEarned} eggs! Your balance is now ${user?.egg_balance || 0} eggs.`);
+        alert(`🥚 Claimed ${result.eggs_earned} eggs! Your balance is now ${result.new_balance || 0} eggs.`);
+        
+        // Refresh user info to update the balance display
+        await refreshUserInfo();
       } else {
-        alert(result.message || 'Unable to claim daily eggs');
+        alert('Unable to claim daily eggs');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to claim daily eggs:', error);
       alert('Failed to claim daily eggs. Please try again.');
     } finally {
@@ -31,15 +31,15 @@ export const FeatureAuthStatus: React.FC = () => {
     }
   };
 
-  const openLogin = () => {
-    setAuthMode('login');
-    setShowAuthModal(true);
-  };
 
-  const openRegister = () => {
-    setAuthMode('register');
-    setShowAuthModal(true);
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-sm text-gray-600">Loading...</span>
+      </div>
+    );
+  }
 
   if (isAuthenticated && user) {
     return (
@@ -99,29 +99,21 @@ export const FeatureAuthStatus: React.FC = () => {
   }
 
   return (
-    <>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={openLogin}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
-        >
-          Login
-        </button>
-        <button
-          onClick={openRegister}
-          className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center gap-1"
-        >
-          <span className="text-sm">🥚</span>
-          Sign Up (Get 500 eggs!)
-        </button>
-      </div>
-      
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-      />
-    </>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => loginWithRedirect()}
+        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+      >
+        Login
+      </button>
+      <button
+        onClick={() => loginWithRedirect()}
+        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center gap-1"
+      >
+        <span className="text-sm">🥚</span>
+        Sign Up (Get 500 eggs!)
+      </button>
+    </div>
   );
 };
 

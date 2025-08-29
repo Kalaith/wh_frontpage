@@ -19,11 +19,32 @@ class FeatureRequestApiError extends Error {
   }
 }
 
+// Store Auth0 token getter function
+let getAuth0Token: (() => Promise<string>) | null = null;
+
+export function setAuth0TokenGetter(tokenGetter: () => Promise<string>) {
+  getAuth0Token = tokenGetter;
+}
+
 async function apiRequest<T>(
   endpoint: string, 
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem('token');
+  let token: string | null = null;
+  
+  // Try to get Auth0 token first
+  if (getAuth0Token) {
+    try {
+      token = await getAuth0Token();
+    } catch (error) {
+      console.warn('Failed to get Auth0 token, falling back to localStorage:', error);
+    }
+  }
+  
+  // Fallback to localStorage token for backwards compatibility
+  if (!token) {
+    token = localStorage.getItem('token');
+  }
   
   const config: RequestInit = {
     headers: {

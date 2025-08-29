@@ -11,7 +11,17 @@
       "Bash(npm run lint)",
       "Bash(npm run lint:*)",
       "Bash(cat:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Read(H:\\WebHatchery/**)",
+      "Read(H:\\WebHatchery/**)",
+      "Read(H:\\WebHatchery\\web\\ses/**)",
+      "Read(H:\\WebHatchery\\web\\ses\\frontend\\src\\utils/**)",
+      "Read(H:\\WebHatchery\\web\\ses\\frontend\\src/**)",
+      "Read(H:\\WebHatchery\\web\\ses\\frontend\\src/**)",
+      "Read(H:\\WebHatchery\\web\\ses\\backend\\src\\Middleware/**)",
+      "Read(H:\\WebHatchery\\web\\ses\\backend\\src\\Services/**)",
+      "Bash(composer:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

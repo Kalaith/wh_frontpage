@@ -94,6 +94,11 @@ $app->group('/api', function (RouteCollectorProxy $group) {
     $group->post('/auth/proxy/login', [\App\Controllers\AuthProxyController::class, 'login']);
     $group->post('/auth/proxy/register', [\App\Controllers\AuthProxyController::class, 'register']);
     $group->get('/auth/proxy/user', [\App\Controllers\AuthProxyController::class, 'getCurrentUser']);
+    
+    // Auth0 endpoints (Protected with Auth0 middleware)
+    $group->group('/auth0', function (RouteCollectorProxy $auth0Group) {
+        $auth0Group->post('/verify-user', [UserController::class, 'verifyAuth0User']);
+    })->add(JwtAuthMiddleware::class);
 
     // Temporary (UNSECURED) admin endpoint to initialize the database for production
     // WARNING: This endpoint is intentionally unprotected. Remove it after use.

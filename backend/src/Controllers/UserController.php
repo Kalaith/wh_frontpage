@@ -505,8 +505,111 @@ class UserController
         }
     }
 
+    public function verifyAuth0User(Request $request, Response $response): Response
+    {
+        try {
+            // Get Auth0 user info from middleware
+            $auth0Sub = $request->getAttribute('auth0_sub');
+            $userInfo = $request->getAttribute('auth0_user_info');
+            
+            if (!$auth0Sub || !$userInfo) {
+                $payload = json_encode([
+                    'success' => false,
+                    'message' => 'Auth0 user information not found in request'
+                ]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
+            $data = json_decode($request->getBody()->getContents(), true);
+            
+            // Try to find existing user by Auth0 ID
+            $user = User::where('auth0_id', $auth0Sub)->first();
+            
+            if (!$user) {
+                // Create new user from Auth0 data
+                $username = $data['username'] ?? $userInfo['nickname'] ?? explode('@', $userInfo['email'])[0] ?? 'user';
+                $displayName = $data['display_name'] ?? $userInfo['name'] ?? $userInfo['email'];
+                
+                // Ensure username is unique
+                $originalUsername = $username;
+                $counter = 1;
+                while (User::where('username', $username)->exists()) {
+                    $username = $originalUsername . $counter;
+                    $counter++;
+                }
+                
+                $user = new User();
+                $user->auth0_id = $auth0Sub;
+                $user->email = $userInfo['email'];
+                $user->username = $username;
+                $user->display_name = $displayName;
+                $user->role = 'user';
+                $user->egg_balance = 500; // Welcome bonus
+                $user->email_verified = $userInfo['email_verified'] ?? false;
+                $user->provider = 'auth0';
+                $user->save();
+                
+                // Create welcome transaction
+                EggTransaction::create([
+                    'user_id' => $user->id,
+                    'amount' => 500,
+                    'transaction_type' => 'registration_bonus',
+                    'description' => 'Welcome bonus for new Auth0 user'
+                ]);
+                
+            } else {
+                // Update existing user with latest Auth0 data
+                $user->email = $userInfo['email'];
+                $user->email_verified = $userInfo['email_verified'] ?? false;
+                
+                // Update display name if provided in request
+                if (isset($data['display_name'])) {
+                    $user->display_name = $data['display_name'];
+                }
+                
+                $user->save();
+            }
+            
+            // Return user data with additional computed fields
+            $userData = $user->toApiArray();
+            $userData['can_claim_daily'] = $user->canClaimDailyReward();
+            
+            $payload = json_encode([
+                'success' => true,
+                'message' => $user->wasRecentlyCreated ? 'User created successfully' : 'User verified successfully',
+                'data' => $userData
+            ]);
+
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            error_log('Auth0 user verification failed: ' . $e->getMessage());
+            $payload = json_encode([
+                'success' => false,
+                'message' => 'Failed to verify Auth0 user',
+                'error' => $e->getMessage()
+            ]);
+
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
     private function getUserIdFromToken(Request $request): int
     {
+        // Check if Auth0 user info is available from middleware (preferred)
+        $auth0Sub = $request->getAttribute('auth0_sub');
+        if ($auth0Sub) {
+            $user = User::where('auth0_id', $auth0Sub)->first();
+            if ($user) {
+                return $user->id;
+            }
+            throw new \Exception('Auth0 user not found in database');
+        }
+        
+        // Fallback to legacy JWT token handling
         $authHeader = $request->getHeaderLine('Authorization');
         
         if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {

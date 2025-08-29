@@ -14,10 +14,6 @@ class FeatureRequest extends Model
         'project_id',
         'title',
         'description', 
-        'category',
-        'use_case',
-        'expected_benefits',
-        'priority_level',
         'feature_type',
         'status',
         'approval_notes',
@@ -36,6 +32,13 @@ class FeatureRequest extends Model
         'total_eggs' => 'integer',
         'vote_count' => 'integer',
         'approved_at' => 'datetime'
+    ];
+    
+    protected $attributes = [
+        'category' => null,
+        'use_case' => null,
+        'expected_benefits' => null,
+        'priority_level' => 'medium'
     ];
 
     // Relationships

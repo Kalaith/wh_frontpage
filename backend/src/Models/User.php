@@ -20,12 +20,16 @@ class User extends Model
         'last_daily_reward',
         'is_verified',
         'verification_token',
-        'email_verified_at'
+        'email_verified_at',
+        'auth0_id',
+        'provider',
+        'email_verified'
     ];
 
     protected $casts = [
         'egg_balance' => 'integer',
         'is_verified' => 'boolean',
+        'email_verified' => 'boolean',
         'last_daily_reward' => 'datetime',
         'email_verified_at' => 'datetime'
     ];
@@ -183,7 +187,7 @@ class User extends Model
                 $table->increments('id');
                 $table->string('username')->unique();
                 $table->string('email')->unique();
-                $table->string('password_hash');
+                $table->string('password_hash')->nullable(); // Nullable for Auth0 users
                 $table->string('display_name')->nullable();
                 $table->enum('role', ['user', 'admin'])->default('user');
                 $table->integer('egg_balance')->default(500);
@@ -191,6 +195,9 @@ class User extends Model
                 $table->boolean('is_verified')->default(false);
                 $table->string('verification_token')->nullable();
                 $table->timestamp('email_verified_at')->nullable();
+                $table->string('auth0_id')->nullable()->unique(); // Auth0 user ID
+                $table->string('provider')->default('local'); // auth0, local, etc.
+                $table->boolean('email_verified')->default(false); // Auth0 email verification status
                 $table->timestamps();
             });
         }
