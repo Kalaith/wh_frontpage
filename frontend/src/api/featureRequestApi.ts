@@ -41,10 +41,7 @@ async function apiRequest<T>(
     }
   }
   
-  // Fallback to localStorage token for backwards compatibility
-  if (!token) {
-    token = localStorage.getItem('token');
-  }
+  // No fallback needed - Auth0 only
   
   const config: RequestInit = {
     headers: {

@@ -1,6 +1,6 @@
 /**
- * Authentication API Client
- * Handles all authentication-related API requests
+ * Authentication API Client - Auth0 Integration
+ * Provides compatibility layer for Auth0 authentication
  */
 import type { AuthUser, LoginRequest, RegisterRequest } from '../entities/Auth';
 import { createAuthError, createValidationError, createServerError, handleApiError } from '../utils/errorHandling';

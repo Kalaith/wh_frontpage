@@ -4,12 +4,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useAuthStore } from './authStore';
 
-// Mock the auth API
-vi.mock('../api/authApi', () => ({
-  login: vi.fn(),
-  register: vi.fn(),
-  logout: vi.fn(),
-  getCurrentUser: vi.fn(),
+// Mock the hooks
+vi.mock('../hooks/useAuthQuery', () => ({
+  useCurrentUser: vi.fn(() => ({ data: null, isLoading: false, error: null })),
+  useLogin: vi.fn(() => ({ mutateAsync: vi.fn() })),
+  useRegister: vi.fn(() => ({ mutateAsync: vi.fn() })),
+  useLogout: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
 describe('AuthStore', () => {
@@ -18,9 +18,6 @@ describe('AuthStore', () => {
     useAuthStore.setState({
       user: null,
       isAuthenticated: false,
-      isLoading: false,
-      error: null,
-      sessionRestored: false,
     });
   });
 
@@ -29,46 +26,62 @@ describe('AuthStore', () => {
 
     expect(store.user).toBeNull();
     expect(store.isAuthenticated).toBe(false);
-    expect(store.isLoading).toBe(false);
-    expect(store.error).toBeNull();
-    expect(store.sessionRestored).toBe(false);
   });
 
-  it('should set loading state', () => {
-    const { setLoading } = useAuthStore.getState();
+  it('should set auth state when user is provided', () => {
+    const { setAuth } = useAuthStore.getState();
+    const testUser = { 
+      id: 1, 
+      email: 'test@example.com', 
+      role: 'user', 
+      display_name: 'Test User' 
+    };
 
-    setLoading(true);
+    setAuth(testUser);
 
-    expect(useAuthStore.getState().isLoading).toBe(true);
+    const state = useAuthStore.getState();
+    expect(state.user).toEqual(testUser);
+    expect(state.isAuthenticated).toBe(true);
   });
 
-  it('should clear error', () => {
-    const { setError, clearError } = useAuthStore.getState();
+  it('should clear auth state when null user is provided', () => {
+    const { setAuth } = useAuthStore.getState();
+    
+    // First set a user
+    const testUser = { 
+      id: 1, 
+      email: 'test@example.com', 
+      role: 'user', 
+      display_name: 'Test User' 
+    };
+    setAuth(testUser);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
 
-    setError({ code: 'TEST_ERROR', message: 'Test error' });
-    expect(useAuthStore.getState().error).toEqual({
-      code: 'TEST_ERROR',
-      message: 'Test error',
-    });
-
-    clearError();
-    expect(useAuthStore.getState().error).toBeNull();
+    // Then clear it
+    setAuth(null);
+    
+    const state = useAuthStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
   });
 
-  it('should logout and clear user state', () => {
-    const { logout } = useAuthStore.getState();
+  it('should clear auth state with clearAuth', () => {
+    const { setAuth, clearAuth } = useAuthStore.getState();
 
     // Set some user state first
-    useAuthStore.setState({
-      user: { id: 1, email: 'test@example.com', role: 'user', display_name: 'Test User' },
-      isAuthenticated: true,
-    });
+    const testUser = { 
+      id: 1, 
+      email: 'test@example.com', 
+      role: 'user', 
+      display_name: 'Test User' 
+    };
+    setAuth(testUser);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
 
-    logout();
+    clearAuth();
 
     const state = useAuthStore.getState();
     expect(state.user).toBeNull();
     expect(state.isAuthenticated).toBe(false);
-    expect(state.error).toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Auth0Provider } from '@auth0/auth0-react';
+import { CACHE_DURATION } from './constants/app';
 import App from './App';
 
 // Auth0 configuration
@@ -20,8 +21,8 @@ if (!domain || !clientId || !audience) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: CACHE_DURATION.PROJECTS,
+      gcTime: CACHE_DURATION.GC_TIME,
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors
         if (error instanceof Error && error.message.includes('4')) {

@@ -21,7 +21,8 @@
       "Read(H:\\WebHatchery\\web\\ses\\backend\\src\\Middleware/**)",
       "Read(H:\\WebHatchery\\web\\ses\\backend\\src\\Services/**)",
       "Bash(composer:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run test:run:*)"
     ],
     "deny": [],
     "ask": []

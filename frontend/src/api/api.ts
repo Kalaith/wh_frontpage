@@ -2,6 +2,8 @@
 import type { ProjectsData, Project } from '../types/projects';
 import type { AuthUser } from '../entities/Auth';
 import type { ApiResponse } from '../types/common';
+import { getAuthToken } from '../utils/authToken';
+import { createAuthError, createServerError } from '../utils/errorHandling';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || '/api';
@@ -21,12 +23,20 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    const token = localStorage.getItem('token');
+    // Get Auth0 token
+    console.log('🌐 Making API request to:', url);
+    const token = await getAuthToken();
+    console.log('🌐 Token retrieved for API request:', token ? `${token.substring(0, 20)}...` : 'null');
     
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
+    
+    console.log('🌐 Request headers:', {
+      ...defaultHeaders,
+      Authorization: defaultHeaders.Authorization ? `Bearer ${defaultHeaders.Authorization.substring(7, 27)}...` : 'missing'
+    });
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -53,6 +63,37 @@ class ApiClient {
         } catch {
           /* ignore */
         }
+
+        // Handle authentication errors specially
+        if (response.status === 401) {
+          console.warn('Authentication failed - token may be invalid or expired');
+          const authError = createAuthError('Authentication required. Please log in again.');
+          return {
+            success: false,
+            error: {
+              ...authError,
+              details: JSON.stringify(errBody),
+            },
+          };
+        }
+
+        // Handle server errors
+        if (response.status >= 500) {
+          console.error('Server error:', response.status, errBody);
+          const serverError = createServerError(
+            response.status === 500 
+              ? 'Server error occurred. Please try again later.'
+              : `Server error (${response.status}): ${response.statusText}`
+          );
+          return {
+            success: false,
+            error: {
+              ...serverError,
+              details: JSON.stringify(errBody),
+            },
+          };
+        }
+
         return {
           success: false,
           error: {
@@ -61,6 +102,7 @@ class ApiClient {
               errBody?.message ||
               `HTTP ${response.status}: ${response.statusText}`,
             details: JSON.stringify(errBody),
+            status: response.status,
           },
         };
       }

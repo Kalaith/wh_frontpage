@@ -1,152 +1,55 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import StatsGrid from '../components/tracker/StatsGrid';
 import RequestCard from '../components/tracker/RequestCard';
 import ActivityFeed from '../components/tracker/ActivityFeed';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ErrorDisplay from '../components/ui/ErrorDisplay';
 import { useProjects } from '../hooks/useProjectsQuery';
-import { useTrackerStats, useFeatureRequests, useActivityFeed } from '../hooks/useTrackerQuery';
+import { useTrackerData } from '../hooks/useTrackerData';
 import { getAllProjects } from '../utils/projectUtils';
 
 const TrackerDashboard: React.FC = () => {
-  const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
-
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
-  const { data: trackerStats, isLoading: statsLoading, error: statsError } = useTrackerStats();
-  // Fetch all feature requests for stats calculation
-  const { data: allFeatureRequests } = useFeatureRequests({});
   
-  // Fetch top requests - if only one project selected, filter by it; otherwise show all
-  const { data: topRequests, isLoading: requestsLoading } = useFeatureRequests({ 
-    sort_by: 'votes', 
-    sort_direction: 'desc', 
-    limit: selectedProjectIds.length > 0 ? 10 : 3, // Get more if filtering client-side
-    project_id: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined
-  });
-
-  // Filter top requests for multiple selected projects (client-side)
-  const filteredTopRequests = topRequests ? (
-    selectedProjectIds.length > 1 
-      ? topRequests
-          .filter(request => request.project?.id && selectedProjectIds.includes(request.project.id))
-          .slice(0, 3)
-      : topRequests.slice(0, 3)
-  ) : [];
-  
-  // For activity feed - fetch more activities if multiple projects selected to filter client-side
-  const { data: allRecentActivity, isLoading: activityLoading } = useActivityFeed(
-    selectedProjectIds.length > 1 ? 20 : 5, // Get more if we need to filter
-    selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined
-  );
-
-  // Create a mapping of feature request IDs to projects for activity filtering
-  const featureToProjectMap = React.useMemo(() => {
-    if (!allFeatureRequests) return {};
-    const map: Record<number, { id: number; title: string; group_name?: string }> = {};
-    allFeatureRequests.forEach(request => {
-      if (request.id && request.project) {
-        map[request.id] = request.project;
-      }
-    });
-    return map;
-  }, [allFeatureRequests]);
-
-  // Filter activities for selected projects
-  const filteredRecentActivity = allRecentActivity ? (
-    selectedProjectIds.length > 0 
-      ? allRecentActivity
-          .filter(activity => {
-            // If it's a feature request activity, check if it belongs to selected projects
-            if (activity.reference_type === 'feature_request' && activity.reference_id) {
-              const project = featureToProjectMap[activity.reference_id];
-              return project && selectedProjectIds.includes(project.id);
-            }
-            // For other activity types, include them if no specific project filtering is needed
-            // or if we can't determine the project association
-            return selectedProjectIds.length === 0;
-          })
-          .slice(0, 5)
-      : allRecentActivity.slice(0, 5)
-  ) : [];
-
-  // Calculate project-specific stats
-  const calculateProjectStats = () => {
-    if (!allFeatureRequests || selectedProjectIds.length === 0) {
-      // No projects selected, use global stats
-      return {
-        totalProjects: trackerStats?.projects?.total || 0,
-        totalRequests: trackerStats?.feature_requests?.total || 0,
-        openRequests: trackerStats?.feature_requests?.open || 0,
-        completedRequests: trackerStats?.feature_requests?.completed || 0
-      };
-    }
-    
-    // Filter requests for selected projects
-    const filteredRequests = allFeatureRequests.filter(request => 
-      request.project?.id && selectedProjectIds.includes(request.project.id)
-    );
-    
-    const openCount = filteredRequests.filter(r => 
-      r.status === 'Open' || r.status === 'open' || r.status === 'pending'
-    ).length;
-    
-    const completedCount = filteredRequests.filter(r => 
-      r.status === 'Completed' || r.status === 'completed'
-    ).length;
-    
-    return {
-      totalProjects: selectedProjectIds.length,
-      totalRequests: filteredRequests.length,
-      openRequests: openCount,
-      completedRequests: completedCount
-    };
-  };
-
-  const stats = calculateProjectStats();
+  const {
+    selectedProjectIds,
+    setSelectedProjectIds,
+    stats,
+    filteredTopRequests,
+    filteredRecentActivity,
+    isLoading,
+    requestsLoading,
+    activityLoading,
+    error,
+    featureToProjectMap
+  } = useTrackerData();
 
   // Debug logging
   console.log('TrackerDashboard Debug:', {
     projectsData,
     projectsLoading,
-    trackerStats,
-    statsLoading,
     selectedProjectIds,
-    allFeatureRequests,
     calculatedStats: stats,
-    topRequests,
+    filteredTopRequests,
     requestsLoading,
-    allRecentActivity,
     filteredRecentActivity,
-    activityLoading
+    activityLoading,
+    isLoading,
+    error
   });
 
-  const isLoading = statsLoading;
-  const error = statsError;
-
   if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading tracker data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading tracker data..." />;
   }
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <div className="text-red-500 mb-4">❌ Error loading tracker data</div>
-          <p className="text-gray-600 mb-4">{error.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+      <ErrorDisplay
+        title="❌ Error loading tracker data"
+        message={error.message}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

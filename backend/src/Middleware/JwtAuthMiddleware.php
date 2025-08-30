@@ -7,6 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use App\Services\Auth0Service;
+use App\Models\User;
 
 class JwtAuthMiddleware implements MiddlewareInterface
 {
@@ -36,11 +37,17 @@ class JwtAuthMiddleware implements MiddlewareInterface
             $payload = $this->auth0Service->validateToken($token);
             $userInfo = $this->auth0Service->extractUserInfo($payload);
 
+            // Look up user in database to get role
+            $user = User::where('auth0_id', $userInfo['sub'])->first();
+            $userRole = $user ? $user->role : 'user'; // Default to 'user' if not found in DB
+            
             // Add Auth0 user information to request attributes
             $request = $request
                 ->withAttribute('auth0_sub', $userInfo['sub'])
                 ->withAttribute('user_email', $userInfo['email'])
                 ->withAttribute('user_name', $userInfo['name'])
+                ->withAttribute('user_role', $userRole) // Add the missing user_role attribute
+                ->withAttribute('user_id', $user ? $user->id : null)
                 ->withAttribute('auth0_payload', $payload)
                 ->withAttribute('auth0_user_info', $userInfo);
 
