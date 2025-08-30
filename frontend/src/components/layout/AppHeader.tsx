@@ -54,6 +54,16 @@ export const AppHeader: React.FC = () => {
                 <span className="text-base">🥚</span>
                 Feature Requests
               </Link>
+              <Link
+                to="/about"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/about')
+                    ? 'bg-gray-100 text-gray-800'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                }`}
+              >
+                About
+              </Link>
               {isAdmin && (
                 <Link
                   to="/projects"
@@ -79,6 +89,7 @@ export const AppHeader: React.FC = () => {
               <option value="/">Home</option>
               <option value="/tracker">Tracker</option>
               <option value="/features">🥚 Feature Requests</option>
+              <option value="/about">About</option>
               {isAuthenticated && <option value="/profile">Profile</option>}
               {isAdmin && <option value="/projects">Manage Projects</option>}
             </select>
