@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react';
-import { Header } from '../components/Header';
 import { QuickLinks } from '../components/QuickLinks';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
-import AuthStatus from '../components/AuthStatus';
-import { useProjects } from '../hooks/useProjectsQuery';
+import { useHomepageProjects } from '../hooks/useProjectsQuery';
 
 const HomePage: React.FC = () => {
-  const { data: projectsData, isLoading: loading, error } = useProjects();
+  const { data: projectsData, isLoading: loading, error } = useHomepageProjects();
 
   // Inject Ko-fi overlay widget
   useEffect(() => {
@@ -19,7 +17,7 @@ const HomePage: React.FC = () => {
 
     const initWidget = () => {
       try {
-        const kofi = (window as any).kofiWidgetOverlay;
+        const kofi = (window as { kofiWidgetOverlay?: { draw?: (id: string, config: Record<string, string>) => void } }).kofiWidgetOverlay;
         if (kofi && typeof kofi.draw === 'function') {
           kofi.draw('webhatchery', {
             type: 'floating-chat',
@@ -28,9 +26,9 @@ const HomePage: React.FC = () => {
             'floating-chat.donateButton.text-color': '#fff',
           });
         }
-      } catch (e) {
+      } catch {
         // non-fatal
-        // console.warn('Ko-fi widget init failed', e);
+        // console.warn('Ko-fi widget init failed');
       }
     };
 
@@ -74,13 +72,7 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8 bg-gray-50 min-h-screen">
-      {/* Top-right login status */}
-      <div className="fixed top-3 right-3 z-10">
-        <AuthStatus />
-      </div>
-
-      <Header data={projectsData} />
+    <div className="max-w-6xl mx-auto p-8">
       <QuickLinks data={projectsData} />
       <ProjectLegend />
       <ProjectShowcase data={projectsData} />

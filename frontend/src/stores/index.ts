@@ -2,8 +2,7 @@
  * Stores index - exports all stores and related hooks
  */
 
-// Auth store
-export { useAuthStore, useAuth } from './authStore';
+// Auth store (removed - using unified feature request auth system)
 
 // Projects store
 export {

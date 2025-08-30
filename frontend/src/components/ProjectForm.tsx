@@ -112,10 +112,23 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         />
       </div>
 
-      <div className="col-span-1 md:col-span-2">
+      <div className="col-span-1 md:col-span-2 space-y-4">
+        {/* Toggle Controls */}
+        <div className="flex items-center gap-6">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={p.show_on_homepage !== false}
+              onChange={e => onChange({ ...p, show_on_homepage: e.target.checked })}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">Show on Homepage</span>
+          </label>
+        </div>
+
         <button
           type="submit"
-          className="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
         >
           {submitLabel}
         </button>

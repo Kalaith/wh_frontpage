@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CACHE_DURATION } from '../constants/app';
 import * as authApi from '../api/authApi';
 
 // Query keys
@@ -16,13 +17,13 @@ export const useCurrentUser = () => {
       try {
         const user = await authApi.getCurrentUser();
         return user;
-      } catch (error) {
+      } catch {
         // If no token or invalid token, return null instead of throwing
         return null;
       }
     },
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: CACHE_DURATION.PROJECTS
   });
 };
 

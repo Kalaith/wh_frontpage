@@ -1,5 +1,7 @@
-import type { ProjectsData } from '../types/projects';
+import type { ProjectsData, Project } from '../types/projects';
 import api from '../api/api';
+import { getAllProjects } from '../utils/projectUtils';
+import { getErrorMessage } from '../utils/errorHandling';
 
 export class ProjectsService {
   private static instance: ProjectsService;
@@ -28,7 +30,7 @@ export class ProjectsService {
       }
 
       throw new Error(
-        apiResponse.error?.message || 'Failed to fetch projects from API'
+        getErrorMessage(apiResponse.error, 'Failed to fetch projects from API')
       );
     } catch (error) {
       console.error('Error loading projects data:', error);
@@ -41,26 +43,26 @@ export class ProjectsService {
   }
 
   // Create a project via API and clear cache so callers can re-fetch fresh data
-  public async createProject(projectData: Partial<any>): Promise<any> {
+  public async createProject(projectData: Partial<Project>): Promise<Project> {
     const res = await api.createProject(projectData);
     if (res.success && res.data) {
       this.clearCache();
       return res.data;
     }
-    throw new Error(res.error?.message || 'Failed to create project');
+    throw new Error(getErrorMessage(res.error, 'Failed to create project'));
   }
 
   // Update a project via API and clear cache
   public async updateProject(
     projectId: number,
-    projectData: Partial<any>
-  ): Promise<any> {
+    projectData: Partial<Project>
+  ): Promise<Project> {
     const res = await api.updateProject(projectId, projectData);
     if (res.success && res.data) {
       this.clearCache();
       return res.data;
     }
-    throw new Error(res.error?.message || 'Failed to update project');
+    throw new Error(getErrorMessage(res.error, 'Failed to update project'));
   }
 
   // Delete a project via API and clear cache
@@ -70,15 +72,11 @@ export class ProjectsService {
       this.clearCache();
       return;
     }
-    throw new Error(res.error?.message || 'Failed to delete project');
+    throw new Error(getErrorMessage(res.error, 'Failed to delete project'));
   }
 
   // Utility to flatten ProjectsData into a simple Project[] list
-  public static flattenProjectsData(data: ProjectsData): Array<any> {
-    const flat: Array<any> = [];
-    Object.values(data.groups || {}).forEach((grp: any) => {
-      grp.projects.forEach((p: any) => flat.push(p));
-    });
-    return flat;
+  public static flattenProjectsData(data: ProjectsData): Project[] {
+    return getAllProjects(data);
   }
 }

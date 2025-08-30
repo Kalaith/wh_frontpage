@@ -3,21 +3,17 @@
  * Manages projects data and state throughout the application
  */
 import { create } from 'zustand';
-import type { ProjectsData } from '../types/projects';
+import type { ProjectsData, Project } from '../types/projects';
+import { StoreError } from '../types/store';
 import api from '../api/api';
-
-// Projects error interface
-interface ProjectsError {
-  code: string;
-  message: string;
-  details?: any;
-}
+import { getAllProjects } from '../utils/projectUtils';
+import { getErrorMessage } from '../utils/errorHandling';
 
 // Projects state interface
 interface ProjectsState {
   projectsData: ProjectsData | null;
   isLoading: boolean;
-  error: ProjectsError | null;
+  error: StoreError | null;
   lastFetched: number | null;
 }
 
@@ -28,8 +24,8 @@ interface ProjectsActions {
   getProjectsData: () => Promise<ProjectsData>;
 
   // CRUD operations
-  createProject: (projectData: Partial<any>) => Promise<any>;
-  updateProject: (projectId: number, projectData: Partial<any>) => Promise<any>;
+  createProject: (projectData: Partial<ProjectsData>) => Promise<Project>;
+  updateProject: (projectId: number, projectData: Partial<ProjectsData>) => Promise<Project>;
   deleteProject: (projectId: number) => Promise<void>;
 
   // Cache management
@@ -38,13 +34,13 @@ interface ProjectsActions {
 
   // Error handling
   clearError: () => void;
-  setError: (error: ProjectsError | null) => void;
+  setError: (error: StoreError | null) => void;
 
   // Loading state
   setLoading: (loading: boolean) => void;
 
   // Utilities
-  getFlattenedProjects: () => Array<any>;
+  getFlattenedProjects: () => Project[];
 }
 
 type ProjectsStore = ProjectsState & ProjectsActions;
@@ -88,10 +84,10 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
       }
 
       throw new Error(
-        apiResponse.error?.message || 'Failed to fetch projects from API'
+        getErrorMessage(apiResponse.error, 'Failed to fetch projects from API')
       );
     } catch (error) {
-      const projectsError: ProjectsError = {
+      const projectsError: StoreError = {
         code: 'FETCH_FAILED',
         message:
           error instanceof Error ? error.message : 'Failed to fetch projects',
@@ -113,7 +109,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   },
 
   // CRUD operations
-  createProject: async (projectData: Partial<any>) => {
+  createProject: async (projectData: Partial<ProjectsData>) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -127,9 +123,9 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return response.data;
       }
-      throw new Error(response.error?.message || 'Failed to create project');
+      throw new Error(getErrorMessage(response.error, 'Failed to create project'));
     } catch (error) {
-      const projectsError: ProjectsError = {
+      const projectsError: StoreError = {
         code: 'CREATE_FAILED',
         message:
           error instanceof Error ? error.message : 'Failed to create project',
@@ -139,7 +135,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
     }
   },
 
-  updateProject: async (projectId: number, projectData: Partial<any>) => {
+  updateProject: async (projectId: number, projectData: Partial<ProjectsData>) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -153,9 +149,9 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return response.data;
       }
-      throw new Error(response.error?.message || 'Failed to update project');
+      throw new Error(getErrorMessage(response.error, 'Failed to update project'));
     } catch (error) {
-      const projectsError: ProjectsError = {
+      const projectsError: StoreError = {
         code: 'UPDATE_FAILED',
         message:
           error instanceof Error ? error.message : 'Failed to update project',
@@ -179,9 +175,9 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return;
       }
-      throw new Error(response.error?.message || 'Failed to delete project');
+      throw new Error(getErrorMessage(response.error, 'Failed to delete project'));
     } catch (error) {
-      const projectsError: ProjectsError = {
+      const projectsError: StoreError = {
         code: 'DELETE_FAILED',
         message:
           error instanceof Error ? error.message : 'Failed to delete project',
@@ -208,7 +204,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
 
   // Error handling
   clearError: () => set({ error: null }),
-  setError: (error: ProjectsError | null) => set({ error }),
+  setError: (error: StoreError | null) => set({ error }),
 
   // Loading state
   setLoading: (loading: boolean) => set({ isLoading: loading }),
@@ -216,15 +212,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   // Utilities
   getFlattenedProjects: () => {
     const { projectsData } = get();
-    if (!projectsData) return [];
-
-    const flat: Array<any> = [];
-    Object.values(projectsData.groups || {}).forEach((grp: any) => {
-      if (grp.projects) {
-        grp.projects.forEach((p: any) => flat.push(p));
-      }
-    });
-    return flat;
+    return getAllProjects(projectsData);
   },
 }));
 

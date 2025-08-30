@@ -1,41 +1,13 @@
 /**
- * Authentication API Client
- * Handles all authentication-related API requests
+ * Authentication API Client - Auth0 Integration
+ * Provides compatibility layer for Auth0 authentication
  */
 import type { AuthUser, LoginRequest, RegisterRequest } from '../entities/Auth';
+import { createAuthError, createValidationError, createServerError, handleApiError } from '../utils/errorHandling';
 
-// Base URL for the central auth service (auth app)
-// Prefer an explicit env var VITE_AUTH_SERVICE_URL; fall back to the auth app path on the same host
-const API_BASE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || '/auth/api';
-
-/**
- * Custom error handler to provide more descriptive error messages
- */
-const handleApiError = (error: unknown): never => {
-  // Log the error for debugging (only in development)
-  if (import.meta.env.DEV) {
-    console.error('Auth API Error:', error);
-  }
-
-  // Handle fetch errors
-  if (error instanceof TypeError && error.message.includes('fetch')) {
-    throw {
-      code: 'CONNECTION_ERROR',
-      message:
-        'Unable to connect to the server. Please check your connection or try again later.',
-    };
-  }
-
-  // Handle other errors
-  if (error && typeof error === 'object' && 'message' in error) {
-    throw error;
-  }
-
-  throw {
-    code: 'UNKNOWN_ERROR',
-    message: 'An unexpected error occurred. Please try again.',
-  };
-};
+// Base URL for the local auth service (feature request system)
+// Use the local backend API instead of the centralized auth service
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 /**
  * Make API request with proper error handling
@@ -44,57 +16,69 @@ const getStoredToken = (): string | null => {
   return localStorage.getItem('token');
 };
 
-const apiRequest = async <T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  const token = getStoredToken();
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw {
-      code: response.status === 401 ? 'UNAUTHORIZED' : 'API_ERROR',
-      message:
-        errorData.error?.message ||
-        `HTTP ${response.status}: ${response.statusText}`,
-      details: errorData,
-    };
-  }
-
-  const data = await response.json();
-
-  if (!data.success) {
-    throw {
-      code: data.error?.code || 'API_ERROR',
-      message: data.error?.message || 'API request failed',
-      details: data.error?.details,
-    };
-  }
-
-  return data.data;
-};
 
 /**
- * Login user with credentials - redirects to central auth service
+ * Login user with credentials - uses local auth system
  */
-export const login = async (_credentials: LoginRequest): Promise<AuthUser> => {
-  // For centralized auth, redirect to the auth portal with return URL
-  const returnUrl = encodeURIComponent(window.location.href);
-  const AUTH_APP_URL =
-    import.meta.env.VITE_AUTH_APP_URL || 'http://127.0.0.1/auth';
-  window.location.href = `${AUTH_APP_URL}/login?returnUrl=${returnUrl}`;
+export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
 
-  // This will never execute due to redirect, but needed for TypeScript
-  throw new Error('Redirecting to auth service...');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        throw createAuthError(errorData.message || 'Invalid credentials');
+      } else if (response.status === 400) {
+        throw createValidationError(errorData.message || 'Invalid input data', errorData);
+      } else if (response.status >= 500) {
+        throw createServerError(errorData.message || 'Server error occurred');
+      } else {
+        throw {
+          code: 'API_ERROR',
+          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          status: response.status,
+          details: errorData,
+        };
+      }
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw {
+        code: 'API_ERROR',
+        message: data.message || 'Login failed',
+        details: data.error,
+      };
+    }
+
+    // Store token for future requests
+    if (data.data.token) {
+      localStorage.setItem('token', data.data.token);
+    }
+
+    // Convert our User format to AuthUser format for login response
+    const authUser: AuthUser = {
+      id: data.data.user.id,
+      email: data.data.user.email,
+      firstName: data.data.user.display_name?.split(' ')[0] || data.data.user.username,
+      lastName: data.data.user.display_name?.split(' ').slice(1).join(' ') || '',
+      membershipType: data.data.user.role === 'admin' ? 'admin' : 'member',
+      token: data.data.token,
+      isActive: data.data.user.is_verified,
+      createdAt: data.data.user.member_since || '',
+      updatedAt: '',
+    };
+    return authUser;
+  } catch (error) {
+    throw handleApiError(error);
+  }
 };
 
 /**
@@ -104,34 +88,77 @@ export const register = async (
   userData: RegisterRequest
 ): Promise<AuthUser> => {
   try {
-    // register should hit the central auth service (e.g. /auth/api/register)
-    const data = await apiRequest<AuthUser>('/register', {
+    // Convert from old format to new format
+    const registerData = {
+      username: userData.email.split('@')[0], // Use email prefix as username
+      email: userData.email,
+      password: userData.password,
+      display_name: `${userData.firstName} ${userData.lastName}`.trim(),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
-      body: JSON.stringify(userData),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registerData),
     });
 
-    // Store token for future requests
-    if (data.token) {
-      localStorage.setItem('token', data.token);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 400) {
+        throw createValidationError(errorData.message || 'Invalid registration data', errorData);
+      } else if (response.status >= 500) {
+        throw createServerError(errorData.message || 'Server error occurred');
+      } else {
+        throw {
+          code: 'API_ERROR',
+          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          status: response.status,
+          details: errorData,
+        };
+      }
     }
 
-    return data;
+    const data = await response.json();
+
+    if (!data.success) {
+      throw {
+        code: 'API_ERROR',
+        message: data.message || 'Registration failed',
+        details: data.error,
+      };
+    }
+
+    // Convert our User format to AuthUser format for registration response
+    const authUser: AuthUser = {
+      id: data.data.id,
+      email: data.data.email,
+      firstName: data.data.display_name?.split(' ')[0] || data.data.username,
+      lastName: data.data.display_name?.split(' ').slice(1).join(' ') || '',
+      membershipType: data.data.role === 'admin' ? 'admin' : 'member',
+      token: '', // No token provided during registration
+      isActive: data.data.is_verified,
+      createdAt: data.data.member_since || '',
+      updatedAt: '',
+    };
+    return authUser;
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
 
 /**
  * Get current authenticated user info
- * First tries local token, then checks with central auth service
+ * Uses local token to validate with our feature request API
  */
 export const getCurrentUser = async (): Promise<AuthUser | null> => {
   const AUTH_DEBUG =
     import.meta.env.DEV || import.meta.env.VITE_DEBUG_AUTH === 'true';
-  const authDebug = (...args: any[]) => {
+  const authDebug = (...args: unknown[]) => {
     if (AUTH_DEBUG) console.log(...args);
   };
-  const authWarn = (...args: any[]) => {
+  const authWarn = (...args: unknown[]) => {
     if (AUTH_DEBUG) console.warn(...args);
   };
 
@@ -141,62 +168,56 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     const token = getStoredToken();
     authDebug('[AuthAPI] Local token exists:', !!token);
 
-    // First try with local token if available
-    if (token) {
-      try {
-        authDebug('[AuthAPI] Trying local token validation...');
-        // validate token against central auth service (/auth/api/user)
-        const data = await apiRequest<AuthUser>('/user');
-        authDebug('[AuthAPI] Local token validated successfully:', data);
-        return data;
-      } catch (error) {
-        authDebug('[AuthAPI] Local token validation failed:', error);
-        // If local token is invalid, clear it and continue to check central auth
-        if (
-          error &&
-          typeof error === 'object' &&
-          'code' in error &&
-          error.code === 'UNAUTHORIZED'
-        ) {
-          localStorage.removeItem('token');
-        }
-      }
+    if (!token) {
+      authDebug('[AuthAPI] No token found');
+      return null;
     }
 
-    // Try to get user info from central auth service (cross-domain check)
     try {
-      authDebug('[AuthAPI] Trying central auth service check...');
-      const centralHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        centralHeaders['Authorization'] = `Bearer ${token}`;
-      }
-      // reuse API_BASE_URL for central service checks
-      const response = await fetch(`${API_BASE_URL}/user`, {
+      authDebug('[AuthAPI] Validating token with local API...');
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
         method: 'GET',
-        credentials: 'include', // Include cookies for cross-domain auth
-        headers: centralHeaders,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
-      authDebug('[AuthAPI] Central auth response status:', response.status);
+      authDebug('[AuthAPI] Profile response status:', response.status);
 
-      if (response.ok) {
-        const data = await response.json();
-        authDebug('[AuthAPI] Central auth response data:', data);
-
-        if (data.success && data.data) {
-          // Store the token locally for future requests
-          if (data.data.token) {
-            localStorage.setItem('token', data.data.token);
-            authDebug('[AuthAPI] Stored token from central auth');
-          }
-          return data.data;
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token is invalid, clear it
+          localStorage.removeItem('token');
+          authDebug('[AuthAPI] Token invalid, cleared storage');
+          return null;
         }
+        throw new Error(`HTTP ${response.status}`);
       }
-    } catch (centralAuthError) {
-      // Central auth service not available or user not logged in there
-      authDebug('[AuthAPI] Central auth check failed:', centralAuthError);
+
+      const data = await response.json();
+      authDebug('[AuthAPI] Profile response data:', data);
+
+      if (data.success && data.data) {
+        // Convert our User format to AuthUser format
+        const authUser: AuthUser = {
+          id: data.data.id,
+          email: data.data.email,
+          firstName: data.data.display_name?.split(' ')[0] || data.data.username,
+          lastName: data.data.display_name?.split(' ').slice(1).join(' ') || '',
+          membershipType: data.data.role === 'admin' ? 'admin' : 'member',
+          token: token,
+          isActive: data.data.is_verified,
+          createdAt: data.data.member_since || '',
+          updatedAt: '',
+        };
+        authDebug('[AuthAPI] User validated successfully:', authUser);
+        return authUser;
+      }
+    } catch (error) {
+      authDebug('[AuthAPI] Token validation failed:', error);
+      localStorage.removeItem('token');
+      return null;
     }
 
     authDebug('[AuthAPI] No authentication found');

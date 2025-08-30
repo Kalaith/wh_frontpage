@@ -26,10 +26,26 @@ class ProjectController
 
             $groupedProjects = $action->execute($isAdmin);
 
+            // Create flat arrays for frontend compatibility
+            $allProjects = [];
+            $groupedArray = [];
+            
+            foreach ($groupedProjects as $groupName => $group) {
+                // Add projects to flat array
+                foreach ($group['projects'] as $project) {
+                    $allProjects[] = $project;
+                }
+                
+                // Create grouped array (just projects, not the group wrapper)
+                $groupedArray[$groupName] = $group['projects'];
+            }
+
             $data = [
                 'version' => '2.0.0',
                 'description' => 'WebHatchery Projects',
-                'groups' => $groupedProjects
+                'groups' => $groupedProjects,
+                'projects' => $allProjects,
+                'grouped' => $groupedArray
             ];
 
             $payload = json_encode(['success' => true, 'data' => $data]);
@@ -38,6 +54,51 @@ class ProjectController
 
         } catch (\Exception $e) {
             $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to fetch projects', 'details' => $e->getMessage()]]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        }
+    }
+
+    /**
+     * Get projects for homepage (only those with show_on_homepage = true)
+     */
+    public function getHomepageProjects(Request $request, Response $response): Response
+    {
+        try {
+            // Determine if the requesting user is an admin
+            $userRole = $request->getAttribute('user_role', 'user');
+            $isAdmin = strtolower((string)$userRole) === 'admin';
+
+            $groupedProjects = \App\Models\Project::getHomepageProjects($isAdmin);
+
+            // Create flat arrays for frontend compatibility
+            $allProjects = [];
+            $groupedArray = [];
+            
+            foreach ($groupedProjects as $groupName => $group) {
+                // Add projects to flat array
+                foreach ($group['projects'] as $project) {
+                    $allProjects[] = $project;
+                }
+                
+                // Create grouped array (just projects, not the group wrapper)
+                $groupedArray[$groupName] = $group['projects'];
+            }
+
+            $data = [
+                'version' => '2.0.0',
+                'description' => 'WebHatchery Homepage Projects',
+                'groups' => $groupedProjects,
+                'projects' => $allProjects,
+                'grouped' => $groupedArray
+            ];
+
+            $payload = json_encode(['success' => true, 'data' => $data]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to fetch homepage projects', 'details' => $e->getMessage()]]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
@@ -81,6 +142,14 @@ class ProjectController
     public function createProject(Request $request, Response $response): Response
     {
         try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
             $data = $request->getParsedBody();
             $action = new CreateProjectAction();
             $created = $action->execute($data);
@@ -102,6 +171,14 @@ class ProjectController
     public function updateProject(Request $request, Response $response, array $args): Response
     {
         try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
             $id = (int)($args['id'] ?? 0);
             $data = $request->getParsedBody();
             $action = new UpdateProjectAction();
@@ -130,6 +207,14 @@ class ProjectController
     public function deleteProject(Request $request, Response $response, array $args): Response
     {
         try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
             $id = (int)($args['id'] ?? 0);
             $action = new DeleteProjectAction();
             $ok = $action->execute($id);
