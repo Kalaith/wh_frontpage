@@ -13,7 +13,7 @@ import {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 class FeatureRequestApiError extends Error {
-  constructor(public status: number, message: string, public response?: any) {
+  constructor(public status: number, message: string, public response?: unknown) {
     super(message);
     this.name = 'FeatureRequestApiError';
   }
@@ -127,8 +127,8 @@ export const featureRequestApi = {
     return response.data || [];
   },
 
-  async getStats(): Promise<any> {
-    const response = await apiRequest<any>('/features/stats');
+  async getStats(): Promise<{ total: number; approved: number; pending: number; completed: number }> {
+    const response = await apiRequest<{ total: number; approved: number; pending: number; completed: number }>('/features/stats');
     return response.data!;
   },
 
@@ -193,7 +193,12 @@ export const featureRequestApi = {
     type?: string;
   }): Promise<{
     transactions: EggTransaction[];
-    stats: any;
+    stats: {
+      total_eggs_earned: number;
+      total_eggs_spent: number;
+      feature_requests_count: number;
+      votes_count: number;
+    };
   }> {
     const queryParams = new URLSearchParams();
     if (params) {
@@ -206,7 +211,12 @@ export const featureRequestApi = {
     
     const response = await apiRequest<{
       transactions: EggTransaction[];
-      stats: any;
+      stats: {
+        total_eggs_earned: number;
+        total_eggs_spent: number;
+        feature_requests_count: number;
+        votes_count: number;
+      };
     }>(`/user/transactions?${queryParams}`);
     return response.data!;
   },

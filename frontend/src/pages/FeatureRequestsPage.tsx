@@ -58,7 +58,7 @@ const FeatureRequestsPage: React.FC = () => {
 
   const createRequestMutation = useCreateFeatureRequest();
 
-  const handleSubmitRequest = async (data: any) => {
+  const handleSubmitRequest = async (data: { title: string; description: string; category: string; priority: string; project_id?: string }) => {
     try {
       await createRequestMutation.mutateAsync(data);
       setShowForm(false);

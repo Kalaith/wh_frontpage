@@ -5,7 +5,7 @@ import { useAuth } from '../../utils/AuthContext';
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 

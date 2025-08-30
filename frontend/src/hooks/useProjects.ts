@@ -30,7 +30,7 @@ export const useProjects = () => {
   const createProject = useCallback(async (p: Partial<Project>) => {
     try {
       const svc = ProjectsService.getInstance();
-      const created = await svc.createProject(p as any);
+      const created = await svc.createProject(p as Project);
       // optimistically add created project
       setProjects(prev => [created as Project, ...prev]);
       return created;
@@ -44,7 +44,7 @@ export const useProjects = () => {
     async (id: number, updates: Partial<Project>) => {
       try {
         const svc = ProjectsService.getInstance();
-        const updated = await svc.updateProject(id, updates as any);
+        const updated = await svc.updateProject(id, updates as Partial<Project>);
         setProjects(prev =>
           prev.map(p => (p.id === id ? (updated as Project) : p))
         );

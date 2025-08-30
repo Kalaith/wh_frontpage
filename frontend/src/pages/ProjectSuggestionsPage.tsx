@@ -18,7 +18,7 @@ const ProjectSuggestionsPage: React.FC = () => {
 
   const createSuggestionMutation = useCreateProjectSuggestion();
 
-  const handleSubmitSuggestion = async (data: any) => {
+  const handleSubmitSuggestion = async (data: { title: string; description: string; group: string; priority: string }) => {
     try {
       await createSuggestionMutation.mutateAsync(data);
       setShowForm(false);

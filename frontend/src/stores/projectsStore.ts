@@ -4,21 +4,16 @@
  */
 import { create } from 'zustand';
 import type { ProjectsData } from '../types/projects';
+import { StoreError } from '../types/store';
 import api from '../api/api';
 import { getAllProjects } from '../utils/projectUtils';
-
-// Projects error interface
-interface ProjectsError {
-  code: string;
-  message: string;
-  details?: any;
-}
+import { getErrorMessage } from '../utils/errorHandling';
 
 // Projects state interface
 interface ProjectsState {
   projectsData: ProjectsData | null;
   isLoading: boolean;
-  error: ProjectsError | null;
+  error: StoreError | null;
   lastFetched: number | null;
 }
 
@@ -29,8 +24,8 @@ interface ProjectsActions {
   getProjectsData: () => Promise<ProjectsData>;
 
   // CRUD operations
-  createProject: (projectData: Partial<any>) => Promise<any>;
-  updateProject: (projectId: number, projectData: Partial<any>) => Promise<any>;
+  createProject: (projectData: Partial<ProjectsData>) => Promise<ProjectsData>;
+  updateProject: (projectId: number, projectData: Partial<ProjectsData>) => Promise<ProjectsData>;
   deleteProject: (projectId: number) => Promise<void>;
 
   // Cache management
@@ -45,7 +40,7 @@ interface ProjectsActions {
   setLoading: (loading: boolean) => void;
 
   // Utilities
-  getFlattenedProjects: () => Array<any>;
+  getFlattenedProjects: () => ProjectsData[];
 }
 
 type ProjectsStore = ProjectsState & ProjectsActions;
@@ -114,7 +109,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   },
 
   // CRUD operations
-  createProject: async (projectData: Partial<any>) => {
+  createProject: async (projectData: Partial<ProjectsData>) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -140,7 +135,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
     }
   },
 
-  updateProject: async (projectId: number, projectData: Partial<any>) => {
+  updateProject: async (projectId: number, projectData: Partial<ProjectsData>) => {
     set({ isLoading: true, error: null });
 
     try {

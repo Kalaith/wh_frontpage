@@ -167,10 +167,10 @@ export const register = async (
 export const getCurrentUser = async (): Promise<AuthUser | null> => {
   const AUTH_DEBUG =
     import.meta.env.DEV || import.meta.env.VITE_DEBUG_AUTH === 'true';
-  const authDebug = (...args: any[]) => {
+  const authDebug = (...args: unknown[]) => {
     if (AUTH_DEBUG) console.log(...args);
   };
-  const authWarn = (...args: any[]) => {
+  const authWarn = (...args: unknown[]) => {
     if (AUTH_DEBUG) console.warn(...args);
   };
 

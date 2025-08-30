@@ -69,8 +69,8 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
     try {
       await onCreate(formData);
       onClose();
-    } catch (error: any) {
-      setError(error.message || 'Failed to create feature request');
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to create feature request');
     } finally {
       setIsSubmitting(false);
     }
@@ -215,7 +215,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                   value={formData.feature_type}
                   onChange={(e) => setFormData(prev => ({ 
                     ...prev, 
-                    feature_type: e.target.value as any 
+                    feature_type: e.target.value as 'new_feature' | 'improvement' | 'bug_fix' | 'integration' | 'other' 
                   }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >

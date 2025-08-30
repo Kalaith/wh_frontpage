@@ -1,11 +1,12 @@
 // src/api/api.ts - API client for backend communication
 import type { ProjectsData, Project } from '../types/projects';
+import type { AuthUser } from '../entities/Auth';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || '/api';
 const DEFAULT_TIMEOUT_MS = 10_000; // 10s
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
@@ -22,7 +23,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  public async request<T = any>(
+  public async request<T = unknown>(
     endpoint: string,
     options: RequestInit = {},
     timeoutMs: number = DEFAULT_TIMEOUT_MS
@@ -55,10 +56,10 @@ class ApiClient {
 
       if (!response.ok) {
         // try to parse error body if possible
-        let errBody: any = null;
+        let errBody: { message?: string; error?: { message?: string } } | null = null;
         try {
           errBody = await response.json();
-        } catch (_) {
+        } catch {
           /* ignore */
         }
         return {
@@ -66,8 +67,9 @@ class ApiClient {
           error: {
             message:
               errBody?.error?.message ||
+              errBody?.message ||
               `HTTP ${response.status}: ${response.statusText}`,
-            details: errBody,
+            details: JSON.stringify(errBody),
           },
         };
       }
@@ -76,10 +78,10 @@ class ApiClient {
       const text = await response.text();
       const data = text ? JSON.parse(text) : { success: true, data: null };
       return data as ApiResponse<T>;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timer);
       const message =
-        error?.name === 'AbortError'
+        (error as { name?: string })?.name === 'AbortError'
           ? 'Request timed out'
           : error instanceof Error
             ? error.message
@@ -142,28 +144,28 @@ class ApiClient {
   async login(
     email: string,
     password: string
-  ): Promise<ApiResponse<{ user: any; token: string }>> {
-    const res = await this.request(`/auth/login`, {
+  ): Promise<ApiResponse<{ user: AuthUser; token: string }>> {
+    const res = await this.request<{ user: AuthUser; token: string }>(`/auth/login`, {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
     if (res.success && res.data?.token) {
       localStorage.setItem('token', res.data.token);
     }
-    return res as ApiResponse<{ user: any; token: string }>;
+    return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 
   async register(
-    userData: Record<string, any>
-  ): Promise<ApiResponse<{ user: any; token: string }>> {
-    const res = await this.request(`/auth/register`, {
+    userData: Record<string, unknown>
+  ): Promise<ApiResponse<{ user: AuthUser; token: string }>> {
+    const res = await this.request<{ user: AuthUser; token: string }>(`/auth/register`, {
       method: 'POST',
       body: JSON.stringify(userData),
     });
     if (res.success && res.data?.token) {
       localStorage.setItem('token', res.data.token);
     }
-    return res as ApiResponse<{ user: any; token: string }>;
+    return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 }
 

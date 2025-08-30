@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FeatureRequestCard } from '../components/features/FeatureRequestCard';
 import { CreateFeatureModal } from '../components/features/CreateFeatureModal';
@@ -18,31 +18,17 @@ export const FeatureRequestDashboard = () => {
 
   const { isAuthenticated, isLoading: authLoading, isAdmin, user, refreshUserInfo } = useAuth();
 
-  useEffect(() => {
-    // Only load features when auth is complete and user is authenticated
-    if (authLoading) return; // Wait for auth to complete
-    if (!isAuthenticated) return; // Must be authenticated
-    
-    // Reset filter if non-admin user somehow has 'pending' selected
-    if (filter === 'pending' && !isAdmin) {
-      setFilter('approved');
-      return;
-    }
-    loadFeatures();
-  }, [filter, isAdmin, authLoading, isAuthenticated]);
-
-  useEffect(() => {
-    // Only load projects when auth is complete (projects are public but we need consistent loading)
-    if (authLoading) return; // Wait for auth to complete
-    loadProjects();
-  }, [authLoading]);
-
-  const loadFeatures = async () => {
+  const loadFeatures = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const params: any = { 
+      const params: {
+        limit: number;
+        sort_by: string;
+        sort_direction: 'asc' | 'desc';
+        status?: string;
+      } = { 
         limit: 50,
         sort_by: 'total_eggs',
         sort_direction: 'desc' as const
@@ -54,13 +40,32 @@ export const FeatureRequestDashboard = () => {
 
       const data = await featureRequestApi.getAllFeatures(params);
       setFeatures(data);
-    } catch (error: any) {
-      setError(error.message || 'Failed to load features');
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to load features');
       console.error('Failed to load features:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    // Only load features when auth is complete and user is authenticated
+    if (authLoading) return; // Wait for auth to complete
+    if (!isAuthenticated) return; // Must be authenticated
+    
+    // Reset filter if non-admin user somehow has 'pending' selected
+    if (filter === 'pending' && !isAdmin) {
+      setFilter('approved');
+      return;
+    }
+    loadFeatures();
+  }, [filter, isAdmin, authLoading, isAuthenticated, loadFeatures]);
+
+  useEffect(() => {
+    // Only load projects when auth is complete (projects are public but we need consistent loading)
+    if (authLoading) return; // Wait for auth to complete
+    loadProjects();
+  }, [authLoading]);
 
   const loadProjects = async () => {
     try {
@@ -98,9 +103,9 @@ export const FeatureRequestDashboard = () => {
       });
       await loadFeatures();
       await refreshUserInfo(); // Refresh user's egg balance
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to vote:', error);
-      throw new Error(error.message || 'Failed to cast vote');
+      throw new Error((error as Error).message || 'Failed to cast vote');
     }
   };
 
@@ -108,9 +113,9 @@ export const FeatureRequestDashboard = () => {
     try {
       await featureRequestApi.approveFeature(featureId, notes);
       await loadFeatures(); // Reload to show updated status
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to approve feature:', error);
-      alert('Failed to approve feature: ' + (error.message || 'Unknown error'));
+      alert('Failed to approve feature: ' + ((error as Error).message || 'Unknown error'));
     }
   };
 
@@ -118,9 +123,9 @@ export const FeatureRequestDashboard = () => {
     try {
       await featureRequestApi.rejectFeature(featureId, notes);
       await loadFeatures(); // Reload to show updated status
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to reject feature:', error);
-      alert('Failed to reject feature: ' + (error.message || 'Unknown error'));
+      alert('Failed to reject feature: ' + ((error as Error).message || 'Unknown error'));
     }
   };
 

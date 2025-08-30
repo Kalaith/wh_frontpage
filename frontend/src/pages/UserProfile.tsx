@@ -56,8 +56,8 @@ export const UserProfile: React.FC = () => {
       await featureRequestApi.updateProfile(editForm);
       await refreshUserInfo(); // Refresh user data
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +76,8 @@ export const UserProfile: React.FC = () => {
       await featureRequestApi.deleteAccount();
       logout(); // This will clear the user session
       // Redirect will happen automatically due to auth state change
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete account');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to delete account');
     } finally {
       setIsLoading(false);
     }

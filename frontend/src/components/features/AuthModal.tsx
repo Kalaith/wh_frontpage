@@ -42,8 +42,8 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
     try {
       await login(loginData.email, loginData.password);
       onClose();
-    } catch (error: any) {
-      setError(error.message || 'Login failed');
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
@@ -73,8 +73,8 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
       setLoginData({ email: registerData.email, password: '' });
       setError(null);
       alert('Registration successful! Please log in with your credentials.');
-    } catch (error: any) {
-      setError(error.message || 'Registration failed');
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

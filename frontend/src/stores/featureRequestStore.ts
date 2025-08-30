@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types/featureRequest';
 import { featureRequestApi } from '../api/featureRequestApi';
+import { getErrorMessage, getErrorStatus, isAuthError } from '../utils/errorHandling';
 
 interface FeatureRequestState {
   user: User | null;
@@ -55,13 +56,13 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
             user: null,
             token: null,
             isAuthenticated: false,
             isLoading: false,
-            error: error.message || 'Login failed',
+            error: getErrorMessage(error) || 'Login failed',
           });
           throw error;
         }
@@ -80,10 +81,10 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
             isLoading: false,
-            error: error.message || 'Registration failed',
+            error: getErrorMessage(error) || 'Registration failed',
           });
           throw error;
         }
@@ -113,10 +114,10 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
             isLoading: false,
-            error: error.message || 'Profile update failed',
+            error: getErrorMessage(error) || 'Profile update failed',
           });
           throw error;
         }
@@ -145,10 +146,10 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
             message: `Claimed ${result.eggs_earned} eggs!`,
             eggsEarned: result.eggs_earned,
           };
-        } catch (error: any) {
+        } catch (error: unknown) {
           return {
             success: false,
-            message: error.message || 'Failed to claim daily eggs',
+            message: getErrorMessage(error) || 'Failed to claim daily eggs',
           };
         }
       },
@@ -160,9 +161,9 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
         try {
           const updatedUser = await featureRequestApi.getProfile();
           set({ user: updatedUser });
-        } catch (error: any) {
+        } catch (error: unknown) {
           // If token is invalid, logout
-          if (error.status === 401) {
+          if (isAuthError(error)) {
             get().logout();
           }
         }

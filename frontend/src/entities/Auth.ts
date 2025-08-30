@@ -28,13 +28,13 @@ export interface RegisterRequest {
   confirmPassword?: string;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   message?: string;
 }
@@ -42,7 +42,7 @@ export interface ApiResponse<T = any> {
 export interface AuthError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface AuthState {

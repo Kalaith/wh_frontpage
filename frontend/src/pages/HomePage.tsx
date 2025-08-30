@@ -17,7 +17,7 @@ const HomePage: React.FC = () => {
 
     const initWidget = () => {
       try {
-        const kofi = (window as any).kofiWidgetOverlay;
+        const kofi = (window as { kofiWidgetOverlay?: { draw?: (id: string, config: Record<string, string>) => void } }).kofiWidgetOverlay;
         if (kofi && typeof kofi.draw === 'function') {
           kofi.draw('webhatchery', {
             type: 'floating-chat',
@@ -26,9 +26,9 @@ const HomePage: React.FC = () => {
             'floating-chat.donateButton.text-color': '#fff',
           });
         }
-      } catch (e) {
+      } catch {
         // non-fatal
-        // console.warn('Ko-fi widget init failed', e);
+        // console.warn('Ko-fi widget init failed');
       }
     };
 

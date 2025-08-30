@@ -16,7 +16,7 @@ export const useCurrentUser = () => {
       try {
         const user = await authApi.getCurrentUser();
         return user;
-      } catch (error) {
+      } catch {
         // If no token or invalid token, return null instead of throwing
         return null;
       }

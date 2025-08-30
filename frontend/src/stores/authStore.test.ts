@@ -60,7 +60,7 @@ describe('AuthStore', () => {
 
     // Set some user state first
     useAuthStore.setState({
-      user: { id: 1, email: 'test@example.com' } as any,
+      user: { id: 1, email: 'test@example.com', role: 'user', display_name: 'Test User' },
       isAuthenticated: true,
     });
 

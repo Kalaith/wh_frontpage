@@ -23,7 +23,7 @@ export const FeatureAuthStatus: React.FC = () => {
       } else {
         alert('Unable to claim daily eggs');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to claim daily eggs:', error);
       alert('Failed to claim daily eggs. Please try again.');
     } finally {

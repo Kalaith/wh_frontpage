@@ -29,8 +29,8 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
 
     try {
       await onVote(eggAmount);
-    } catch (error: any) {
-      setError(error.message || 'Failed to cast vote');
+    } catch (error: unknown) {
+      setError((error as Error).message || 'Failed to cast vote');
     } finally {
       setIsSubmitting(false);
     }
