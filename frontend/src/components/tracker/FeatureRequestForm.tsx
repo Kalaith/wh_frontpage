@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { useProjects } from '../../hooks/useProjectsQuery';
 import { getAllProjects } from '../../utils/projectUtils';
-
-interface FeatureRequestData {
-  title: string;
-  description: string;
-  category: string;
-  priority: string;
-  tags: string;
-  project_id?: number;
-}
+import type { FeatureRequestData } from '../../types/featureRequest';
 
 interface FeatureRequestFormProps {
   onSubmit?: (data: FeatureRequestData) => void;

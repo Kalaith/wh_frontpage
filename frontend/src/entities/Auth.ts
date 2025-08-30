@@ -2,6 +2,8 @@
  * Authentication entities and types
  */
 
+import type { AuthError } from '../types/common';
+
 export interface AuthUser {
   id: number;
   email: string;
@@ -26,23 +28,6 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   confirmPassword?: string;
-}
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-  message?: string;
-}
-
-export interface AuthError {
-  code: string;
-  message: string;
-  details?: unknown;
 }
 
 export interface AuthState {

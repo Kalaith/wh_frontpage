@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-
-interface ProjectSuggestionData {
-  name: string;
-  description: string;
-  group: string;
-  rationale: string;
-}
+import type { ProjectSuggestionData } from '../../types/tracker';
 
 interface ProjectSuggestionFormProps {
   onSubmit?: (data: ProjectSuggestionData) => void;

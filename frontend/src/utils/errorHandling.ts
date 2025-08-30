@@ -1,19 +1,15 @@
 // Error handling utilities for consistent error processing across the application
 
-export interface AppError {
-  code: string;
-  message: string;
-  status?: number;
-  details?: unknown;
-}
+import type { AppError } from '../types/common';
 
 // Core error extraction utilities
-export const getErrorMessage = (error: unknown): string => {
+export const getErrorMessage = (error: unknown, defaultMessage?: string): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === 'object' && error !== null && 'message' in error) {
     return String((error as { message: unknown }).message);
   }
-  return String(error);
+  if (typeof error === 'string') return error;
+  return defaultMessage || String(error);
 };
 
 export const getErrorStatus = (error: unknown): number | undefined => {

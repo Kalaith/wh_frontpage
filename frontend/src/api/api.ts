@@ -1,20 +1,11 @@
 // src/api/api.ts - API client for backend communication
 import type { ProjectsData, Project } from '../types/projects';
 import type { AuthUser } from '../entities/Auth';
+import type { ApiResponse } from '../types/common';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || '/api';
 const DEFAULT_TIMEOUT_MS = 10_000; // 10s
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: {
-    message: string;
-    details?: string;
-  };
-  message?: string;
-}
 
 class ApiClient {
   private baseUrl: string;

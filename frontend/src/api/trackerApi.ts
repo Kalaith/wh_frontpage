@@ -65,11 +65,13 @@ export interface TrackerStats {
   };
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
+import type { ApiResponse } from '../types/common';
+
+// Helper function to extract error message from ApiResponse
+const getErrorMessage = (error: ApiResponse['error'], defaultMessage: string): string => {
+  if (typeof error === 'string') return error;
+  return error?.message || defaultMessage;
+};
 
 // Tracker API functions
 export const trackerApi = {
@@ -78,7 +80,7 @@ export const trackerApi = {
     const result = await api.request<TrackerStats>('/tracker/stats');
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to fetch tracker stats');
+      throw new Error(getErrorMessage(result.error, 'Failed to fetch tracker stats'));
     }
     
     return result.data!;
@@ -108,7 +110,7 @@ export const trackerApi = {
     const result = await api.request<FeatureRequest[]>(url);
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to fetch feature requests');
+      throw new Error(getErrorMessage(result.error, 'Failed to fetch feature requests'));
     }
     
     return result.data!;
@@ -129,7 +131,7 @@ export const trackerApi = {
     });
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to create feature request');
+      throw new Error(getErrorMessage(result.error, 'Failed to create feature request'));
     }
     
     return result.data!;
@@ -157,7 +159,7 @@ export const trackerApi = {
     const result = await api.request<ProjectSuggestion[]>(url);
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to fetch project suggestions');
+      throw new Error(getErrorMessage(result.error, 'Failed to fetch project suggestions'));
     }
     
     return result.data!;
@@ -177,7 +179,7 @@ export const trackerApi = {
     });
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to create project suggestion');
+      throw new Error(getErrorMessage(result.error, 'Failed to create project suggestion'));
     }
     
     return result.data!;
@@ -193,7 +195,7 @@ export const trackerApi = {
     const result = await api.request<ActivityItem[]>(url);
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to fetch activity feed');
+      throw new Error(getErrorMessage(result.error, 'Failed to fetch activity feed'));
     }
     
     return result.data!;
@@ -211,7 +213,7 @@ export const trackerApi = {
     });
     
     if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to record vote');
+      throw new Error(getErrorMessage(result.error, 'Failed to record vote'));
     }
     
     return result.data!;

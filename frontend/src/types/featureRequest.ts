@@ -153,10 +153,12 @@ export interface AdminStats {
   };
 }
 
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  error?: string;
-  count?: number;
+// Form data interfaces
+export interface FeatureRequestData {
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  tags: string;
+  project_id?: number;
 }

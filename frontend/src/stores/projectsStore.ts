@@ -7,6 +7,7 @@ import type { ProjectsData, Project } from '../types/projects';
 import { StoreError } from '../types/store';
 import api from '../api/api';
 import { getAllProjects } from '../utils/projectUtils';
+import { getErrorMessage } from '../utils/errorHandling';
 
 // Projects state interface
 interface ProjectsState {
@@ -83,7 +84,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
       }
 
       throw new Error(
-        apiResponse.error?.message || 'Failed to fetch projects from API'
+        getErrorMessage(apiResponse.error, 'Failed to fetch projects from API')
       );
     } catch (error) {
       const projectsError: StoreError = {
@@ -122,7 +123,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return response.data;
       }
-      throw new Error(response.error?.message || 'Failed to create project');
+      throw new Error(getErrorMessage(response.error, 'Failed to create project'));
     } catch (error) {
       const projectsError: StoreError = {
         code: 'CREATE_FAILED',
@@ -148,7 +149,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return response.data;
       }
-      throw new Error(response.error?.message || 'Failed to update project');
+      throw new Error(getErrorMessage(response.error, 'Failed to update project'));
     } catch (error) {
       const projectsError: StoreError = {
         code: 'UPDATE_FAILED',
@@ -174,7 +175,7 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return;
       }
-      throw new Error(response.error?.message || 'Failed to delete project');
+      throw new Error(getErrorMessage(response.error, 'Failed to delete project'));
     } catch (error) {
       const projectsError: StoreError = {
         code: 'DELETE_FAILED',

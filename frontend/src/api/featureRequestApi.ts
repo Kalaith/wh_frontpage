@@ -6,9 +6,9 @@ import {
   UserDashboard,
   AdminStats,
   EggTransaction,
-  Vote,
-  ApiResponse 
+  Vote
 } from '../types/featureRequest';
+import type { ApiResponse } from '../types/common';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
