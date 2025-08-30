@@ -142,6 +142,14 @@ class ProjectController
     public function createProject(Request $request, Response $response): Response
     {
         try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
             $data = $request->getParsedBody();
             $action = new CreateProjectAction();
             $created = $action->execute($data);
@@ -163,6 +171,14 @@ class ProjectController
     public function updateProject(Request $request, Response $response, array $args): Response
     {
         try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
             $id = (int)($args['id'] ?? 0);
             $data = $request->getParsedBody();
             $action = new UpdateProjectAction();
@@ -191,6 +207,14 @@ class ProjectController
     public function deleteProject(Request $request, Response $response, array $args): Response
     {
         try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+            }
+
             $id = (int)($args['id'] ?? 0);
             $action = new DeleteProjectAction();
             $ok = $action->execute($id);

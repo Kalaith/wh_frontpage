@@ -1,13 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FeatureAuthStatus } from '../features/FeatureAuthStatus';
-import { useFeatureRequestUser, useIsFeatureAuthenticated } from '../../stores/featureRequestStore';
+import { useAuth } from '../../utils/AuthContext';
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
-  const user = useFeatureRequestUser();
-  const isAuthenticated = useIsFeatureAuthenticated();
-  const isAdmin = isAuthenticated && user?.role === 'admin';
+  const { user, isAuthenticated, isAdmin } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 

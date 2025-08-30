@@ -5,8 +5,10 @@ import ProjectForm from '../components/ProjectForm';
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '../hooks/useProjectsQuery';
 import { useFeatureRequests } from '../hooks/useTrackerQuery';
 import { getProjectCount, getGroupedProjects } from '../utils/projectUtils';
+import { useAuth } from '../utils/AuthContext';
 
 const ProjectsPage: React.FC = () => {
+  const { isAuthenticated, isAdmin, isLoading, loginWithRedirect } = useAuth();
   const { data: projectsData, isLoading: loading, error } = useProjects();
   const { data: allFeatureRequests } = useFeatureRequests({});
   const createProjectMutation = useCreateProject();
@@ -68,6 +70,49 @@ const ProjectsPage: React.FC = () => {
     if (!projectId) return;
     await deleteProjectMutation.mutateAsync(projectId);
   };
+
+  // Authentication checks - this page requires admin access
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <p>Loading authentication...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-red-800 mb-4">Authentication Required</h2>
+          <p className="text-red-700 mb-4">You must be logged in to access project management.</p>
+          <button
+            onClick={() => loginWithRedirect()}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            Log In
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-red-800 mb-4">Admin Access Required</h2>
+          <p className="text-red-700 mb-4">You must be an administrator to manage projects.</p>
+          <Link
+            to="/"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded inline-block"
+          >
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading)
     return (

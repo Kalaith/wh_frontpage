@@ -1,20 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  useFeatureRequestUser, 
-  useIsFeatureAuthenticated, 
-  useFeatureUpdateProfile,
-  useFeatureLogout,
-  useFeatureRefreshProfile 
-} from '../stores/featureRequestStore';
+import { useAuth } from '../utils/AuthContext';
 import { featureRequestApi } from '../api/featureRequestApi';
 
 export const UserProfile: React.FC = () => {
-  const user = useFeatureRequestUser();
-  const isAuthenticated = useIsFeatureAuthenticated();
-  const updateProfile = useFeatureUpdateProfile();
-  const logout = useFeatureLogout();
-  const refreshProfile = useFeatureRefreshProfile();
+  const { user, isAuthenticated, isLoading: authLoading, logout, refreshUserInfo } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -36,10 +26,11 @@ export const UserProfile: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to complete
     if (isAuthenticated) {
-      refreshProfile();
+      refreshUserInfo();
     }
-  }, [isAuthenticated, refreshProfile]);
+  }, [isAuthenticated, authLoading, refreshUserInfo]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -61,7 +52,9 @@ export const UserProfile: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      await updateProfile(editForm);
+      // Use featureRequestApi directly since we removed the store method
+      await featureRequestApi.updateProfile(editForm);
+      await refreshUserInfo(); // Refresh user data
       setIsEditing(false);
     } catch (err: any) {
       setError(err.message || 'Failed to update profile');
@@ -89,6 +82,18 @@ export const UserProfile: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return (

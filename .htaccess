@@ -12,7 +12,10 @@ RewriteCond %{REQUEST_URI} ^/api/
 RewriteCond %{DOCUMENT_ROOT}/api/public/index.php -f
 RewriteRule ^api/(.*)$ api/public/index.php [QSA,L]
 
-# Handle client-side routing for React app
+# Force React routing for specific SPA routes (even if directories exist)
+RewriteRule ^(projects|tracker|features|profile)/?$ index.html [L]
+
+# Handle client-side routing for React app (for other routes)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/backend/

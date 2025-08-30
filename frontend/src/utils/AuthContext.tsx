@@ -97,23 +97,59 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Get access token to make authenticated API call
       const token = await getAccessTokenSilently();
       
-      // Call our API to verify/create user
-      const response = await fetch('/api/auth0/verify-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          auth0_id: auth0User.sub,
-          email: auth0User.email,
-          display_name: auth0User.name || auth0User.email,
-          username: auth0User.nickname || auth0User.email?.split('@')[0] || 'user'
-        })
-      });
+      // Call our API to verify/create user with timeout and retry logic
+      let response: Response | null = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+          
+          response = await fetch('/api/auth0/verify-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              auth0_id: auth0User.sub,
+              email: auth0User.email,
+              display_name: auth0User.name || auth0User.email,
+              username: auth0User.nickname || auth0User.email?.split('@')[0] || 'user'
+            }),
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            throw new Error(`API call failed: ${response.status}`);
+          }
+          
+          break; // Success, exit retry loop
+          
+        } catch (fetchError) {
+          retryCount++;
+          
+          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+            addLogMessage(`Request timeout (attempt ${retryCount}/${maxRetries})`, 'warn');
+          } else {
+            addLogMessage(`Network error (attempt ${retryCount}/${maxRetries}): ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`, 'warn');
+          }
+          
+          if (retryCount >= maxRetries) {
+            throw new Error(`Failed after ${maxRetries} attempts: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
+          }
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+        }
+      }
 
-      if (!response.ok) {
-        throw new Error(`API call failed: ${response.status}`);
+      if (!response) {
+        throw new Error('No response received after retries');
       }
 
       const result = await response.json();

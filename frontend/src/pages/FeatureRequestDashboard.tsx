@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FeatureRequestCard } from '../components/features/FeatureRequestCard';
 import { CreateFeatureModal } from '../components/features/CreateFeatureModal';
-import { useFeatureRequestUser, useIsFeatureAuthenticated, useFeatureRefreshProfile, useIsFeatureAdmin } from '../stores/featureRequestStore';
+import { useAuth } from '../utils/AuthContext';
 import { featureRequestApi } from '../api/featureRequestApi';
 import api from '../api/api';
 import type { FeatureRequest, CreateFeatureRequest } from '../types/featureRequest';
@@ -16,23 +16,26 @@ export const FeatureRequestDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('approved');
 
-  const isAuthenticated = useIsFeatureAuthenticated();
-  const user = useFeatureRequestUser();
-  const refreshProfile = useFeatureRefreshProfile();
-  const isAdmin = useIsFeatureAdmin();
+  const { isAuthenticated, isLoading: authLoading, isAdmin, user, refreshUserInfo } = useAuth();
 
   useEffect(() => {
+    // Only load features when auth is complete and user is authenticated
+    if (authLoading) return; // Wait for auth to complete
+    if (!isAuthenticated) return; // Must be authenticated
+    
     // Reset filter if non-admin user somehow has 'pending' selected
     if (filter === 'pending' && !isAdmin) {
       setFilter('approved');
       return;
     }
     loadFeatures();
-  }, [filter, isAdmin]);
+  }, [filter, isAdmin, authLoading, isAuthenticated]);
 
   useEffect(() => {
+    // Only load projects when auth is complete (projects are public but we need consistent loading)
+    if (authLoading) return; // Wait for auth to complete
     loadProjects();
-  }, []);
+  }, [authLoading]);
 
   const loadFeatures = async () => {
     try {
@@ -77,7 +80,7 @@ export const FeatureRequestDashboard = () => {
     try {
       await featureRequestApi.createFeature({ ...data, user_id: user.id });
       await loadFeatures();
-      await refreshProfile(); // Refresh user's egg balance
+      await refreshUserInfo(); // Refresh user's egg balance
     } catch (error) {
       console.error('Failed to create feature:', error);
       throw error;
@@ -94,7 +97,7 @@ export const FeatureRequestDashboard = () => {
         eggs_allocated: eggs,
       });
       await loadFeatures();
-      await refreshProfile(); // Refresh user's egg balance
+      await refreshUserInfo(); // Refresh user's egg balance
     } catch (error: any) {
       console.error('Failed to vote:', error);
       throw new Error(error.message || 'Failed to cast vote');
@@ -120,6 +123,18 @@ export const FeatureRequestDashboard = () => {
       alert('Failed to reject feature: ' + (error.message || 'Unknown error'));
     }
   };
+
+  // Show loading spinner while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
