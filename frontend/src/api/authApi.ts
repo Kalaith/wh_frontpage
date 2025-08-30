@@ -3,39 +3,11 @@
  * Handles all authentication-related API requests
  */
 import type { AuthUser, LoginRequest, RegisterRequest } from '../entities/Auth';
+import { createAuthError, createValidationError, createServerError, handleApiError } from '../utils/errorHandling';
 
 // Base URL for the local auth service (feature request system)
 // Use the local backend API instead of the centralized auth service
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-
-/**
- * Custom error handler to provide more descriptive error messages
- */
-const handleApiError = (error: unknown): never => {
-  // Log the error for debugging (only in development)
-  if (import.meta.env.DEV) {
-    console.error('Auth API Error:', error);
-  }
-
-  // Handle fetch errors
-  if (error instanceof TypeError && error.message.includes('fetch')) {
-    throw {
-      code: 'CONNECTION_ERROR',
-      message:
-        'Unable to connect to the server. Please check your connection or try again later.',
-    };
-  }
-
-  // Handle other errors
-  if (error && typeof error === 'object' && 'message' in error) {
-    throw error;
-  }
-
-  throw {
-    code: 'UNKNOWN_ERROR',
-    message: 'An unexpected error occurred. Please try again.',
-  };
-};
 
 /**
  * Make API request with proper error handling
@@ -60,11 +32,20 @@ export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw {
-        code: response.status === 401 ? 'UNAUTHORIZED' : 'API_ERROR',
-        message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-        details: errorData,
-      };
+      if (response.status === 401) {
+        throw createAuthError(errorData.message || 'Invalid credentials');
+      } else if (response.status === 400) {
+        throw createValidationError(errorData.message || 'Invalid input data', errorData);
+      } else if (response.status >= 500) {
+        throw createServerError(errorData.message || 'Server error occurred');
+      } else {
+        throw {
+          code: 'API_ERROR',
+          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          status: response.status,
+          details: errorData,
+        };
+      }
     }
 
     const data = await response.json();
@@ -96,7 +77,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
     };
     return authUser;
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
 
@@ -125,11 +106,18 @@ export const register = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw {
-        code: response.status === 400 ? 'VALIDATION_ERROR' : 'API_ERROR',
-        message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-        details: errorData,
-      };
+      if (response.status === 400) {
+        throw createValidationError(errorData.message || 'Invalid registration data', errorData);
+      } else if (response.status >= 500) {
+        throw createServerError(errorData.message || 'Server error occurred');
+      } else {
+        throw {
+          code: 'API_ERROR',
+          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          status: response.status,
+          details: errorData,
+        };
+      }
     }
 
     const data = await response.json();
@@ -156,7 +144,7 @@ export const register = async (
     };
     return authUser;
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
 

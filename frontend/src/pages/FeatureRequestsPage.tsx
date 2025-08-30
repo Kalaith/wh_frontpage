@@ -58,9 +58,18 @@ const FeatureRequestsPage: React.FC = () => {
 
   const createRequestMutation = useCreateFeatureRequest();
 
-  const handleSubmitRequest = async (data: { title: string; description: string; category: string; priority: string; project_id?: string }) => {
+  const handleSubmitRequest = async (data: { title: string; description: string; category: string; priority: string; tags: string; project_id?: number }) => {
     try {
-      await createRequestMutation.mutateAsync(data);
+      // Prepare data for API
+      const submitData = {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        priority: data.priority,
+        project_id: data.project_id?.toString(),
+        tags: data.tags
+      };
+      await createRequestMutation.mutateAsync(submitData);
       setShowForm(false);
     } catch (error) {
       console.error('Failed to submit feature request:', error);

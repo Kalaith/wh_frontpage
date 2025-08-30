@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types/featureRequest';
 import { featureRequestApi } from '../api/featureRequestApi';
-import { getErrorMessage, getErrorStatus, isAuthError } from '../utils/errorHandling';
+import { getErrorMessage, isAuthError } from '../utils/errorHandling';
 
 interface FeatureRequestState {
   user: User | null;
