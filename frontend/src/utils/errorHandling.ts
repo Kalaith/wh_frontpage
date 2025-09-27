@@ -9,7 +9,7 @@ export const getErrorMessage = (error: unknown, defaultMessage?: string): string
     return String((error as { message: unknown }).message);
   }
   if (typeof error === 'string') return error;
-  return defaultMessage || String(error);
+  return defaultMessage ?? String(error);
 };
 
 export const getErrorStatus = (error: unknown): number | undefined => {

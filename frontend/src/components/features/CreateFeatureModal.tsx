@@ -33,7 +33,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
 
   const [tagInput, setTagInput] = useState('');
 
-  const canAfford = (user?.egg_balance || 0) >= 100;
+  const canAfford = (user?.egg_balance ?? 0) >= 100;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +80,10 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       const tag = tagInput.trim();
-      if (tag && !(formData.tags || []).includes(tag)) {
+      if (tag && !(formData.tags ?? []).includes(tag)) {
         setFormData(prev => ({
           ...prev,
-          tags: [...(prev.tags || []), tag]
+          tags: [...(prev.tags ?? []), tag]
         }));
         setTagInput('');
       }
@@ -93,7 +93,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: (prev.tags || []).filter(tag => tag !== tagToRemove)
+      tags: (prev.tags ?? []).filter(tag => tag !== tagToRemove)
     }));
   };
 
@@ -184,7 +184,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                 </label>
                 {projects.length > 0 ? (
                   <select
-                    value={formData.project_id || ''}
+                    value={formData.project_id ?? ''}
                     onChange={(e) => setFormData(prev => ({ 
                       ...prev, 
                       project_id: e.target.value ? parseInt(e.target.value) : undefined 
@@ -257,9 +257,9 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                   placeholder="Add tags (press Enter or comma to add)"
                 />
                 
-                {(formData.tags || []).length > 0 && (
+                {(formData.tags ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {(formData.tags || []).map((tag) => (
+                    {(formData.tags ?? []).map((tag) => (
                       <span
                         key={tag}
                         className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-md"

@@ -15,7 +15,7 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const maxEggs = user?.egg_balance || 0;
+  const maxEggs = user?.egg_balance ?? 0;
   const quickAmounts = [10, 25, 50, 100];
 
   const handleVote = async () => {

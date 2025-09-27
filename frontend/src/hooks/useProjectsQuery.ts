@@ -22,7 +22,7 @@ export const useProjects = () => {
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to fetch projects'));
       }
-      return response.data!;
+      return response.data as ProjectsData;
     },
   });
 };
@@ -35,7 +35,7 @@ export const useHomepageProjects = () => {
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to fetch homepage projects'));
       }
-      return response.data!;
+      return response.data as ProjectsData;
     },
   });
 };
@@ -48,7 +48,7 @@ export const useProjectsByGroup = (group: string) => {
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to fetch projects by group'));
       }
-      return response.data!;
+      return response.data as ProjectsData;
     },
     enabled: !!group,
   });
@@ -64,7 +64,7 @@ export const useCreateProject = () => {
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to create project'));
       }
-      return response.data!;
+      return response.data as ProjectsData;
     },
     onSuccess: () => {
       // Invalidate and refetch projects
@@ -82,7 +82,7 @@ export const useUpdateProject = () => {
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to update project'));
       }
-      return response.data!;
+      return response.data as ProjectsData;
     },
     onSuccess: () => {
       // Invalidate and refetch projects

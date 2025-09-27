@@ -54,7 +54,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities = [], featureToP
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <span>{activity.created_at_relative}</span>
                   <span className="text-gray-400">•</span>
-                  <span>by {activity.user || 'Anonymous'}</span>
+                  <span>by {activity.user ?? 'Anonymous'}</span>
                   {activity.type && (
                     <>
                       <span className="text-gray-400">•</span>

@@ -64,7 +64,7 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 {group.projects.map((project) => (
                   <button
                     key={project.id}
-                    onClick={() => onProjectSelect(project.id || null)}
+                    onClick={() => onProjectSelect(project.id ?? null)}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                       selectedProjectId === project.id
                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'

@@ -61,7 +61,7 @@ const FeatureRequestForm: React.FC<FeatureRequestFormProps> = ({
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project</label>
         <select 
-          value={formData.project_id?.toString() || ''}
+          value={formData.project_id?.toString() ?? ''}
           onChange={(e) => handleProjectChange(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >

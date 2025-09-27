@@ -70,7 +70,7 @@ import type { ApiResponse } from '../types/common';
 // Helper function to extract error message from ApiResponse
 const getErrorMessage = (error: ApiResponse['error'], defaultMessage: string): string => {
   if (typeof error === 'string') return error;
-  return error?.message || defaultMessage;
+  return error?.message ?? defaultMessage;
 };
 
 // Tracker API functions
@@ -83,7 +83,7 @@ export const trackerApi = {
       throw new Error(getErrorMessage(result.error, 'Failed to fetch tracker stats'));
     }
     
-    return result.data!;
+    return result.data as TrackerStats;
   },
 
   // Get feature requests with optional filtering
@@ -97,7 +97,7 @@ export const trackerApi = {
     limit?: number;
   }): Promise<FeatureRequest[]> {
     const queryParams = new URLSearchParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -105,15 +105,15 @@ export const trackerApi = {
         }
       });
     }
-    
+
     const url = `/tracker/feature-requests${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const result = await api.request<FeatureRequest[]>(url);
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to fetch feature requests'));
     }
-    
-    return result.data!;
+
+    return result.data as FeatureRequest[];
   },
 
   // Create a new feature request
@@ -129,12 +129,12 @@ export const trackerApi = {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to create feature request'));
     }
-    
-    return result.data!;
+
+    return result.data as FeatureRequest;
   },
 
   // Get project suggestions with optional filtering
@@ -146,7 +146,7 @@ export const trackerApi = {
     limit?: number;
   }): Promise<ProjectSuggestion[]> {
     const queryParams = new URLSearchParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -154,15 +154,15 @@ export const trackerApi = {
         }
       });
     }
-    
+
     const url = `/tracker/project-suggestions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const result = await api.request<ProjectSuggestion[]>(url);
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to fetch project suggestions'));
     }
-    
-    return result.data!;
+
+    return result.data as ProjectSuggestion[];
   },
 
   // Create a new project suggestion
@@ -177,12 +177,12 @@ export const trackerApi = {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to create project suggestion'));
     }
-    
-    return result.data!;
+
+    return result.data as ProjectSuggestion;
   },
 
   // Get activity feed
@@ -190,15 +190,15 @@ export const trackerApi = {
     const params = new URLSearchParams();
     if (limit) params.append('limit', limit.toString());
     if (projectId) params.append('project_id', projectId.toString());
-    
+
     const url = `/tracker/activity${params.toString() ? `?${params.toString()}` : ''}`;
     const result = await api.request<ActivityItem[]>(url);
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to fetch activity feed'));
     }
-    
-    return result.data!;
+
+    return result.data as ActivityItem[];
   },
 
   // Vote on an item
@@ -211,11 +211,11 @@ export const trackerApi = {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to record vote'));
     }
-    
-    return result.data!;
+
+    return result.data as { item_id: number; item_type: string; new_vote_count: number };
   }
 };

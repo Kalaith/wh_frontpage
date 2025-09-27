@@ -11,7 +11,7 @@ const ProjectNewsFeed: React.FC = () => {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
         <div className="animate-pulse space-y-3">
-          {[...Array(3)].map((_, index) => (
+          {[...Array(3)].map((unused, index) => (
             <div key={index} className="flex space-x-3">
               <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
               <div className="flex-1">
@@ -36,7 +36,7 @@ const ProjectNewsFeed: React.FC = () => {
     );
   }
 
-  const recentActivity = activityData?.data || [];
+  const recentActivity = activityData?.data ?? [];
 
   return (
     <motion.div
