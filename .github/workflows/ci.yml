@@ -5,6 +5,7 @@ on:
     branches: [main, master, development]
   push:
     branches: [main, master, development]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -51,3 +52,67 @@ jobs:
             exit 1
           fi
           echo "Build successful - artifacts verified"
+
+  update-manifest:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Check if should skip
+        id: check_skip
+        run: |
+          # Get commit message safely
+          COMMIT_MSG="${{ github.event.head_commit.message || github.event.commits[0].message || 'No message' }}"
+          echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          
+          # Check if we should skip
+          if [[ "$COMMIT_MSG" == *"[skip ci]"* ]] || [[ "$COMMIT_MSG" == *"Update project manifest"* ]]; then
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping manifest update - commit message: $COMMIT_MSG"
+          else
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+            echo "Proceeding with manifest update - commit message: $COMMIT_MSG"
+          fi
+
+      - name: Update project.json with git info
+        if: steps.check_skip.outputs.should_skip != 'true'
+        run: |
+          # Read existing manifest or create new one
+          if [ -f "project.json" ]; then
+            manifest=$(cat project.json)
+          else
+            manifest='{"name":"frontpage","status":"active","deployment":{}}'
+          fi
+
+          # Update with git information
+          echo "$manifest" | jq --arg commit "$GITHUB_SHA" \
+            --arg updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg branch "$GITHUB_REF_NAME" \
+            --arg message "${{ steps.check_skip.outputs.commit_message }}" \
+            '.gitCommit = $commit | .lastUpdated = $updated | .branch = $branch | .lastCommitMessage = $message' \
+            > project.json
+
+      - name: Commit updated manifest
+        if: steps.check_skip.outputs.should_skip != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add project.json
+          
+          if ! git diff --staged --quiet; then
+            git commit -m "Update project manifest [skip ci]"
+            git push
+            echo "Project manifest updated successfully"
+          else
+            echo "No changes to project.json manifest"
+          fi

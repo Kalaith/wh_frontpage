@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/api';
-import type { Project } from '../types/projects';
+import type { Project, ProjectsData } from '../types/projects';
 import { getErrorMessage } from '../utils/errorHandling';
 
 // Query keys
@@ -48,7 +48,7 @@ export const useProjectsByGroup = (group: string) => {
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to fetch projects by group'));
       }
-      return response.data as ProjectsData;
+      return response.data as Project[];
     },
     enabled: !!group,
   });
@@ -57,14 +57,14 @@ export const useProjectsByGroup = (group: string) => {
 // Project mutations
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (projectData: Partial<Project>) => {
       const response = await api.createProject(projectData);
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to create project'));
       }
-      return response.data as ProjectsData;
+      return response.data as Project;
     },
     onSuccess: () => {
       // Invalidate and refetch projects
@@ -75,14 +75,14 @@ export const useCreateProject = () => {
 
 export const useUpdateProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Project> }) => {
       const response = await api.updateProject(id, data);
       if (!response.success) {
         throw new Error(getErrorMessage(response.error, 'Failed to update project'));
       }
-      return response.data as ProjectsData;
+      return response.data as Project;
     },
     onSuccess: () => {
       // Invalidate and refetch projects
