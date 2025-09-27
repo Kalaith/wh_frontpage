@@ -71,8 +71,10 @@ jobs:
       - name: Check if should skip
         id: check_skip
         run: |
-          # Get commit message safely
+          # Get commit message safely and clean it
           COMMIT_MSG="${{ github.event.head_commit.message || github.event.commits[0].message || 'No message' }}"
+          # Clean the commit message - remove newlines and escape quotes
+          COMMIT_MSG=$(echo "$COMMIT_MSG" | tr '\n' ' ' | sed 's/"/\\"/g' | head -c 200)
           echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
           
           # Check if we should skip
@@ -94,13 +96,30 @@ jobs:
             manifest='{"name":"frontpage","status":"active","deployment":{}}'
           fi
 
-          # Update with git information
+          # Safely get commit message and escape it for JSON
+          SAFE_MESSAGE="${{ steps.check_skip.outputs.commit_message }}"
+          
+          # Update with git information using proper JSON escaping
           echo "$manifest" | jq --arg commit "$GITHUB_SHA" \
             --arg updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg branch "$GITHUB_REF_NAME" \
-            --arg message "${{ steps.check_skip.outputs.commit_message }}" \
+            --arg message "$SAFE_MESSAGE" \
             '.gitCommit = $commit | .lastUpdated = $updated | .branch = $branch | .lastCommitMessage = $message' \
-            > project.json
+            > project.json.tmp
+          
+          # Check if jq succeeded
+          if [ $? -eq 0 ] && [ -f "project.json.tmp" ]; then
+            mv project.json.tmp project.json
+            echo "Project manifest updated successfully"
+          else
+            echo "Error: Failed to update project.json with jq"
+            # Fallback: create a basic manifest without the problematic commit message
+            echo "$manifest" | jq --arg commit "$GITHUB_SHA" \
+              --arg updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg branch "$GITHUB_REF_NAME" \
+              '.gitCommit = $commit | .lastUpdated = $updated | .branch = $branch | .lastCommitMessage = "Merge commit"' \
+              > project.json
+          fi
 
       - name: Commit updated manifest
         if: steps.check_skip.outputs.should_skip != 'true'
