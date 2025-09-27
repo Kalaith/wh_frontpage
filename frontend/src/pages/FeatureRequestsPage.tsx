@@ -26,10 +26,10 @@ const FeatureRequestsPage: React.FC = () => {
     
     setFilters(prev => ({
       ...prev,
-      project_id: projectFromUrl || '',
-      status: statusFromUrl || '',
-      priority: priorityFromUrl || '',
-      category: categoryFromUrl || ''
+      project_id: projectFromUrl ?? '',
+      status: statusFromUrl ?? '',
+      priority: priorityFromUrl ?? '',
+      category: categoryFromUrl ?? ''
     }));
   }, [searchParams]);
 

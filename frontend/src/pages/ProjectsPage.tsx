@@ -235,7 +235,7 @@ const ProjectsPage: React.FC = () => {
                           project={(editingData as Project) ?? p}
                           onChange={(d: Partial<Project>) =>
                             setEditingData(prev => ({
-                              ...(prev || {}),
+                              ...(prev ?? {}),
                               ...(d || {}),
                             }))
                           }

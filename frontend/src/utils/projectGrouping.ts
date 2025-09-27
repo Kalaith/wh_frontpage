@@ -3,7 +3,7 @@ import type { Project } from '../types/projects';
 export const groupProjectsByName = (projects: Project[]) => {
   const groups: Record<string, Project[]> = {};
   projects.forEach(p => {
-    const g = p.group_name || 'other';
+    const g = p.group_name ?? 'other';
     if (!groups[g]) groups[g] = [];
     groups[g].push(p);
   });

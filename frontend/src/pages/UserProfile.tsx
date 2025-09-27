@@ -247,13 +247,13 @@ export const UserProfile: React.FC = () => {
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-gray-600">Features Created</p>
                   <p className="text-xl font-bold text-blue-600">
-                    {user.stats?.features_created || 0}
+                    {user.stats?.features_created ?? 0}
                   </p>
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
                   <p className="text-sm text-gray-600">Votes Cast</p>
                   <p className="text-xl font-bold text-green-600">
-                    {user.stats?.votes_cast || 0}
+                    {user.stats?.votes_cast ?? 0}
                   </p>
                 </div>
               </div>

@@ -263,7 +263,7 @@ export const FeatureRequestDashboard = () => {
           <CreateFeatureModal
             onClose={() => setShowCreateModal(false)}
             onCreate={handleCreateFeature}
-            projects={projects.map(p => ({ id: p.id!, title: p.title }))}
+            projects={projects.map(p => ({ id: p.id as number, title: p.title }))}
           />
         )}
     </div>

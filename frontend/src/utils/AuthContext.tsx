@@ -116,8 +116,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             body: JSON.stringify({
               auth0_id: auth0User.sub,
               email: auth0User.email,
-              display_name: auth0User.name || auth0User.email,
-              username: auth0User.nickname || auth0User.email?.split('@')[0] || 'user'
+              display_name: auth0User.name ?? auth0User.email,
+              username: auth0User.nickname ?? auth0User.email?.split('@')[0] ?? 'user'
             }),
             signal: controller.signal
           });
@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           verificationState: 'user_verified'
         }));
       } else {
-        throw new Error(result.message || 'User verification failed');
+        throw new Error(result.message ?? 'User verification failed');
       }
 
     } catch (err) {
@@ -202,7 +202,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         auth0Email: auth0User.email,
         auth0Name: auth0User.name,
         auth0Sub: auth0User.sub,
-        isSocialLogin: auth0User.sub?.includes('|') || false,
+        isSocialLogin: auth0User.sub?.includes('|') ?? false,
         auth0Provider: auth0User.sub?.includes('|') ? auth0User.sub.split('|')[0] : 'auth0'
       }));
       performUserVerification();

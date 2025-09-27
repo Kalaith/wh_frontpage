@@ -8,7 +8,7 @@ import App from './App';
 // Auth0 configuration
 const domain = import.meta.env.VITE_AUTH0_DOMAIN;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
-const redirectUri = import.meta.env.VITE_AUTH0_CALLBACK_URL || window.location.origin;
+const redirectUri = import.meta.env.VITE_AUTH0_CALLBACK_URL ?? window.location.origin;
 const audience = import.meta.env.VITE_AUTH0_AUDIENCE;
 
 // Validate Auth0 configuration
@@ -34,7 +34,7 @@ const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <Auth0Provider
       domain={domain}

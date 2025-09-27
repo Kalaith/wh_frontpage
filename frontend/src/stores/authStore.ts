@@ -64,7 +64,7 @@ export const useAuth = () => {
   }, [queryUser, user, setAuth, clearAuth]);
 
   return {
-    user: user || queryUser,
+    user: user ?? queryUser,
     isAuthenticated: isAuthenticated && !!queryUser,
     isLoading,
     error,

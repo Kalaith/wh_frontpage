@@ -60,3 +60,11 @@ export class HealthSummaryResponse {
   timestamp!: string;
   error?: string;
 }
+
+export class CriticalProjectsResponse {
+  success!: boolean;
+  data!: ProjectHealth[];
+  count!: number;
+  timestamp!: string;
+  error?: string;
+}

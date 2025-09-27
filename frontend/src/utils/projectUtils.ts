@@ -4,7 +4,7 @@ export function getProjectUrl(project: Project): string {
   if (project.deployment?.deployAs) {
     return `${project.deployment.deployAs}/`;
   }
-  return project.path || '#';
+  return project.path ?? '#';
 }
 
 /**
@@ -69,7 +69,7 @@ export function getGroupedProjects(data: ProjectsData | null | undefined): Recor
  */
 export function getProjectsByGroup(data: ProjectsData | null | undefined, groupName: string): Project[] {
   const grouped = getGroupedProjects(data);
-  return grouped[groupName] || [];
+  return grouped[groupName] ?? [];
 }
 
 export function getDeploymentBadgeClass(project: Project): string {

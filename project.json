@@ -2,8 +2,8 @@
   "name": "frontpage",
   "status": "active",
   "deployment": {},
-  "gitCommit": "aa2cc55c4852142de6640334d775857311d3b43d",
-  "lastUpdated": "2025-09-27T00:39:29Z",
+  "gitCommit": "532b7992715cff80eae0e7e67bc4800a2c6b0721",
+  "lastUpdated": "2025-09-27T01:41:57Z",
   "branch": "development",
-  "lastCommitMessage": "feat: Enhance project manifest update workflows with git information retrieval and local deployment configuration"
+  "lastCommitMessage": "fix: Refactor loading skeletons in ProjectNewsFeed for improved readability"
 }

@@ -27,7 +27,7 @@ const testToken = async () => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log('🧪 Token payload:', payload);
-      } catch (e) {
+      } catch {
         console.log('🧪 Could not decode token payload');
       }
     }

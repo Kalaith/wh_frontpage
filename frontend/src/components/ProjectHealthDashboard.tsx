@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useHealthSummary, useCriticalProjects, useRunHealthCheck } from '../hooks/useProjectHealth';
-import type { HealthSummary, ProjectHealth } from '../types/projectHealth';
+import type { ProjectHealth } from '../types/projectHealth';
 
 const ProjectHealthDashboard: React.FC = () => {
   const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useHealthSummary();
-  const { data: criticalData, isLoading: criticalLoading } = useCriticalProjects();
+  const { data: criticalData } = useCriticalProjects();
   const runHealthCheck = useRunHealthCheck();
 
   if (summaryLoading) {
@@ -33,7 +33,7 @@ const ProjectHealthDashboard: React.FC = () => {
   }
 
   const summary = summaryData?.data;
-  const criticalProjects = criticalData?.data || [];
+  const criticalProjects: ProjectHealth[] = criticalData?.data ?? [];
 
   if (!summary) {
     return null;
@@ -92,7 +92,7 @@ const ProjectHealthDashboard: React.FC = () => {
             Critical Issues ({criticalProjects.length})
           </h4>
           <div className="space-y-2">
-            {criticalProjects.slice(0, 3).map((project) => (
+            {criticalProjects.slice(0, 3).map((project: ProjectHealth) => (
               <CriticalProjectCard key={project.project_name} project={project} />
             ))}
           </div>

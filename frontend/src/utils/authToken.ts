@@ -4,14 +4,14 @@
  */
 
 // Global reference to Auth0 hook - will be set by App component
-let auth0Hook: any = null;
+let auth0Hook: unknown = null;
 
 /**
  * Set the Auth0 hook reference for token retrieval
  */
-export const setAuth0Client = (auth0: any): void => {
+export const setAuth0Client = (auth0: unknown): void => {
   auth0Hook = auth0;
-  console.log('🔐 Auth0 hook set:', Object.keys(auth0));
+  console.log('🔐 Auth0 hook set:', Object.keys(auth0 as Record<string, unknown>));
 };
 
 /**
@@ -27,9 +27,9 @@ export const getAuthToken = async (): Promise<string | null> => {
 
   try {
     // Check if user is authenticated
-    const isAuthenticated = auth0Hook.isAuthenticated;
+    const isAuthenticated = (auth0Hook as { isAuthenticated: boolean }).isAuthenticated;
     console.log('🔐 User authenticated:', isAuthenticated);
-    
+
     if (!isAuthenticated) {
       console.warn('❌ User not authenticated');
       return null;
@@ -37,9 +37,9 @@ export const getAuthToken = async (): Promise<string | null> => {
 
     console.log('🔐 Attempting to get token silently...');
     console.log('🔐 Auth0 audience:', import.meta.env.VITE_AUTH0_AUDIENCE);
-    
+
     // Get access token silently
-    const token = await auth0Hook.getAccessTokenSilently({
+    const token = await (auth0Hook as { getAccessTokenSilently: (params: unknown) => Promise<string> }).getAccessTokenSilently({
       authorizationParams: {
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
         scope: 'openid profile email'
@@ -60,7 +60,7 @@ export const getAuthToken = async (): Promise<string | null> => {
 export const clearAuthTokens = async (): Promise<void> => {
   if (auth0Hook) {
     try {
-      await auth0Hook.logout({
+      await (auth0Hook as { logout: (params: unknown) => Promise<void> }).logout({
         logoutParams: {
           returnTo: window.location.origin
         }
@@ -80,7 +80,7 @@ export const isAuthenticated = async (): Promise<boolean> => {
   }
 
   try {
-    return auth0Hook.isAuthenticated;
+    return (auth0Hook as { isAuthenticated: boolean }).isAuthenticated;
   } catch (error) {
     console.warn('Failed to check Auth0 authentication:', error);
     return false;

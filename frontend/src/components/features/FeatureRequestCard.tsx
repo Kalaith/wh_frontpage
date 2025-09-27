@@ -181,7 +181,7 @@ export const FeatureRequestCard = ({
         )}
 
         {/* Use case and benefits (expanded view) */}
-        {!compact && (feature.use_case || feature.expected_benefits) && (
+        {!compact && (feature.use_case ?? feature.expected_benefits) && (
           <div className="mt-4 pt-4 border-t border-gray-100">
             {feature.use_case && (
               <div className="mb-2">
