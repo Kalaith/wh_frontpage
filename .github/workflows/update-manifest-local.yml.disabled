@@ -1,0 +1,28 @@
+# LOCAL DEPLOYMENT ONLY - RENAME TO .yml TO ENABLE
+# This workflow is disabled by default for local-only deployments
+#
+# For local deployment:
+# 1. The publish.ps1 script handles manifest updates during build
+# 2. Git information is pulled from local git commands
+# 3. No GitHub Actions needed
+#
+# To enable GitHub workflow:
+# 1. Rename this file to update-manifest.yml
+# 2. Ensure repository has proper permissions
+# 3. Consider rate limiting and infinite loop prevention
+
+name: Update Project Manifest (Local Mode)
+on:
+  # Disabled - no triggers
+  workflow_dispatch:
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Local deployment notice
+        run: |
+          echo "This workflow is configured for local deployment only"
+          echo "Project manifests are updated by publish.ps1 during build"

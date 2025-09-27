@@ -509,6 +509,29 @@ function Update-ProjectManifest() {
     $currentTime = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
     $manifest.lastBuild = $currentTime
 
+    # Add git information if available
+    try {
+        $gitCommit = & git rev-parse HEAD 2>$null
+        $gitBranch = & git rev-parse --abbrev-ref HEAD 2>$null
+        $gitMessage = & git log -1 --pretty=%B 2>$null
+
+        if ($gitCommit) {
+            $manifest.gitCommit = $gitCommit.Trim()
+            $manifest.lastUpdated = $currentTime
+            Write-Info "Added git commit: $($gitCommit.Substring(0, 7))"
+        }
+
+        if ($gitBranch) {
+            $manifest.branch = $gitBranch.Trim()
+        }
+
+        if ($gitMessage) {
+            $manifest.lastCommitMessage = $gitMessage.Trim()
+        }
+    } catch {
+        Write-Warning "Could not retrieve git information: $($_.Exception.Message)"
+    }
+
     if ($Production) {
         $manifest.deployment.production = $currentTime
         Write-Info "Updated production deployment timestamp"
