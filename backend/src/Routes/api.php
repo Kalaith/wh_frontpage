@@ -2,6 +2,9 @@
 
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ProjectController;
+use App\Controllers\ProjectUpdateController;
+use App\Controllers\ProjectNewsFeedController;
+use App\Controllers\ProjectHealthController;
 use App\Controllers\TrackerController;
 use App\Controllers\FeatureRequestController;
 use App\Controllers\UserController;
@@ -72,6 +75,26 @@ $app->group('/api', function (RouteCollectorProxy $group) {
     $group->get('/projects', [ProjectController::class, 'getProjects']);
     $group->get('/projects/homepage', [ProjectController::class, 'getHomepageProjects']);
     $group->get('/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
+
+    // Public Project Update Routes (No Auth Required)
+    $group->get('/projects/updates', [ProjectUpdateController::class, 'getAllUpdates']);
+    $group->get('/projects/updates/recent', [ProjectUpdateController::class, 'getRecentUpdates']);
+    $group->get('/projects/updates/stats', [ProjectUpdateController::class, 'getStatistics']);
+    $group->get('/projects/updates/attention', [ProjectUpdateController::class, 'getProjectsNeedingAttention']);
+
+    // Public News Feed Routes (No Auth Required)
+    $group->get('/news', [ProjectNewsFeedController::class, 'getNewsFeed']);
+    $group->get('/news/recent', [ProjectNewsFeedController::class, 'getRecentActivity']);
+    $group->get('/news/stats', [ProjectNewsFeedController::class, 'getActivityStats']);
+    $group->get('/news/project/{project}', [ProjectNewsFeedController::class, 'getProjectChangelog']);
+
+    // Public Health Monitoring Routes (No Auth Required)
+    $group->get('/health/system', [ProjectHealthController::class, 'getSystemHealth']);
+    $group->get('/health/summary', [ProjectHealthController::class, 'getHealthSummary']);
+    $group->get('/health/critical', [ProjectHealthController::class, 'getCriticalProjects']);
+    $group->get('/health/recommendations', [ProjectHealthController::class, 'getRecommendations']);
+    $group->get('/health/project/{project}', [ProjectHealthController::class, 'getProjectHealth']);
+    $group->post('/health/check', [ProjectHealthController::class, 'runHealthCheck']);
     
     // Public Feature Request Routes (No Auth Required for viewing)
     $group->get('/features', [FeatureRequestController::class, 'getAllFeatures']);

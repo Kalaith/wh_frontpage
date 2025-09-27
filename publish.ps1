@@ -481,5 +481,74 @@ if ($args -contains "-Help" -or $args -contains "--help" -or $args -contains "/?
     exit 0
 }
 
-# Run main function
+# Function to update project manifest with build/deployment info
+function Update-ProjectManifest() {
+    $manifestPath = "$PSScriptRoot\project.json"
+
+    # Read existing manifest or create new one
+    if (Test-Path $manifestPath) {
+        try {
+            $manifest = Get-Content $manifestPath | ConvertFrom-Json
+        } catch {
+            Write-Warning "Could not parse existing project.json, creating new one"
+            $manifest = @{
+                name = "frontpage"
+                status = "active"
+                deployment = @{}
+            }
+        }
+    } else {
+        $manifest = @{
+            name = "frontpage"
+            status = "active"
+            deployment = @{}
+        }
+    }
+
+    # Update build and deployment timestamps
+    $currentTime = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $manifest.lastBuild = $currentTime
+
+    # Add git information if available
+    try {
+        $gitCommit = & git rev-parse HEAD 2>$null
+        $gitBranch = & git rev-parse --abbrev-ref HEAD 2>$null
+        $gitMessage = & git log -1 --pretty=%B 2>$null
+
+        if ($gitCommit) {
+            $manifest.gitCommit = $gitCommit.Trim()
+            $manifest.lastUpdated = $currentTime
+            Write-Info "Added git commit: $($gitCommit.Substring(0, 7))"
+        }
+
+        if ($gitBranch) {
+            $manifest.branch = $gitBranch.Trim()
+        }
+
+        if ($gitMessage) {
+            $manifest.lastCommitMessage = $gitMessage.Trim()
+        }
+    } catch {
+        Write-Warning "Could not retrieve git information: $($_.Exception.Message)"
+    }
+
+    if ($Production) {
+        $manifest.deployment.production = $currentTime
+        Write-Info "Updated production deployment timestamp"
+    } else {
+        $manifest.deployment.development = $currentTime
+        Write-Info "Updated development deployment timestamp"
+    }
+
+    # Save updated manifest
+    try {
+        $manifest | ConvertTo-Json -Depth 3 | Set-Content $manifestPath -Encoding UTF8
+        Write-Success "Project manifest updated: $manifestPath"
+    } catch {
+        Write-Warning "Failed to update project manifest: $($_.Exception.Message)"
+    }
+}
+
+# Run main function and update manifest
 Main
+Update-ProjectManifest

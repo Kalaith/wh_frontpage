@@ -292,3 +292,6 @@ This project is part of the WebHatchery ecosystem.
 ## 📞 Support
 
 For support or questions about this project, please create an issue in the GitHub repository.
+
+---
+

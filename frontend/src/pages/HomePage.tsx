@@ -3,6 +3,9 @@ import { QuickLinks } from '../components/QuickLinks';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
+import ProjectUpdates from '../components/ProjectUpdates';
+import ProjectNewsFeed from '../components/ProjectNewsFeed';
+import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
 
 const HomePage: React.FC = () => {
@@ -72,10 +75,27 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
+    <div className="max-w-7xl mx-auto p-8">
       <QuickLinks data={projectsData} />
-      <ProjectLegend />
-      <ProjectShowcase data={projectsData} />
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
+        {/* Left Column - Main Content */}
+        <div className="xl:col-span-2">
+          <ProjectLegend />
+          <ProjectShowcase data={projectsData} />
+        </div>
+
+        {/* Right Column - Updates and Activity */}
+        <div className="xl:col-span-2 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 gap-8">
+            <ProjectUpdates />
+            <ProjectHealthDashboard />
+          </div>
+          <ProjectNewsFeed />
+        </div>
+      </div>
+
       <Footer data={projectsData} />
     </div>
   );
