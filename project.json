@@ -2,8 +2,8 @@
   "name": "frontpage",
   "status": "active",
   "deployment": {},
-  "gitCommit": "80094846ba7835327026293904fbff13fbd4d650",
-  "lastUpdated": "2025-09-27T00:57:19Z",
+  "gitCommit": "1c97870dce4f3398b854251934bb35b6a7602db4",
+  "lastUpdated": "2025-09-27T01:12:40Z",
   "branch": "development",
   "lastCommitMessage": "Merge branch 'development' of https://github.com/Kalaith/wh_frontpage into development"
 }
