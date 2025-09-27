@@ -2,8 +2,8 @@
   "name": "frontpage",
   "status": "active",
   "deployment": {},
-  "gitCommit": "532b7992715cff80eae0e7e67bc4800a2c6b0721",
-  "lastUpdated": "2025-09-27T01:41:57Z",
+  "gitCommit": "bbf3c0ca75340523895fb0f6fa603f87c8356976",
+  "lastUpdated": "2025-09-27T01:57:52Z",
   "branch": "development",
-  "lastCommitMessage": "fix: Refactor loading skeletons in ProjectNewsFeed for improved readability"
+  "lastCommitMessage": "Merge branch 'development' of https://github.com/Kalaith/wh_frontpage into development "
 }
