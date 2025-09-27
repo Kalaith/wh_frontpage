@@ -5,7 +5,7 @@ import type { ProjectUpdate } from '../types/projectUpdates';
 
 const ProjectUpdates: React.FC = () => {
   const { data: recentUpdates, isLoading: recentLoading, error: recentError } = useRecentProjectUpdates();
-  const { data: attentionProjects, isLoading: attentionLoading } = useProjectsNeedingAttention();
+  const { data: attentionProjects } = useProjectsNeedingAttention();
 
   if (recentLoading) {
     return (

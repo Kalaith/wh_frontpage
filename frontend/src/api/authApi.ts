@@ -7,7 +7,7 @@ import { createAuthError, createValidationError, createServerError, handleApiErr
 
 // Base URL for the local auth service (feature request system)
 // Use the local backend API instead of the centralized auth service
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 /**
  * Make API request with proper error handling
@@ -33,15 +33,15 @@ export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       if (response.status === 401) {
-        throw createAuthError(errorData.message || 'Invalid credentials');
+        throw createAuthError(errorData.message ?? 'Invalid credentials');
       } else if (response.status === 400) {
-        throw createValidationError(errorData.message || 'Invalid input data', errorData);
+        throw createValidationError(errorData.message ?? 'Invalid input data', errorData);
       } else if (response.status >= 500) {
-        throw createServerError(errorData.message || 'Server error occurred');
+        throw createServerError(errorData.message ?? 'Server error occurred');
       } else {
         throw {
           code: 'API_ERROR',
-          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          message: errorData.message ?? `HTTP ${response.status}: ${response.statusText}`,
           status: response.status,
           details: errorData,
         };
@@ -53,7 +53,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
     if (!data.success) {
       throw {
         code: 'API_ERROR',
-        message: data.message || 'Login failed',
+        message: data.message ?? 'Login failed',
         details: data.error,
       };
     }
@@ -67,12 +67,12 @@ export const login = async (credentials: LoginRequest): Promise<AuthUser> => {
     const authUser: AuthUser = {
       id: data.data.user.id,
       email: data.data.user.email,
-      firstName: data.data.user.display_name?.split(' ')[0] || data.data.user.username,
-      lastName: data.data.user.display_name?.split(' ').slice(1).join(' ') || '',
+      firstName: data.data.user.display_name?.split(' ')[0] ?? data.data.user.username,
+      lastName: data.data.user.display_name?.split(' ').slice(1).join(' ') ?? '',
       membershipType: data.data.user.role === 'admin' ? 'admin' : 'member',
       token: data.data.token,
       isActive: data.data.user.is_verified,
-      createdAt: data.data.user.member_since || '',
+      createdAt: data.data.user.member_since ?? '',
       updatedAt: '',
     };
     return authUser;
@@ -107,13 +107,13 @@ export const register = async (
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       if (response.status === 400) {
-        throw createValidationError(errorData.message || 'Invalid registration data', errorData);
+        throw createValidationError(errorData.message ?? 'Invalid registration data', errorData);
       } else if (response.status >= 500) {
-        throw createServerError(errorData.message || 'Server error occurred');
+        throw createServerError(errorData.message ?? 'Server error occurred');
       } else {
         throw {
           code: 'API_ERROR',
-          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          message: errorData.message ?? `HTTP ${response.status}: ${response.statusText}`,
           status: response.status,
           details: errorData,
         };
@@ -125,7 +125,7 @@ export const register = async (
     if (!data.success) {
       throw {
         code: 'API_ERROR',
-        message: data.message || 'Registration failed',
+        message: data.message ?? 'Registration failed',
         details: data.error,
       };
     }
@@ -134,12 +134,12 @@ export const register = async (
     const authUser: AuthUser = {
       id: data.data.id,
       email: data.data.email,
-      firstName: data.data.display_name?.split(' ')[0] || data.data.username,
-      lastName: data.data.display_name?.split(' ').slice(1).join(' ') || '',
+      firstName: data.data.display_name?.split(' ')[0] ?? data.data.username,
+      lastName: data.data.display_name?.split(' ').slice(1).join(' ') ?? '',
       membershipType: data.data.role === 'admin' ? 'admin' : 'member',
       token: '', // No token provided during registration
       isActive: data.data.is_verified,
-      createdAt: data.data.member_since || '',
+      createdAt: data.data.member_since ?? '',
       updatedAt: '',
     };
     return authUser;
@@ -203,12 +203,12 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
         const authUser: AuthUser = {
           id: data.data.id,
           email: data.data.email,
-          firstName: data.data.display_name?.split(' ')[0] || data.data.username,
-          lastName: data.data.display_name?.split(' ').slice(1).join(' ') || '',
+          firstName: data.data.display_name?.split(' ')[0] ?? data.data.username,
+          lastName: data.data.display_name?.split(' ').slice(1).join(' ') ?? '',
           membershipType: data.data.role === 'admin' ? 'admin' : 'member',
           token: token,
           isActive: data.data.is_verified,
-          createdAt: data.data.member_since || '',
+          createdAt: data.data.member_since ?? '',
           updatedAt: '',
         };
         authDebug('[AuthAPI] User validated successfully:', authUser);

@@ -6,7 +6,7 @@ import { getAuthToken } from '../utils/authToken';
 import { createAuthError, createServerError } from '../utils/errorHandling';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || '/api';
+  import.meta.env.VITE_API_BASE_URL ?? '/api';
 const DEFAULT_TIMEOUT_MS = 10_000; // 10s
 
 class ApiClient {
@@ -98,8 +98,8 @@ class ApiClient {
           success: false,
           error: {
             message:
-              errBody?.error?.message ||
-              errBody?.message ||
+              errBody?.error?.message ??
+              errBody?.message ??
               `HTTP ${response.status}: ${response.statusText}`,
             details: JSON.stringify(errBody),
             status: response.status,
