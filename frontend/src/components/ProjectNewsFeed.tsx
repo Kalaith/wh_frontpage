@@ -7,19 +7,24 @@ const ProjectNewsFeed: React.FC = () => {
   const { data: activityData, isLoading, error } = useRecentActivity(3); // Last 3 days
 
   if (isLoading) {
+    const loadingSkeletons = [];
+    for (let i = 0; i < 3; i++) {
+      loadingSkeletons.push(
+        <div key={i} className="flex space-x-3">
+          <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+          <div className="flex-1">
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
         <div className="animate-pulse space-y-3">
-          {[...Array(3)].map((_, index) => (
-            <div key={index} className="flex space-x-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            </div>
-          ))}
+          {loadingSkeletons}
         </div>
       </div>
     );
