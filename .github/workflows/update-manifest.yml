@@ -1,0 +1,40 @@
+name: Update Project Manifest
+on:
+  push:
+    branches: [ main, development ]
+  workflow_dispatch:
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update project.json with git info
+        run: |
+          # Read existing manifest or create new one
+          if [ -f "project.json" ]; then
+            manifest=$(cat project.json)
+          else
+            manifest='{"name":"frontpage","status":"active","deployment":{}}'
+          fi
+
+          # Update with git information
+          echo "$manifest" | jq --arg commit "$GITHUB_SHA" \
+            --arg updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg branch "$GITHUB_REF_NAME" \
+            --arg message "${{ github.event.head_commit.message }}" \
+            '.gitCommit = $commit | .lastUpdated = $updated | .branch = $branch | .lastCommitMessage = $message' \
+            > project.json
+
+      - name: Commit updated manifest
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add project.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Update project manifest [skip ci]"
+            git push
+          fi
