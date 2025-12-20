@@ -3,11 +3,21 @@
 
 declare(strict_types=1);
 
-use Slim\Factory\AppFactory;
-use DI\Container;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Dotenv\Dotenv;
-use App\Middleware\CorsMiddleware;
+use App\Core\Router;
+use App\Core\Request;
+use App\Core\Response;
+
+// Handle CORS
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -15,7 +25,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
-// Database setup (optional for frontpage, but consistent with auth)
+// Database setup
 if (isset($_ENV['DB_HOST'])) {
     $capsule = new Capsule;
     $capsule->addConnection([
@@ -34,88 +44,20 @@ if (isset($_ENV['DB_HOST'])) {
     $capsule->bootEloquent();
 }
 
-// Container setup
-$container = new Container();
+// Create Router
+$router = new Router();
 
-// Register dependencies
-$container->set(\App\Controllers\ProjectController::class, function() {
-    return new \App\Controllers\ProjectController();
-});
-
-$container->set(\App\Controllers\TrackerController::class, function() {
-    return new \App\Controllers\TrackerController();
-});
-
-$container->set(\App\Middleware\JwtAuthMiddleware::class, function() {
-    return new \App\Middleware\JwtAuthMiddleware();
-});
-
-AppFactory::setContainer($container);
-
-// Create Slim app
-$app = AppFactory::create();
-
-// Debug: Log request information
-error_log("Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'not set'));
-error_log("Script Name: " . ($_SERVER['SCRIPT_NAME'] ?? 'not set'));
-error_log("Path Info: " . ($_SERVER['PATH_INFO'] ?? 'not set'));
-error_log("APP_BASE_PATH: " . ($_ENV['APP_BASE_PATH'] ?? 'not set'));
-
-// Set base path for subdirectory deployment
-// Commented out to allow direct access to /api routes without /frontpage prefix
-// if (isset($_ENV['APP_BASE_PATH']) && !empty($_ENV['APP_BASE_PATH'])) {
-//     $app->setBasePath($_ENV['APP_BASE_PATH']);
-//     error_log("Slim base path set to: " . $_ENV['APP_BASE_PATH']);
-// } else {
-//     error_log("No base path set");
-// }
-error_log("Base path disabled - direct API access enabled");
-
-// Add middleware
-$app->add(new CorsMiddleware());
-$app->addRoutingMiddleware();
-$app->addBodyParsingMiddleware();
-
-// Error middleware
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
-$errorHandler = $errorMiddleware->getDefaultErrorHandler();
-$errorHandler->forceContentType('application/json');
-
-// Handle preflight OPTIONS requests
-$app->options('/{routes:.*}', function ($request, $response) {
-    return $response;
-});
-
-// Error handler for JSON responses
-$errorMiddleware->setDefaultErrorHandler(function ($request, $exception, $displayErrorDetails) {
-    $response = new \Slim\Psr7\Response();
-    
-    $statusCode = 500;
-    if (method_exists($exception, 'getCode') && $exception->getCode() >= 400 && $exception->getCode() < 600) {
-        $statusCode = $exception->getCode();
-    }
-    
-    $payload = json_encode([
-        'success' => false,
-        'error' => [
-            'message' => $exception->getMessage(),
-            'code' => $statusCode
-        ]
-    ]);
-    
-    $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus($statusCode);
-});
+// Set base path if needed (for subdirectory deployment)
+if (isset($_ENV['APP_BASE_PATH']) && !empty($_ENV['APP_BASE_PATH'])) {
+    $router->setBasePath($_ENV['APP_BASE_PATH']);
+}
 
 // Load routes
 require_once __DIR__ . '/../src/Routes/api.php';
 
 // Add a simple root endpoint for testing
-$app->get('/', function ($request, $response) {
-    $payload = json_encode([
-        'success' => true,
+$router->get('/', function (Request $request, Response $response) {
+    $response->success([
         'message' => 'Frontpage API Server',
         'version' => '1.0.0',
         'endpoints' => [
@@ -133,9 +75,7 @@ $app->get('/', function ($request, $response) {
         ],
         'timestamp' => date('c')
     ]);
-    
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
 });
 
-$app->run();
+// Run Router
+$router->handle();
