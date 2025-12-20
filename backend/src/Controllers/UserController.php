@@ -1,46 +1,39 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
 use App\Core\Request;
 use App\Core\Response;
-use App\Config\Config;
 use App\Models\User;
 use App\Models\EggTransaction;
 use App\Models\FeatureRequest;
 use App\Models\FeatureVote;
+use App\Actions\LoginAction;
+use App\Actions\RegisterAction;
+use App\Actions\GetProfileAction;
+use App\Actions\UpdateProfileAction;
+use App\Config\Config;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Exception;
 
 class UserController
 {
+    public function __construct(
+        private readonly LoginAction $loginAction,
+        private readonly RegisterAction $registerAction,
+        private readonly GetProfileAction $getProfileAction,
+        private readonly UpdateProfileAction $updateProfileAction
+    ) {}
+
     public function getProfile(Request $request, Response $response): void
     {
         try {
             $userId = $this->getUserIdFromToken($request);
-            
-            $user = User::find($userId);
-            if (!$user) {
-                $response->error('User not found', 404);
-                return;
-            }
-
-            $profile = $user->toApiArray();
-            
-            // Add additional profile stats
-            $profile['stats'] = [
-                'features_created' => FeatureRequest::where('user_id', $userId)->count(),
-                'votes_cast' => FeatureVote::where('user_id', $userId)->count(),
-                'eggs_spent' => EggTransaction::where('user_id', $userId)->where('amount', '<', 0)->sum('amount') * -1,
-                'eggs_earned' => EggTransaction::where('user_id', $userId)->where('amount', '>', 0)->sum('amount'),
-                'features_approved' => FeatureRequest::where('user_id', $userId)->where('status', 'approved')->count(),
-                'features_completed' => FeatureRequest::where('user_id', $userId)->where('status', 'completed')->count(),
-            ];
-
+            $profile = $this->getProfileAction->execute($userId);
             $response->success($profile);
-
-        } catch (\Exception $e) {
-            $response->error($e->getMessage(), 500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
@@ -50,34 +43,11 @@ class UserController
             $userId = $this->getUserIdFromToken($request);
             $data = $request->getBody();
             
-            $user = User::find($userId);
-            if (!$user) {
-                $response->error('User not found', 404);
-                return;
-            }
+            $profile = $this->updateProfileAction->execute($userId, $data);
+            $response->success($profile, 'Profile updated successfully');
 
-            // Update allowed fields
-            $allowedFields = ['display_name', 'username'];
-            foreach ($allowedFields as $field) {
-                if (isset($data[$field])) {
-                    // Check if username is unique
-                    if ($field === 'username' && $data[$field] !== $user->username) {
-                        $existingUser = User::where('username', $data[$field])->where('id', '!=', $userId)->first();
-                        if ($existingUser) {
-                            $response->error('Username already taken', 400);
-                            return;
-                        }
-                    }
-                    
-                    $user->{$field} = $data[$field];
-                }
-            }
-
-            $user->save();
-            $response->success($user->toApiArray(), 'Profile updated successfully');
-
-        } catch (\Exception $e) {
-            $response->error($e->getMessage(), 500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
@@ -109,7 +79,7 @@ class UserController
                 $response->error('Unable to claim daily reward');
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error($e->getMessage(), 500);
         }
     }
@@ -120,12 +90,12 @@ class UserController
             $userId = $this->getUserIdFromToken($request);
             
             $limit = (int)$request->getQueryParam('limit', 50);
-            $type = $request->getQueryParam('type');
+            $type = (string)$request->getQueryParam('type', '');
 
             $query = EggTransaction::where('user_id', $userId)
                 ->orderBy('created_at', 'desc');
 
-            if ($type) {
+            if ($type !== '') {
                 $query->where('transaction_type', $type);
             }
 
@@ -144,7 +114,7 @@ class UserController
                 'stats' => $stats
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error($e->getMessage(), 500);
         }
     }
@@ -224,7 +194,7 @@ class UserController
 
             $response->success($dashboard);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error($e->getMessage(), 500);
         }
     }
@@ -249,29 +219,12 @@ class UserController
                 return;
             }
 
-            // Check if user already exists
-            if (User::where('email', $data['email'])->exists()) {
-                $response->error('Email already registered', 400);
-                return;
-            }
+            $user = $this->registerAction->execute($data);
 
-            if (User::where('username', $data['username'])->exists()) {
-                $response->error('Username already taken', 400);
-                return;
-            }
+            $response->withStatus(201)->success($user, 'Account created successfully! You received 500 welcome eggs.');
 
-            // Create user
-            $user = User::createUser([
-                'username' => $data['username'],
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'display_name' => $data['display_name'] ?? $data['username']
-            ]);
-
-            $response->withStatus(201)->success($user->toApiArray(), 'Account created successfully! You received 500 welcome eggs.');
-
-        } catch (\Exception $e) {
-            $response->error($e->getMessage(), 500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
@@ -285,35 +238,12 @@ class UserController
                 return;
             }
 
-            $user = User::where('email', $data['email'])->first();
-            
-            if (!$user || !password_verify($data['password'], $user->password_hash)) {
-                $response->error('Invalid credentials', 401);
-                return;
-            }
+            $result = $this->loginAction->execute((string)$data['email'], (string)$data['password']);
 
-            // Generate JWT token
-            $secret = Config::get('jwt.secret');
-            $expiration = Config::get('jwt.expiration');
-            
-            $payload_jwt = [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-                'iat' => time(),
-                'exp' => time() + $expiration
-            ];
+            $response->success($result, 'Login successful');
 
-            $token = JWT::encode($payload_jwt, $secret, 'HS256');
-
-            $response->success([
-                'user' => $user->toApiArray(),
-                'token' => $token,
-                'expires_at' => date('Y-m-d H:i:s', $payload_jwt['exp'])
-            ], 'Login successful');
-
-        } catch (\Exception $e) {
-            $response->error($e->getMessage(), 500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 401));
         }
     }
 
@@ -338,7 +268,7 @@ class UserController
 
             $response->success(null, 'Account deleted successfully');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error($e->getMessage(), 500);
         }
     }
@@ -352,20 +282,20 @@ class UserController
         }
         
         // Fallback to manual token handling if needed
-        $token = $request->getHeader('authorization');
-        if ($token && preg_match('/Bearer\s+(.*)$/i', $token, $matches)) {
+        $token = (string)$request->getHeader('authorization');
+        if ($token !== '' && preg_match('/Bearer\s+(.*)$/i', $token, $matches)) {
             $token = $matches[1];
         } else {
-            throw new \Exception('Authorization token required');
+            throw new Exception('Authorization token required', 401);
         }
 
-        $secret = Config::get('jwt.secret');
+        $secret = (string)Config::get('jwt.secret');
         
         try {
             $decoded = JWT::decode($token, new Key($secret, 'HS256'));
             return (int) $decoded->user_id;
-        } catch (\Exception $e) {
-            throw new \Exception('Invalid token');
+        } catch (Exception $e) {
+            throw new Exception('Invalid token', 401);
         }
     }
 }

@@ -17,17 +17,29 @@ interface AuthState {
   login: (email: string, password: string) => Promise<AuthUser>;
   register: (userData: any) => Promise<AuthUser>;
   logout: () => void;
+  refreshUserInfo: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
 
       setAuth: (user, token) => {
         set({ user, token, isAuthenticated: true });
+      },
+
+      refreshUserInfo: async () => {
+        try {
+          const response = await api.getCurrentUser();
+          if (response.success && response.data) {
+            set({ user: response.data, isAuthenticated: true });
+          }
+        } catch (error) {
+          console.error('Failed to refresh user info:', error);
+        }
       },
 
       login: async (email, password) => {
@@ -82,6 +94,8 @@ export const useAuth = () => {
 
   return {
     ...store,
+    isAdmin: store.user?.role === 'admin',
+    loginWithRedirect: () => { window.location.href = '/login'; },
     isLoading: false, // Legacy field
     error: null,      // Legacy field
   };

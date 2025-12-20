@@ -197,6 +197,10 @@ class ApiClient {
     });
     return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
+
+  async getCurrentUser(): Promise<ApiResponse<AuthUser>> {
+    return this.request<AuthUser>('/auth/user');
+  }
 }
 
 // Create and export a singleton instance

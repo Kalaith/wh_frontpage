@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -8,35 +9,28 @@ use App\Models\FeatureRequest;
 use App\Models\ProjectSuggestion;
 use App\Models\ActivityFeed;
 use App\Models\Project;
+use App\Actions\GetTrackerStatsAction;
+use App\Actions\GetFeatureRequestsAction;
+use App\Actions\CreateFeatureRequestAction;
+use Exception;
 
 class TrackerController
 {
+    public function __construct(
+        private readonly GetTrackerStatsAction $getTrackerStatsAction,
+        private readonly GetFeatureRequestsAction $getFeatureRequestsAction,
+        private readonly CreateFeatureRequestAction $createFeatureRequestAction
+    ) {}
+
     /**
      * Get tracker dashboard stats
      */
     public function getStats(Request $request, Response $response): void
     {
         try {
-            // Get project count
-            $projectCount = Project::count();
-
-            // Get feature request stats
-            $featureStats = FeatureRequest::getStats();
-            
-            // Get suggestion stats  
-            $suggestionStats = ProjectSuggestion::getStats();
-
-            $stats = [
-                'projects' => [
-                    'total' => $projectCount
-                ],
-                'feature_requests' => $featureStats,
-                'suggestions' => $suggestionStats
-            ];
-
+            $stats = $this->getTrackerStatsAction->execute();
             $response->success($stats);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error retrieving tracker stats: ' . $e->getMessage(), 500);
         }
     }
@@ -54,20 +48,20 @@ class TrackerController
                 'project_id' => $request->getParam('project_id')
             ];
 
-            $sortBy = $request->getParam('sort_by', 'votes');
-            $sortDirection = $request->getParam('sort_direction', 'desc');
+            $sortBy = (string)$request->getParam('sort_by', 'votes');
+            $sortDirection = (string)$request->getParam('sort_direction', 'desc');
             $limit = $request->getParam('limit');
 
-            $requests = FeatureRequest::getByFilters(
-                array_filter($filters), 
-                (string)$sortBy, 
-                (string)$sortDirection, 
+            $requests = $this->getFeatureRequestsAction->execute(
+                $filters, 
+                $sortBy, 
+                $sortDirection, 
                 $limit ? (int)$limit : null
             );
 
             $response->success($requests);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error retrieving feature requests: ' . $e->getMessage(), 500);
         }
     }
@@ -89,36 +83,11 @@ class TrackerController
                 }
             }
 
-            // Process tags if provided
-            if (isset($data['tags']) && is_string($data['tags'])) {
-                $data['tags'] = array_map('trim', explode(',', $data['tags']));
-            }
+            $result = $this->createFeatureRequestAction->execute($data);
 
-            // Create feature request
-            $featureRequest = FeatureRequest::create([
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'category' => $data['category'] ?? 'Enhancement',
-                'priority' => $data['priority'] ?? 'Medium',
-                'tags' => $data['tags'] ?? null,
-                'project_id' => !empty($data['project_id']) ? (int)$data['project_id'] : null,
-                'submitted_by' => $data['submitted_by'] ?? 'anonymous'
-            ]);
+            $response->withStatus(201)->success($result, 'Feature request created successfully');
 
-            // Log activity
-            ActivityFeed::logActivity(
-                'feature_request',
-                'created',
-                'New feature request submitted',
-                $featureRequest->title,
-                $featureRequest->id,
-                'feature_request',
-                $featureRequest->submitted_by
-            );
-
-            $response->withStatus(201)->success($featureRequest->toApiArray(), 'Feature request created successfully');
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error creating feature request: ' . $e->getMessage(), 400);
         }
     }
@@ -134,20 +103,20 @@ class TrackerController
                 'status' => $request->getParam('status')
             ];
 
-            $sortBy = $request->getParam('sort_by', 'votes');
-            $sortDirection = $request->getParam('sort_direction', 'desc');
+            $sortBy = (string)$request->getParam('sort_by', 'votes');
+            $sortDirection = (string)$request->getParam('sort_direction', 'desc');
             $limit = $request->getParam('limit');
 
             $suggestions = ProjectSuggestion::getByFilters(
                 array_filter($filters), 
-                (string)$sortBy, 
-                (string)$sortDirection, 
+                $sortBy, 
+                $sortDirection, 
                 $limit ? (int)$limit : null
             );
 
             $response->success($suggestions);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error retrieving project suggestions: ' . $e->getMessage(), 500);
         }
     }
@@ -191,7 +160,7 @@ class TrackerController
 
             $response->withStatus(201)->success($suggestion->toApiArray(), 'Project suggestion created successfully');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error creating project suggestion: ' . $e->getMessage(), 400);
         }
     }
@@ -209,7 +178,7 @@ class TrackerController
 
             $response->success($activity);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error retrieving activity feed: ' . $e->getMessage(), 500);
         }
     }
@@ -222,9 +191,9 @@ class TrackerController
         try {
             $data = $request->getBody();
             
-            $itemType = $data['item_type'] ?? null; // 'feature_request' or 'project_suggestion'
+            $itemType = (string)($data['item_type'] ?? ''); // 'feature_request' or 'project_suggestion'
             $itemId = $data['item_id'] ?? null;
-            $voteValue = $data['vote_value'] ?? 1; // 1 for upvote, -1 for downvote
+            $voteValue = (int)($data['vote_value'] ?? 1); // 1 for upvote, -1 for downvote
 
             if (!$itemType || !$itemId) {
                 $response->error('item_type and item_id are required', 400);
@@ -261,7 +230,7 @@ class TrackerController
                 'new_vote_count' => $item->votes
             ], 'Vote recorded successfully');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Error recording vote: ' . $e->getMessage(), 400);
         }
     }

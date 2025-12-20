@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Actions;
 
@@ -31,9 +31,14 @@ class CreateProjectAction
             'version' => $project->version,
         ];
 
-        if ($project->path) $created['path'] = $project->path;
-        if ($project->repository_url) $created['repository'] = ['url' => $project->repository_url];
+        if ($project->path) {
+            $created['path'] = $project->path;
+        }
+        
+        if ($project->repository_url) {
+            $created['repository'] = ['url' => $project->repository_url];
+        }
 
-        return $created;
+        return (array)$created;
     }
 }

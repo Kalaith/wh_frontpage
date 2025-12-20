@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -9,22 +10,29 @@ use App\Actions\GetProjectsByGroupAction;
 use App\Actions\CreateProjectAction;
 use App\Actions\UpdateProjectAction;
 use App\Actions\DeleteProjectAction;
+use Exception;
 
 class ProjectController
 {
+    public function __construct(
+        private readonly GetGroupedProjectsAction $getGroupedProjectsAction,
+        private readonly GetProjectsByGroupAction $getProjectsByGroupAction,
+        private readonly CreateProjectAction $createProjectAction,
+        private readonly UpdateProjectAction $updateProjectAction,
+        private readonly DeleteProjectAction $deleteProjectAction
+    ) {}
+
     /**
      * Get all projects grouped by category
      */
     public function getProjects(Request $request, Response $response): void
     {
         try {
-            $action = new GetGroupedProjectsAction();
-
             // Determine if the requesting user is an admin
             $userRole = $request->getAttribute('user_role', 'user');
             $isAdmin = strtolower((string)$userRole) === 'admin';
 
-            $groupedProjects = $action->execute($isAdmin);
+            $groupedProjects = $this->getGroupedProjectsAction->execute($isAdmin);
 
             // Create flat arrays for frontend compatibility
             $allProjects = [];
@@ -50,7 +58,7 @@ class ProjectController
 
             $response->success($data);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch projects: ' . $e->getMessage(), 500);
         }
     }
@@ -91,7 +99,7 @@ class ProjectController
 
             $response->success($data);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch homepage projects: ' . $e->getMessage(), 500);
         }
     }
@@ -113,12 +121,11 @@ class ProjectController
                 }
             }
 
-            $action = new GetProjectsByGroupAction();
-            $mapped = $action->execute((string)$groupName);
+            $mapped = $this->getProjectsByGroupAction->execute((string)$groupName);
 
             $response->success($mapped);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch projects for group: ' . $e->getMessage(), 500);
         }
     }
@@ -137,12 +144,11 @@ class ProjectController
             }
 
             $data = $request->getBody();
-            $action = new CreateProjectAction();
-            $created = $action->execute($data);
+            $created = $this->createProjectAction->execute($data);
 
             $response->withStatus(201)->success($created, 'Project created successfully');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to create project: ' . $e->getMessage(), 500);
         }
     }
@@ -162,8 +168,7 @@ class ProjectController
 
             $id = (int)$request->getParam('id', 0);
             $data = $request->getBody();
-            $action = new UpdateProjectAction();
-            $updated = $action->execute($id, $data);
+            $updated = $this->updateProjectAction->execute($id, $data);
 
             if ($updated === null) {
                 $response->error('Project not found', 404);
@@ -172,7 +177,7 @@ class ProjectController
 
             $response->success($updated, 'Project updated');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to update project: ' . $e->getMessage(), 500);
         }
     }
@@ -191,8 +196,7 @@ class ProjectController
             }
 
             $id = (int)$request->getParam('id', 0);
-            $action = new DeleteProjectAction();
-            $ok = $action->execute($id);
+            $ok = $this->deleteProjectAction->execute($id);
 
             if (!$ok) {
                 $response->error('Project not found', 404);
@@ -201,7 +205,7 @@ class ProjectController
 
             $response->success(null, 'Project deleted');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to delete project: ' . $e->getMessage(), 500);
         }
     }

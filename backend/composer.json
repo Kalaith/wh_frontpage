@@ -1,6 +1,12 @@
 {
+  "name": "frontpage/backend",
+  "description": "PHP backend for the Frontpage application",
+  "type": "project",
+  "config": {
+    "process-timeout": 0
+  },
   "scripts": {
-    "start": "php -S localhost:8000 -t public",
+    "start": "php -S localhost:8000 public/index.php",
     "test": "phpunit",
     "cs-check": "phpcs --standard=PSR12 src/ tests/",
     "cs-fix": "phpcbf --standard=PSR12 src/ tests/"

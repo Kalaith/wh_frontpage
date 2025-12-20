@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Actions;
 
@@ -20,7 +20,7 @@ class GetProjectsByGroupAction
         $projects = Project::where('group_name', $groupName)
             ->get();
 
-        return $projects->map(function ($project) use ($groupName) {
+        return (array)$projects->map(function ($project) use ($groupName) {
             $p = [
                 'id' => $project->id,
                 'group_name' => $groupName,
@@ -31,10 +31,14 @@ class GetProjectsByGroupAction
                 'version' => $project->version,
             ];
 
-            if ($project->path) $p['path'] = $project->path;
-            if ($project->repository_url) $p['repository'] = ['url' => $project->repository_url];
+            if ($project->path) {
+                $p['path'] = $project->path;
+            }
+            if ($project->repository_url) {
+                $p['repository'] = ['url' => $project->repository_url];
+            }
 
             return $p;
-    })->toArray();
+        })->toArray();
     }
 }

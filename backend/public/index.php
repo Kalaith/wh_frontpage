@@ -9,21 +9,63 @@ use App\Core\Router;
 use App\Core\Request;
 use App\Core\Response;
 
-// Handle CORS
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+// Search for shared vendor folder in multiple locations
+$autoloader = null;
+$searchPaths = [
+    __DIR__ . '/../vendor/autoload.php',           // Local vendor
+    __DIR__ . '/../../vendor/autoload.php',        // 2 levels up
+    __DIR__ . '/../../../vendor/autoload.php',     // 3 levels up
+    __DIR__ . '/../../../../vendor/autoload.php',  // 4 levels up
+    __DIR__ . '/../../../../../vendor/autoload.php' // 5 levels up
+];
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
+foreach ($searchPaths as $path) {
+    if (file_exists($path)) {
+        $autoloader = $path;
+        break;
+    }
 }
 
-require_once __DIR__ . '/../vendor/autoload.php';
+if (!$autoloader) {
+    header("HTTP/1.1 500 Internal Server Error");
+    echo "Autoloader not found. Please run 'composer install' or check your deployment.";
+    exit(1);
+}
+
+require_once $autoloader;
+
+// Manual autoloader for App classes - prepend to override stale composer mappings in preview
+spl_autoload_register(function ($class) {
+    if (strpos($class, 'App\\') === 0) {
+        $path = __DIR__ . '/../src/' . str_replace('\\', '/', substr($class, 4)) . '.php';
+        if (file_exists($path)) {
+            require_once $path;
+        }
+    }
+}, true, true);
 
 // Load environment variables
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
+try {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+    $dotenv->load();
+} catch (\Throwable $e) {
+    // Fail silently in some environments
+}
+
+// Get CORS origin
+$allowedOrigin = $_ENV['CORS_ORIGIN'] ?? '*';
+
+// Handle CORS preflight OPTIONS requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+    header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    header('Access-Control-Max-Age: 86400');
+    exit(0);
+}
+
+// Global CORS header for all other requests
+header('Access-Control-Allow-Origin: ' . $allowedOrigin);
 
 // Database setup
 if (isset($_ENV['DB_HOST'])) {

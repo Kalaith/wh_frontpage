@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\EmailNotification;
@@ -134,7 +136,7 @@ class EmailService
 
     private function generateHtmlContent(EmailNotification $notification)
     {
-        $user = $notification->user;
+        $displayName = $user->display_name ?: $user->username;
         $textContent = nl2br(htmlspecialchars($notification->message));
         
         return "
@@ -162,7 +164,7 @@ class EmailService
             
             <div class='content'>
                 <h2>{$notification->subject}</h2>
-                <p>Hello {$user->display_name ?: $user->username},</p>
+                <p>Hello {$displayName},</p>
                 
                 <div>{$textContent}</div>
                 

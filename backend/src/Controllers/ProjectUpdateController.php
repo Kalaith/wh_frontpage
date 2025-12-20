@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -8,12 +8,9 @@ use App\Services\ProjectUpdateService;
 
 class ProjectUpdateController
 {
-    private ProjectUpdateService $updateService;
-
-    public function __construct()
-    {
-        $this->updateService = new ProjectUpdateService();
-    }
+    public function __construct(
+        private readonly ProjectUpdateService $updateService
+    ) {}
 
     /**
      * Get all project updates with status information

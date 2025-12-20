@@ -1,15 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 class ProjectNewsFeedService
 {
-    private ProjectUpdateService $updateService;
-
-    public function __construct()
-    {
-        $this->updateService = new ProjectUpdateService();
-    }
+    public function __construct(
+        private readonly ProjectUpdateService $updateService
+    ) {}
 
     /**
      * Generate news feed from recent project updates

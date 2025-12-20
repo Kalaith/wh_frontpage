@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -8,12 +8,9 @@ use App\Services\ProjectHealthService;
 
 class ProjectHealthController
 {
-    private ProjectHealthService $healthService;
-
-    public function __construct()
-    {
-        $this->healthService = new ProjectHealthService();
-    }
+    public function __construct(
+        private readonly ProjectHealthService $healthService
+    ) {}
 
     /**
      * Get comprehensive system health report

@@ -5,7 +5,7 @@ import ProjectForm from '../components/ProjectForm';
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '../hooks/useProjectsQuery';
 import { useFeatureRequests } from '../hooks/useTrackerQuery';
 import { getProjectCount, getGroupedProjects } from '../utils/projectUtils';
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from '../stores/authStore';
 
 const ProjectsPage: React.FC = () => {
   const { isAuthenticated, isAdmin, isLoading, loginWithRedirect } = useAuth();
@@ -14,16 +14,16 @@ const ProjectsPage: React.FC = () => {
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
-  
+
   const projectCount = getProjectCount(projectsData);
   const grouped = getGroupedProjects(projectsData);
-  
+
   // Create a map of project ID to feature request counts
   const featureRequestCounts = React.useMemo(() => {
     if (!allFeatureRequests || !Array.isArray(allFeatureRequests)) return {};
-    
+
     const counts: Record<number, { total: number; open: number; completed: number }> = {};
-    
+
     allFeatureRequests.forEach((request) => {
       const projectId = request.project?.id;
       if (projectId) {
@@ -31,7 +31,7 @@ const ProjectsPage: React.FC = () => {
           counts[projectId] = { total: 0, open: 0, completed: 0 };
         }
         counts[projectId].total++;
-        
+
         if (request.status === 'Open' || request.status === 'open') {
           counts[projectId].open++;
         } else if (request.status === 'Completed' || request.status === 'completed') {
@@ -39,7 +39,7 @@ const ProjectsPage: React.FC = () => {
         }
       }
     });
-    
+
     return counts;
   }, [allFeatureRequests]);
   const [createData, setCreateData] = useState<Partial<Project>>({

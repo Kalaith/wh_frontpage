@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -8,12 +8,9 @@ use App\Services\ProjectNewsFeedService;
 
 class ProjectNewsFeedController
 {
-    private ProjectNewsFeedService $newsFeedService;
-
-    public function __construct()
-    {
-        $this->newsFeedService = new ProjectNewsFeedService();
-    }
+    public function __construct(
+        private readonly ProjectNewsFeedService $newsFeedService
+    ) {}
 
     /**
      * Get the main news feed

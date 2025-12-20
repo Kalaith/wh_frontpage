@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Actions;
 
@@ -11,6 +11,6 @@ class GetGroupedProjectsAction
      */
     public function execute(bool $includePrivate = false): array
     {
-        return Project::getGroupedProjects($includePrivate);
+        return (array)Project::getGroupedProjects($includePrivate);
     }
 }

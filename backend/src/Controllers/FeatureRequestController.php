@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -9,59 +10,36 @@ use App\Models\User;
 use App\Models\FeatureVote;
 use App\Models\EggTransaction;
 use App\Models\Project;
+use App\Actions\GetAllFeaturesAction;
+use App\Actions\CreateFeatureAction;
+use Exception;
 
 class FeatureRequestController
 {
+    public function __construct(
+        private readonly GetAllFeaturesAction $getAllFeaturesAction,
+        private readonly CreateFeatureAction $createFeatureAction
+    ) {}
+
     public function getAllFeatures(Request $request, Response $response): void
     {
         try {
-            $status = $request->getParam('status', 'approved');
-            $project_id = $request->getParam('project_id');
-            $category = $request->getParam('category');
-            $sort_by = $request->getParam('sort_by', 'total_eggs');
-            $sort_direction = $request->getParam('sort_direction', 'desc');
-            $limit = $request->getParam('limit', 50);
-            $search = $request->getParam('search');
+            $filters = [
+                'status' => $request->getParam('status', 'approved'),
+                'project_id' => $request->getParam('project_id'),
+                'category' => $request->getParam('category'),
+                'search' => $request->getParam('search')
+            ];
 
-            $query = FeatureRequest::query();
+            $sortBy = (string)$request->getParam('sort_by', 'total_eggs');
+            $sortDirection = (string)$request->getParam('sort_direction', 'desc');
+            $limit = (int)$request->getParam('limit', 50);
 
-            // Apply filters
-            if ($status !== 'all') {
-                $query->where('status', $status);
-            }
-
-            if ($project_id) {
-                $query->where('project_id', $project_id);
-            }
-
-            if ($category) {
-                $query->where('category', $category);
-            }
-
-            if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
-                });
-            }
-
-            // Apply sorting
-            $query->orderBy((string)$sort_by, (string)$sort_direction);
-
-            if ((int)$limit > 0) {
-                $query->limit((int)$limit);
-            }
-
-            // Load relationships
-            $query->with(['user:id,username,display_name', 'project:id,title']);
-
-            $features = $query->get()->map(function ($feature) {
-                return $feature->toApiArray();
-            });
+            $features = $this->getAllFeaturesAction->execute($filters, $sortBy, $sortDirection, $limit);
 
             $response->success($features);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch feature requests: ' . $e->getMessage(), 500);
         }
     }
@@ -87,7 +65,7 @@ class FeatureRequestController
 
             $response->success($data);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch feature request: ' . $e->getMessage(), 500);
         }
     }
@@ -106,49 +84,12 @@ class FeatureRequestController
                 }
             }
 
-            // Verify user exists and has enough eggs
-            $user = User::find($data['user_id']);
-            if (!$user) {
-                $response->error('User not found', 400);
-                return;
-            }
+            $result = $this->createFeatureAction->execute($data);
 
-            if ($user->egg_balance < 100) {
-                $response->error('Insufficient eggs. Creating a feature request costs 100 eggs.', 400);
-                return;
-            }
+            $response->withStatus(201)->success($result, 'Feature request created successfully. It will be reviewed by administrators.');
 
-            // Verify project exists if provided
-            if (isset($data['project_id']) && $data['project_id']) {
-                $project = Project::find($data['project_id']);
-                if (!$project) {
-                    $response->error('Project not found', 400);
-                    return;
-                }
-            }
-
-            // Create feature request
-            $feature = FeatureRequest::create([
-                'user_id' => $data['user_id'],
-                'project_id' => $data['project_id'] ?? null,
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'category' => $data['category'] ?? null,
-                'use_case' => $data['use_case'] ?? null,
-                'expected_benefits' => $data['expected_benefits'] ?? null,
-                'priority_level' => $data['priority_level'] ?? 'medium',
-                'feature_type' => $data['feature_type'] ?? 'enhancement',
-                'tags' => isset($data['tags']) ? json_encode($data['tags']) : null,
-                'status' => 'pending'
-            ]);
-
-            // Deduct eggs from user
-            $user->spendEggs(100, "Created feature request: {$feature->title}", $feature->id, 'feature_request');
-
-            $response->withStatus(201)->success($feature->toApiArray(), 'Feature request created successfully. It will be reviewed by administrators.');
-
-        } catch (\Exception $e) {
-            $response->error('Failed to create feature request: ' . $e->getMessage(), 500);
+        } catch (Exception $e) {
+            $response->error('Failed to create feature request: ' . $e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
@@ -172,18 +113,18 @@ class FeatureRequestController
             }
 
             $result = FeatureVote::castVote(
-                $data['user_id'], 
-                $data['feature_id'], 
-                $data['eggs_allocated']
+                (int)$data['user_id'], 
+                (int)$data['feature_id'], 
+                (int)$data['eggs_allocated']
             );
 
             if ($result['success']) {
                 $response->success($result);
             } else {
-                $response->error($result['message'], 400);
+                $response->error($result['message'] ?? 'Vote failed', 400);
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to cast vote: ' . $e->getMessage(), 500);
         }
     }
@@ -203,7 +144,7 @@ class FeatureRequestController
 
             $response->success($features);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch user feature requests: ' . $e->getMessage(), 500);
         }
     }
@@ -217,7 +158,7 @@ class FeatureRequestController
 
             $response->success($votes);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch user votes: ' . $e->getMessage(), 500);
         }
     }
@@ -238,7 +179,7 @@ class FeatureRequestController
 
             $response->success($stats);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response->error('Failed to fetch statistics: ' . $e->getMessage(), 500);
         }
     }

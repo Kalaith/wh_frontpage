@@ -1,4 +1,4 @@
-<?php
+declare(strict_types=1);
 
 namespace App\Actions;
 
@@ -9,7 +9,9 @@ class DeleteProjectAction
     public function execute(int $id): bool
     {
         $project = Project::find($id);
-        if (!$project) return false;
+        if (!$project) {
+            return false;
+        }
         $project->delete();
         return true;
     }
