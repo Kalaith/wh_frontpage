@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Core\Request;
+use App\Core\Response;
 use App\Models\FeatureRequest;
 use App\Models\User;
 use App\Models\FeatureVote;
@@ -12,18 +12,16 @@ use App\Models\Project;
 
 class FeatureRequestController
 {
-    public function getAllFeatures(Request $request, Response $response): Response
+    public function getAllFeatures(Request $request, Response $response): void
     {
         try {
-            $queryParams = $request->getQueryParams();
-            
-            $status = $queryParams['status'] ?? 'approved';
-            $project_id = $queryParams['project_id'] ?? null;
-            $category = $queryParams['category'] ?? null;
-            $sort_by = $queryParams['sort_by'] ?? 'total_eggs';
-            $sort_direction = $queryParams['sort_direction'] ?? 'desc';
-            $limit = isset($queryParams['limit']) ? (int)$queryParams['limit'] : 50;
-            $search = $queryParams['search'] ?? null;
+            $status = $request->getParam('status', 'approved');
+            $project_id = $request->getParam('project_id');
+            $category = $request->getParam('category');
+            $sort_by = $request->getParam('sort_by', 'total_eggs');
+            $sort_direction = $request->getParam('sort_direction', 'desc');
+            $limit = $request->getParam('limit', 50);
+            $search = $request->getParam('search');
 
             $query = FeatureRequest::query();
 
@@ -48,10 +46,10 @@ class FeatureRequestController
             }
 
             // Apply sorting
-            $query->orderBy($sort_by, $sort_direction);
+            $query->orderBy((string)$sort_by, (string)$sort_direction);
 
-            if ($limit > 0) {
-                $query->limit($limit);
+            if ((int)$limit > 0) {
+                $query->limit((int)$limit);
             }
 
             // Load relationships
@@ -61,42 +59,24 @@ class FeatureRequestController
                 return $feature->toApiArray();
             });
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $features,
-                'count' => $features->count()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($features);
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch feature requests',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to fetch feature requests: ' . $e->getMessage(), 500);
         }
     }
 
-    public function getFeatureById(Request $request, Response $response, array $args): Response
+    public function getFeatureById(Request $request, Response $response): void
     {
         try {
-            $featureId = (int)$args['id'];
+            $featureId = (int)$request->getParam('id');
             
             $feature = FeatureRequest::with(['user:id,username,display_name', 'project:id,title'])
                 ->find($featureId);
 
             if (!$feature) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Feature request not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+                $response->error('Feature request not found', 404);
+                return;
             }
 
             // Get votes for this feature
@@ -105,74 +85,45 @@ class FeatureRequestController
             $data = $feature->toApiArray();
             $data['votes'] = $votes;
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $data
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($data);
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch feature request',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to fetch feature request: ' . $e->getMessage(), 500);
         }
     }
 
-    public function createFeature(Request $request, Response $response): Response
+    public function createFeature(Request $request, Response $response): void
     {
         try {
-            $data = json_decode($request->getBody()->getContents(), true);
+            $data = $request->getBody();
             
             // Validate required fields
             $required = ['title', 'description', 'user_id'];
             foreach ($required as $field) {
                 if (!isset($data[$field]) || empty($data[$field])) {
-                    $payload = json_encode([
-                        'success' => false,
-                        'message' => "Field '{$field}' is required"
-                    ]);
-                    $response->getBody()->write($payload);
-                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                    $response->error("Field '{$field}' is required", 400);
+                    return;
                 }
             }
 
             // Verify user exists and has enough eggs
             $user = User::find($data['user_id']);
             if (!$user) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                $response->error('User not found', 400);
+                return;
             }
 
             if ($user->egg_balance < 100) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Insufficient eggs. Creating a feature request costs 100 eggs.'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                $response->error('Insufficient eggs. Creating a feature request costs 100 eggs.', 400);
+                return;
             }
 
             // Verify project exists if provided
             if (isset($data['project_id']) && $data['project_id']) {
                 $project = Project::find($data['project_id']);
                 if (!$project) {
-                    $payload = json_encode([
-                        'success' => false,
-                        'message' => 'Project not found'
-                    ]);
-                    $response->getBody()->write($payload);
-                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                    $response->error('Project not found', 400);
+                    return;
                 }
             }
 
@@ -194,52 +145,30 @@ class FeatureRequestController
             // Deduct eggs from user
             $user->spendEggs(100, "Created feature request: {$feature->title}", $feature->id, 'feature_request');
 
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Feature request created successfully. It will be reviewed by administrators.',
-                'data' => $feature->toApiArray()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+            $response->withStatus(201)->success($feature->toApiArray(), 'Feature request created successfully. It will be reviewed by administrators.');
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to create feature request',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to create feature request: ' . $e->getMessage(), 500);
         }
     }
 
-    public function voteOnFeature(Request $request, Response $response): Response
+    public function voteOnFeature(Request $request, Response $response): void
     {
         try {
-            $data = json_decode($request->getBody()->getContents(), true);
+            $data = $request->getBody();
             
             // Validate required fields
             $required = ['user_id', 'feature_id', 'eggs_allocated'];
             foreach ($required as $field) {
                 if (!isset($data[$field])) {
-                    $payload = json_encode([
-                        'success' => false,
-                        'message' => "Field '{$field}' is required"
-                    ]);
-                    $response->getBody()->write($payload);
-                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                    $response->error("Field '{$field}' is required", 400);
+                    return;
                 }
             }
 
             if ($data['eggs_allocated'] <= 0) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Eggs allocated must be greater than 0'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                $response->error('Eggs allocated must be greater than 0', 400);
+                return;
             }
 
             $result = FeatureVote::castVote(
@@ -248,28 +177,21 @@ class FeatureRequestController
                 $data['eggs_allocated']
             );
 
-            $status = $result['success'] ? 200 : 400;
-            $payload = json_encode($result);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+            if ($result['success']) {
+                $response->success($result);
+            } else {
+                $response->error($result['message'], 400);
+            }
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to cast vote',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to cast vote: ' . $e->getMessage(), 500);
         }
     }
 
-    public function getUserFeatures(Request $request, Response $response, array $args): Response
+    public function getUserFeatures(Request $request, Response $response): void
     {
         try {
-            $userId = (int)$args['user_id'];
+            $userId = (int)$request->getParam('user_id');
             
             $features = FeatureRequest::where('user_id', $userId)
                 ->with('project:id,title')
@@ -279,54 +201,28 @@ class FeatureRequestController
                     return $feature->toApiArray();
                 });
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $features
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($features);
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch user feature requests',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to fetch user feature requests: ' . $e->getMessage(), 500);
         }
     }
 
-    public function getUserVotes(Request $request, Response $response, array $args): Response
+    public function getUserVotes(Request $request, Response $response): void
     {
         try {
-            $userId = (int)$args['user_id'];
+            $userId = (int)$request->getParam('user_id');
             
             $votes = FeatureVote::getUserVotes($userId);
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $votes
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($votes);
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch user votes',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to fetch user votes: ' . $e->getMessage(), 500);
         }
     }
 
-    public function getStats(Request $request, Response $response): Response
+    public function getStats(Request $request, Response $response): void
     {
         try {
             $stats = [
@@ -340,23 +236,10 @@ class FeatureRequestController
                 'active_voters' => FeatureVote::distinct('user_id')->count(),
             ];
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $stats
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($stats);
 
         } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch statistics',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $response->error('Failed to fetch statistics: ' . $e->getMessage(), 500);
         }
     }
 }

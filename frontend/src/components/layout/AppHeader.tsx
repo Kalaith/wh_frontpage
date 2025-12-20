@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FeatureAuthStatus } from '../features/FeatureAuthStatus';
-import { useAuth } from '../../utils/AuthContext';
+import { useAuth } from '../../stores/authStore';
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -15,63 +16,58 @@ export const AppHeader: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo and Main Navigation */}
           <div className="flex items-center space-x-8">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="flex items-center space-x-2"
             >
               <span className="text-xl font-bold text-blue-600">WebHatchery.au</span>
             </Link>
-            
+
             <nav className="hidden md:flex space-x-6">
               <Link
                 to="/"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/') 
-                    ? 'bg-blue-100 text-blue-700' 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')
+                    ? 'bg-blue-100 text-blue-700'
                     : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 Home
               </Link>
               <Link
                 to="/tracker"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/tracker') 
-                    ? 'bg-blue-100 text-blue-700' 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/tracker')
+                    ? 'bg-blue-100 text-blue-700'
                     : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 Tracker
               </Link>
               <Link
                 to="/features"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                  isActive('/features') 
-                    ? 'bg-green-100 text-green-700' 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${isActive('/features')
+                    ? 'bg-green-100 text-green-700'
                     : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <span className="text-base">🥚</span>
                 Feature Requests
               </Link>
               <Link
                 to="/about"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/about')
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/about')
                     ? 'bg-gray-100 text-gray-800'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 About
               </Link>
               {isAdmin && (
                 <Link
                   to="/projects"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/projects') 
-                      ? 'bg-purple-100 text-purple-700' 
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/projects')
+                      ? 'bg-purple-100 text-purple-700'
                       : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   Manage Projects
                 </Link>

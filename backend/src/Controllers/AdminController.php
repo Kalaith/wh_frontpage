@@ -2,8 +2,9 @@
 
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Core\Request;
+use App\Core\Response;
+use App\Config\Config;
 use App\Models\User;
 use App\Models\FeatureRequest;
 use App\Models\EggTransaction;
@@ -13,56 +14,50 @@ use Firebase\JWT\Key;
 
 class AdminController
 {
-    public function getPendingFeatures(Request $request, Response $response): Response
+    public function getPendingFeatures(Request $request, Response $response): void
     {
         try {
             $this->requireAdmin($request);
             
-            $queryParams = $request->getQueryParams();
-            $limit = isset($queryParams['limit']) ? (int)$queryParams['limit'] : 50;
-            $sort_by = $queryParams['sort_by'] ?? 'created_at';
-            $sort_direction = $queryParams['sort_direction'] ?? 'desc';
+            $limit = $request->getParam('limit', 50);
+            $sort_by = $request->getParam('sort_by', 'created_at');
+            $sort_direction = $request->getParam('sort_direction', 'desc');
 
             $query = FeatureRequest::where('status', 'pending')
                 ->with(['user:id,username,display_name,email', 'project:id,title'])
-                ->orderBy($sort_by, $sort_direction);
+                ->orderBy((string)$sort_by, (string)$sort_direction);
 
-            if ($limit > 0) {
-                $query->limit($limit);
+            if ((int)$limit > 0) {
+                $query->limit((int)$limit);
             }
 
             $pendingFeatures = $query->get()->map(function ($feature) {
                 return $feature->toApiArray();
             });
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $pendingFeatures,
-                'count' => $pendingFeatures->count()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($pendingFeatures);
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to fetch pending features', $e);
+            $this->errorResponse($response, 'Failed to fetch pending features', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function approveFeature(Request $request, Response $response, array $args): Response
+    public function approveFeature(Request $request, Response $response): void
     {
         try {
             $adminId = $this->requireAdmin($request);
-            $featureId = (int)$args['id'];
-            $data = json_decode($request->getBody()->getContents(), true);
+            $featureId = (int)$request->getParam('id');
+            $data = $request->getBody();
 
             $feature = FeatureRequest::find($featureId);
             if (!$feature) {
-                return $this->errorResponse($response, 'Feature request not found', null, 404);
+                $this->errorResponse($response, 'Feature request not found', null, 404);
+                return;
             }
 
             if ($feature->status !== 'pending') {
-                return $this->errorResponse($response, 'Feature is not in pending status', null, 400);
+                $this->errorResponse($response, 'Feature is not in pending status', null, 400);
+                return;
             }
 
             // Update feature status
@@ -89,34 +84,29 @@ class AdminController
                 'approval_notes' => $data['notes'] ?? null
             ]);
 
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Feature approved successfully',
-                'data' => $feature->fresh(['user', 'project', 'approvedBy'])->toApiArray()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($feature->fresh(['user', 'project', 'approvedBy'])->toApiArray(), 'Feature approved successfully');
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to approve feature', $e);
+            $this->errorResponse($response, 'Failed to approve feature', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function rejectFeature(Request $request, Response $response, array $args): Response
+    public function rejectFeature(Request $request, Response $response): void
     {
         try {
             $adminId = $this->requireAdmin($request);
-            $featureId = (int)$args['id'];
-            $data = json_decode($request->getBody()->getContents(), true);
+            $featureId = (int)$request->getParam('id');
+            $data = $request->getBody();
 
             $feature = FeatureRequest::find($featureId);
             if (!$feature) {
-                return $this->errorResponse($response, 'Feature request not found', null, 404);
+                $this->errorResponse($response, 'Feature request not found', null, 404);
+                return;
             }
 
             if ($feature->status !== 'pending') {
-                return $this->errorResponse($response, 'Feature is not in pending status', null, 400);
+                $this->errorResponse($response, 'Feature is not in pending status', null, 400);
+                return;
             }
 
             // Update feature status
@@ -143,35 +133,30 @@ class AdminController
                 'rejection_reason' => $data['notes'] ?? 'No reason provided'
             ]);
 
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Feature rejected',
-                'data' => $feature->fresh(['user', 'project', 'approvedBy'])->toApiArray()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($feature->fresh(['user', 'project', 'approvedBy'])->toApiArray(), 'Feature rejected');
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to reject feature', $e);
+            $this->errorResponse($response, 'Failed to reject feature', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function updateFeatureStatus(Request $request, Response $response, array $args): Response
+    public function updateFeatureStatus(Request $request, Response $response): void
     {
         try {
             $adminId = $this->requireAdmin($request);
-            $featureId = (int)$args['id'];
-            $data = json_decode($request->getBody()->getContents(), true);
+            $featureId = (int)$request->getParam('id');
+            $data = $request->getBody();
 
             $feature = FeatureRequest::find($featureId);
             if (!$feature) {
-                return $this->errorResponse($response, 'Feature request not found', null, 404);
+                $this->errorResponse($response, 'Feature request not found', null, 404);
+                return;
             }
 
             $allowedStatuses = ['approved', 'open', 'planned', 'in_progress', 'completed', 'rejected'];
             if (!isset($data['status']) || !in_array($data['status'], $allowedStatuses)) {
-                return $this->errorResponse($response, 'Invalid status', null, 400);
+                $this->errorResponse($response, 'Invalid status', null, 400);
+                return;
             }
 
             $oldStatus = $feature->status;
@@ -193,34 +178,29 @@ class AdminController
                 'updated_at' => new \DateTime()
             ]);
 
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Feature status updated successfully',
-                'data' => $feature->fresh(['user', 'project', 'approvedBy'])->toApiArray()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($feature->fresh(['user', 'project', 'approvedBy'])->toApiArray(), 'Feature status updated successfully');
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to update feature status', $e);
+            $this->errorResponse($response, 'Failed to update feature status', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function adjustUserEggs(Request $request, Response $response, array $args): Response
+    public function adjustUserEggs(Request $request, Response $response): void
     {
         try {
             $adminId = $this->requireAdmin($request);
-            $userId = (int)$args['id'];
-            $data = json_decode($request->getBody()->getContents(), true);
+            $userId = (int)$request->getParam('id');
+            $data = $request->getBody();
 
             $user = User::find($userId);
             if (!$user) {
-                return $this->errorResponse($response, 'User not found', null, 404);
+                $this->errorResponse($response, 'User not found', null, 404);
+                return;
             }
 
             if (!isset($data['amount']) || !is_numeric($data['amount'])) {
-                return $this->errorResponse($response, 'Valid amount is required', null, 400);
+                $this->errorResponse($response, 'Valid amount is required', null, 400);
+                return;
             }
 
             $amount = (int)$data['amount'];
@@ -235,27 +215,20 @@ class AdminController
             $admin = User::find($adminId);
             $adminName = $admin ? $admin->display_name : 'Admin';
 
-            $payload = json_encode([
-                'success' => true,
-                'message' => $amount > 0 ? 'Eggs added to user account' : 'Eggs deducted from user account',
-                'data' => [
-                    'user_id' => $userId,
-                    'adjustment_amount' => $amount,
-                    'new_balance' => $user->fresh()->egg_balance,
-                    'reason' => $reason,
-                    'adjusted_by' => $adminName
-                ]
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success([
+                'user_id' => $userId,
+                'adjustment_amount' => $amount,
+                'new_balance' => $user->fresh()->egg_balance,
+                'reason' => $reason,
+                'adjusted_by' => $adminName
+            ], $amount > 0 ? 'Eggs added to user account' : 'Eggs deducted from user account');
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to adjust user eggs', $e);
+            $this->errorResponse($response, 'Failed to adjust user eggs', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function getAdminStats(Request $request, Response $response): Response
+    public function getAdminStats(Request $request, Response $response): void
     {
         try {
             $this->requireAdmin($request);
@@ -298,28 +271,21 @@ class AdminController
                 ]
             ];
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $stats
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($stats);
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to fetch admin statistics', $e);
+            $this->errorResponse($response, 'Failed to fetch admin statistics', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function getUserManagement(Request $request, Response $response): Response
+    public function getUserManagement(Request $request, Response $response): void
     {
         try {
             $this->requireAdmin($request);
             
-            $queryParams = $request->getQueryParams();
-            $limit = isset($queryParams['limit']) ? (int)$queryParams['limit'] : 50;
-            $search = $queryParams['search'] ?? null;
-            $role = $queryParams['role'] ?? null;
+            $limit = $request->getParam('limit', 50);
+            $search = $request->getParam('search');
+            $role = $request->getParam('role');
 
             $query = User::query();
 
@@ -337,8 +303,8 @@ class AdminController
 
             $query->orderBy('created_at', 'desc');
 
-            if ($limit > 0) {
-                $query->limit($limit);
+            if ((int)$limit > 0) {
+                $query->limit((int)$limit);
             }
 
             $users = $query->get()->map(function ($user) {
@@ -351,28 +317,22 @@ class AdminController
                 return $userData;
             });
 
-            $payload = json_encode([
-                'success' => true,
-                'data' => $users,
-                'count' => $users->count()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($users);
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Failed to fetch users', $e);
+            $this->errorResponse($response, 'Failed to fetch users', $e, (int)$e->getCode() ?: 500);
         }
     }
 
-    public function bulkApproveFeatures(Request $request, Response $response): Response
+    public function bulkApproveFeatures(Request $request, Response $response): void
     {
         try {
             $adminId = $this->requireAdmin($request);
-            $data = json_decode($request->getBody()->getContents(), true);
+            $data = $request->getBody();
 
             if (!isset($data['feature_ids']) || !is_array($data['feature_ids'])) {
-                return $this->errorResponse($response, 'feature_ids array is required', null, 400);
+                $this->errorResponse($response, 'feature_ids array is required', null, 400);
+                return;
             }
 
             $approvedCount = 0;
@@ -413,21 +373,14 @@ class AdminController
                 }
             }
 
-            $payload = json_encode([
-                'success' => true,
-                'message' => "Bulk approval completed. {$approvedCount} features approved.",
-                'data' => [
-                    'approved_count' => $approvedCount,
-                    'total_requested' => count($data['feature_ids']),
-                    'errors' => $errors
-                ]
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success([
+                'approved_count' => $approvedCount,
+                'total_requested' => count($data['feature_ids']),
+                'errors' => $errors
+            ], "Bulk approval completed. {$approvedCount} features approved.");
 
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Bulk approval failed', $e);
+            $this->errorResponse($response, 'Bulk approval failed', $e, (int)$e->getCode() ?: 500);
         }
     }
 
@@ -445,36 +398,30 @@ class AdminController
 
     private function getUserIdFromToken(Request $request): int
     {
-        $authHeader = $request->getHeaderLine('Authorization');
+        $token = $request->getHeader('authorization');
         
-        if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        if (!$token || !preg_match('/Bearer\s+(.*)$/i', $token, $matches)) {
             throw new \Exception('Authorization token required', 401);
         }
 
         $token = $matches[1];
-        $config = require __DIR__ . '/../../config.php';
+        $secret = Config::get('jwt.secret');
         
         try {
-            $decoded = JWT::decode($token, new Key($config['jwt']['secret'], 'HS256'));
+            $decoded = JWT::decode($token, new Key($secret, 'HS256'));
             return $decoded->user_id;
         } catch (\Exception $e) {
             throw new \Exception('Invalid token', 401);
         }
     }
 
-    private function errorResponse(Response $response, string $message, ?\Exception $e, int $status = 500): Response
+    private function errorResponse(Response $response, string $message, ?\Exception $e, int $status = 500): void
     {
-        $payload = [
-            'success' => false,
-            'message' => $message
-        ];
-
+        $errorMsg = $message;
         if ($e) {
-            $payload['error'] = $e->getMessage();
+            $errorMsg .= ': ' . $e->getMessage();
         }
-
-        $response->getBody()->write(json_encode($payload));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+        $response->error($errorMsg, $status);
     }
 
     private function getMostVotedFeature(): ?array

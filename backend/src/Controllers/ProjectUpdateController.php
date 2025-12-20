@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Core\Request;
+use App\Core\Response;
 use App\Services\ProjectUpdateService;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
 
 class ProjectUpdateController
 {
@@ -18,98 +18,52 @@ class ProjectUpdateController
     /**
      * Get all project updates with status information
      */
-    public function getAllUpdates(Request $request, Response $response): Response
+    public function getAllUpdates(Request $request, Response $response): void
     {
         try {
             $projects = $this->updateService->getAllProjectUpdates();
 
-            $data = [
-                'success' => true,
-                'data' => $projects,
-                'timestamp' => date('c')
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($projects);
 
         } catch (\Exception $e) {
-            $error = [
-                'success' => false,
-                'error' => 'Failed to fetch project updates: ' . $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($error));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
+            $response->error('Failed to fetch project updates: ' . $e->getMessage(), 500);
         }
     }
 
     /**
      * Get project update statistics
      */
-    public function getStatistics(Request $request, Response $response): Response
+    public function getStatistics(Request $request, Response $response): void
     {
         try {
             $stats = $this->updateService->getProjectStatistics();
 
-            $data = [
-                'success' => true,
-                'data' => $stats,
-                'timestamp' => date('c')
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($stats);
 
         } catch (\Exception $e) {
-            $error = [
-                'success' => false,
-                'error' => 'Failed to fetch project statistics: ' . $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($error));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
+            $response->error('Failed to fetch project statistics: ' . $e->getMessage(), 500);
         }
     }
 
     /**
      * Get projects that need attention
      */
-    public function getProjectsNeedingAttention(Request $request, Response $response): Response
+    public function getProjectsNeedingAttention(Request $request, Response $response): void
     {
         try {
             $projects = $this->updateService->getProjectsNeedingAttention();
 
-            $data = [
-                'success' => true,
-                'data' => $projects,
-                'count' => count($projects),
-                'timestamp' => date('c')
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($projects);
 
         } catch (\Exception $e) {
-            $error = [
-                'success' => false,
-                'error' => 'Failed to fetch projects needing attention: ' . $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($error));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
+            $response->error('Failed to fetch projects needing attention: ' . $e->getMessage(), 500);
         }
     }
 
     /**
      * Get recent updates (last 7 days)
      */
-    public function getRecentUpdates(Request $request, Response $response): Response
+    public function getRecentUpdates(Request $request, Response $response): void
     {
         try {
             $allProjects = $this->updateService->getAllProjectUpdates();
@@ -122,26 +76,10 @@ class ProjectUpdateController
             // Re-index array to ensure proper JSON encoding
             $recentProjects = array_values($recentProjects);
 
-            $data = [
-                'success' => true,
-                'data' => $recentProjects,
-                'count' => count($recentProjects),
-                'timestamp' => date('c')
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($recentProjects);
 
         } catch (\Exception $e) {
-            $error = [
-                'success' => false,
-                'error' => 'Failed to fetch recent updates: ' . $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($error));
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
+            $response->error('Failed to fetch recent updates: ' . $e->getMessage(), 500);
         }
     }
 }

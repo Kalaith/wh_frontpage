@@ -2,77 +2,54 @@
 
 namespace App\Middleware;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-use App\Services\Auth0Service;
+use App\Core\Request;
+use App\Core\Response;
+use App\Config\Config;
 use App\Models\User;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
-class JwtAuthMiddleware implements MiddlewareInterface
+class JwtAuthMiddleware
 {
-    private Auth0Service $auth0Service;
-    
-    public function __construct()
+    public function handle(Request $request, Response $response): bool
     {
-        $this->auth0Service = new Auth0Service();
-    }
-
-    public function process(Request $request, RequestHandler $handler): Response
-    {
-        $authHeader = $request->getHeaderLine('Authorization');
+        $token = $request->getHeader('authorization');
         
-        if (!$authHeader) {
-            return $this->unauthorizedResponse('Authorization header missing');
-        }
-
-        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            return $this->unauthorizedResponse('Invalid authorization header format');
+        if (!$token || !preg_match('/Bearer\s+(.*)$/i', $token, $matches)) {
+            $response->error('Authorization header missing or invalid', 401);
+            return false;
         }
 
         $token = $matches[1];
+        $secret = Config::get('jwt.secret');
         
         try {
-            // Validate Auth0 JWT token
-            $payload = $this->auth0Service->validateToken($token);
-            $userInfo = $this->auth0Service->extractUserInfo($payload);
+            // Validate local JWT token
+            $decoded = JWT::decode($token, new Key($secret, 'HS256'));
+            $payload = (array) $decoded;
 
-            // Look up user in database to get role
-            $user = User::where('auth0_id', $userInfo['sub'])->first();
-            $userRole = $user ? $user->role : 'user'; // Default to 'user' if not found in DB
+            // Look up user in database
+            $userId = (int) $payload['user_id'];
+            $user = User::find($userId);
             
-            // Add Auth0 user information to request attributes
-            $request = $request
-                ->withAttribute('auth0_sub', $userInfo['sub'])
-                ->withAttribute('user_email', $userInfo['email'])
-                ->withAttribute('user_name', $userInfo['name'])
-                ->withAttribute('user_role', $userRole) // Add the missing user_role attribute
-                ->withAttribute('user_id', $user ? $user->id : null)
-                ->withAttribute('auth0_payload', $payload)
-                ->withAttribute('auth0_user_info', $userInfo);
+            if (!$user) {
+                $response->error('User not found', 401);
+                return false;
+            }
 
-            return $handler->handle($request);
+            // Add user information to request attributes
+            $request->setAttribute('user_id', $user->id);
+            $request->setAttribute('user_email', $user->email);
+            $request->setAttribute('user_name', $user->display_name ?? $user->username);
+            $request->setAttribute('user_role', $user->role);
+            $request->setAttribute('jwt_payload', $payload);
+
+            return true;
             
         } catch (\Exception $e) {
             error_log('JWT Auth Middleware Error: ' . $e->getMessage());
-            return $this->unauthorizedResponse('Invalid or expired token: ' . $e->getMessage());
+            $response->error('Invalid or expired token: ' . $e->getMessage(), 401);
+            return false;
         }
-    }
-
-    private function unauthorizedResponse(string $message): Response
-    {
-        $response = new \Slim\Psr7\Response();
-        $payload = json_encode([
-            'success' => false,
-            'error' => [
-                'message' => $message,
-                'code' => 401
-            ]
-        ]);
-
-        $response->getBody()->write($payload);
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(401);
     }
 }

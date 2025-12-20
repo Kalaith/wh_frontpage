@@ -2,100 +2,87 @@
  * Authentication Store using Zustand
  * Manages authentication state throughout the application
  */
-import React from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useCurrentUser, useLogin, useRegister, useLogout } from '../hooks/useAuthQuery';
 import type { AuthUser } from '../entities/Auth';
+import api from '../api/api';
 
-// Simple auth store for UI state only
-// React Query handles server state
-interface AuthStore {
-  // Local UI state
-  isAuthenticated: boolean;
+interface AuthState {
   user: AuthUser | null;
-  
+  token: string | null;
+  isAuthenticated: boolean;
+
   // Actions
-  setAuth: (user: AuthUser | null) => void;
-  clearAuth: () => void;
+  setAuth: (user: AuthUser, token: string) => void;
+  login: (email: string, password: string) => Promise<AuthUser>;
+  register: (userData: any) => Promise<AuthUser>;
+  logout: () => void;
 }
 
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      // Initial state
       user: null,
+      token: null,
       isAuthenticated: false,
 
-      // Actions
-      setAuth: (user: AuthUser | null) => {
-        set({ user, isAuthenticated: !!user });
+      setAuth: (user, token) => {
+        set({ user, token, isAuthenticated: true });
       },
-      
-      clearAuth: () => {
-        set({ user: null, isAuthenticated: false });
+
+      login: async (email, password) => {
+        const response = await api.login(email, password);
+        if (response.success && response.data) {
+          const { user, token } = response.data;
+          set({ user, token, isAuthenticated: true });
+          return user;
+        }
+        const message = typeof response.error === 'string'
+          ? response.error
+          : response.error?.message || 'Login failed';
+        throw new Error(message);
+      },
+
+      register: async (userData) => {
+        const response = await api.register(userData);
+        if (response.success && response.data) {
+          const { user, token } = response.data;
+          set({ user, token, isAuthenticated: true });
+          return user;
+        }
+        const message = typeof response.error === 'string'
+          ? response.error
+          : response.error?.message || 'Registration failed';
+        throw new Error(message);
+      },
+
+      logout: () => {
+        // Clear all project-related storage
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('frontpage') || key.includes('auth-storage')) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        set({ user: null, token: null, isAuthenticated: false });
+
+        // Force reload to clear memory
+        window.location.href = '/';
       },
     }),
     {
       name: 'auth-storage',
-      partialize: state => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-      }),
     }
   )
 );
 
-// Combined hook that uses both React Query for server state and Zustand for UI state
+// Compatibility hook for existing components
 export const useAuth = () => {
-  const { user, isAuthenticated, setAuth, clearAuth } = useAuthStore();
-  const { data: queryUser, isLoading, error } = useCurrentUser();
-  const loginMutation = useLogin();
-  const registerMutation = useRegister();
-  const logoutMutation = useLogout();
-
-  // Sync React Query data with Zustand store
-  React.useEffect(() => {
-    if (queryUser && (!user || user.id !== queryUser.id)) {
-      setAuth(queryUser);
-    } else if (!queryUser && user) {
-      clearAuth();
-    }
-  }, [queryUser, user, setAuth, clearAuth]);
+  const store = useAuthStore();
 
   return {
-    user: user ?? queryUser,
-    isAuthenticated: isAuthenticated && !!queryUser,
-    isLoading,
-    error,
-    login: async (email: string, password: string) => {
-      try {
-        const result = await loginMutation.mutateAsync({ email, password });
-        setAuth(result);
-        return result;
-      } catch (error) {
-        clearAuth();
-        throw error;
-      }
-    },
-    register: async (userData: {
-      email: string;
-      password: string;
-      firstName: string;
-      lastName: string;
-    }) => {
-      try {
-        const result = await registerMutation.mutateAsync(userData);
-        setAuth(result);
-        return result;
-      } catch (error) {
-        clearAuth();
-        throw error;
-      }
-    },
-    logout: () => {
-      logoutMutation.mutate();
-      clearAuth();
-    },
+    ...store,
+    isLoading: false, // Legacy field
+    error: null,      // Legacy field
   };
 };

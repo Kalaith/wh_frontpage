@@ -2,7 +2,6 @@
 import type { ProjectsData, Project } from '../types/projects';
 import type { AuthUser } from '../entities/Auth';
 import type { ApiResponse } from '../types/common';
-import { getAuthToken } from '../utils/authToken';
 import { createAuthError, createServerError } from '../utils/errorHandling';
 
 const API_BASE_URL =
@@ -23,20 +22,24 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    // Get Auth0 token
-    console.log('🌐 Making API request to:', url);
-    const token = await getAuthToken();
-    console.log('🌐 Token retrieved for API request:', token ? `${token.substring(0, 20)}...` : 'null');
-    
+    // Get token from auth-storage (Zustand persist)
+    let token = null;
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+      try {
+        const { state } = JSON.parse(authStorage);
+        if (state && state.token) {
+          token = state.token;
+        }
+      } catch (e) {
+        console.error('Failed to parse auth-storage', e);
+      }
+    }
+
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
-    
-    console.log('🌐 Request headers:', {
-      ...defaultHeaders,
-      Authorization: defaultHeaders.Authorization ? `Bearer ${defaultHeaders.Authorization.substring(7, 27)}...` : 'missing'
-    });
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -81,7 +84,7 @@ class ApiClient {
         if (response.status >= 500) {
           console.error('Server error:', response.status, errBody);
           const serverError = createServerError(
-            response.status === 500 
+            response.status === 500
               ? 'Server error occurred. Please try again later.'
               : `Server error (${response.status}): ${response.statusText}`
           );
@@ -138,7 +141,7 @@ class ApiClient {
   async getProjects(): Promise<ApiResponse<ProjectsData>> {
     return this.request<ProjectsData>('/projects');
   }
-  
+
   async getHomepageProjects(): Promise<ApiResponse<ProjectsData>> {
     return this.request<ProjectsData>('/projects/homepage');
   }
@@ -182,9 +185,6 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    if (res.success && res.data?.token) {
-      localStorage.setItem('token', res.data.token);
-    }
     return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 
@@ -195,9 +195,6 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(userData),
     });
-    if (res.success && res.data?.token) {
-      localStorage.setItem('token', res.data.token);
-    }
     return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 }
