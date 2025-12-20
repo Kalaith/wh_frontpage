@@ -73,8 +73,8 @@ jobs:
         run: |
           # Get commit message safely and clean it
           COMMIT_MSG="${{ github.event.head_commit.message || github.event.commits[0].message || 'No message' }}"
-          # Clean the commit message - remove newlines and escape quotes
-          COMMIT_MSG=$(echo "$COMMIT_MSG" | tr '\n' ' ' | sed 's/"/\\"/g' | head -c 200)
+          # Clean the commit message - use jq for proper JSON escaping and remove newlines
+          COMMIT_MSG=$(echo "$COMMIT_MSG" | jq -Rs . | jq -r 'gsub("\\n";" ") | .[0:200]')
           echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
           
           # Check if we should skip
