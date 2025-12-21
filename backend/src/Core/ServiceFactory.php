@@ -132,6 +132,9 @@ final class ServiceFactory
                 $projectRepo,
                 $projectGitRepo
             ),
+            \App\Controllers\MigrationController::class => new \App\Controllers\MigrationController(
+                new \App\Repositories\MigrationRepository($db)
+            ),
             default => throw new \Exception("Unknown class: $class")
         };
 

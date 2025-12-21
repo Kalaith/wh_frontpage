@@ -81,7 +81,7 @@ final class GitHubWebhookController
             'last_commit_message' => $commitMessage ? substr($commitMessage, 0, 500) : null,
         ];
 
-        $this->projectGitRepository->upsert($project['id'], $gitData);
+        $this->projectGitRepository->upsert((int)$project['id'], $gitData);
 
         $response->success([
             'message' => 'Git metadata updated',
@@ -304,5 +304,57 @@ final class GitHubWebhookController
         }
 
         return null;
+    }
+
+    /**
+     * Mark a project as deployed to an environment
+     * Called by publish.ps1 after successful deployment
+     */
+    public function markDeployed(Request $request, Response $response): void
+    {
+        // IP restriction for security
+        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? null;
+        $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+        $clientIp = explode(',', $clientIp)[0];
+        
+        if ($allowedIp && trim($clientIp) !== trim($allowedIp)) {
+            $response->withStatus(403)->json(['error' => 'Access denied']);
+            return;
+        }
+
+        // Accept both POST body and GET query params
+        $data = $request->getBody();
+        $projectName = $data['project'] ?? $_GET['project'] ?? null;
+        $environment = $data['environment'] ?? $_GET['environment'] ?? 'production';
+
+        if (!$projectName) {
+            $response->error('Missing project name', 400);
+            return;
+        }
+
+        try {
+            // Find project by title or path
+            $project = $this->projectRepository->findByTitle($projectName);
+            if (!$project) {
+                $project = $this->projectRepository->findByPathLike($projectName);
+            }
+
+            if (!$project) {
+                $response->error("Project not found: $projectName", 404);
+                return;
+            }
+
+            // Add environment to project's environments
+            $this->projectGitRepository->addEnvironment((int)$project['id'], $environment);
+
+            $response->success([
+                'project' => $project['title'],
+                'environment' => $environment,
+                'message' => "Marked as deployed to $environment"
+            ]);
+
+        } catch (\Exception $e) {
+            $response->error('Failed to mark deployed: ' . $e->getMessage(), 500);
+        }
     }
 }

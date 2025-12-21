@@ -98,4 +98,44 @@ final class ProjectGitRepository
         $stmt = $this->db->prepare('DELETE FROM projects_git WHERE project_id = :project_id');
         return $stmt->execute(['project_id' => $projectId]);
     }
+
+    /**
+     * Add an environment to a project's environments list
+     */
+    public function addEnvironment(int $projectId, string $environment): bool
+    {
+        $existing = $this->findByProjectId($projectId);
+        
+        if (!$existing) {
+            // Create new record with just the environment
+            $this->create($projectId, [
+                'environments' => [$environment],
+                'last_build' => date('Y-m-d H:i:s')
+            ]);
+            return true;
+        }
+
+        // Get current environments
+        $environments = json_decode($existing['environments'] ?? '[]', true) ?: [];
+        
+        // Add new environment if not already present
+        if (!in_array($environment, $environments)) {
+            $environments[] = $environment;
+        }
+
+        // Update just environments and last_build
+        $stmt = $this->db->prepare(
+            'UPDATE projects_git SET 
+                environments = :environments,
+                last_build = :last_build,
+                updated_at = NOW()
+             WHERE project_id = :project_id'
+        );
+        
+        return $stmt->execute([
+            'project_id' => $projectId,
+            'environments' => json_encode($environments),
+            'last_build' => date('Y-m-d H:i:s')
+        ]);
+    }
 }

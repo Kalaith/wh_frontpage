@@ -105,8 +105,12 @@ final class ProjectRepository
 
     public function findByPathLike(string $projectName): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM projects WHERE path LIKE :path LIMIT 1');
-        $stmt->execute(['path' => "%/$projectName"]);
+        // Try exact path match first, then suffix match
+        $stmt = $this->db->prepare('SELECT * FROM projects WHERE path = :exactPath OR path LIKE :suffixPath LIMIT 1');
+        $stmt->execute([
+            'exactPath' => $projectName,
+            'suffixPath' => "%/$projectName"
+        ]);
         $project = $stmt->fetch();
         
         return $project ?: null;

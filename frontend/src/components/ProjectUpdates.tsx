@@ -31,8 +31,8 @@ const ProjectUpdates: React.FC = () => {
     );
   }
 
-  const recentProjects = recentUpdates?.data ?? [];
-  const needsAttention = attentionProjects?.data ?? [];
+  const recentProjects = (recentUpdates as ProjectUpdate[] | null) ?? [];
+  const needsAttention = (attentionProjects as ProjectUpdate[] | null) ?? [];
 
   return (
     <motion.div
