@@ -68,12 +68,11 @@ const HomePage: React.FC = () => {
     <div className="max-w-7xl mx-auto p-8">
       <QuickLinks data={projectsData} isLoading={loading} />
 
-      {/* Main Content Grid */}
+      {/* Top Content Grid - Status Guide and Updates side by side */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
-        {/* Left Column - Main Content */}
+        {/* Left Column - Status Guide */}
         <div className="xl:col-span-2">
           <ProjectLegend />
-          <ProjectShowcase data={projectsData} isLoading={loading} />
         </div>
 
         {/* Right Column - Updates and Activity */}
@@ -85,6 +84,9 @@ const HomePage: React.FC = () => {
           <ProjectNewsFeed />
         </div>
       </div>
+
+      {/* Project Portfolio - Full Width */}
+      <ProjectShowcase data={projectsData} isLoading={loading} />
 
       <Footer data={projectsData} isLoading={loading} />
     </div>
