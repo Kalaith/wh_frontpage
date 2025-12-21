@@ -221,18 +221,22 @@ final class GitHubWebhookController
                 continue;
             }
 
-            $webhookExists = false;
+            // Delete any existing webhooks pointing to our domain
+            $appDomain = parse_url($appUrl, PHP_URL_HOST);
+            $deletedIds = [];
             foreach ($existingWebhooks as $hook) {
-                if (isset($hook['config']['url']) && $hook['config']['url'] === $webhookUrl) {
-                    $webhookExists = true;
-                    break;
+                $hookUrl = $hook['config']['url'] ?? '';
+                $hookDomain = parse_url($hookUrl, PHP_URL_HOST);
+                
+                // If this webhook points to our domain, delete it
+                if ($hookDomain && $hookDomain === $appDomain && isset($hook['id'])) {
+                    $deleteResult = $this->githubApiRequest("DELETE", "/repos/$owner/$repo/hooks/{$hook['id']}", $githubToken);
+                    $deletedIds[] = $hook['id'];
                 }
             }
-
-            if ($webhookExists) {
-                $results['details']['skipped'][] = $projectInfo;
-                $results['summary']['skipped']++;
-                continue;
+            
+            if (!empty($deletedIds)) {
+                $projectInfo['deleted_webhooks'] = $deletedIds;
             }
 
             // Create webhook
@@ -287,6 +291,8 @@ final class GitHubWebhookController
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        } elseif ($method === 'DELETE') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         }
 
         $response = curl_exec($ch);

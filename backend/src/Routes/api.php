@@ -146,4 +146,85 @@ $router->get('/api/admin/users', [AdminController::class, 'getUserManagement'], 
 $router->post('/api/webhooks/github', [GitHubWebhookController::class, 'handlePush']);
 
 // Admin webhook setup (IP restricted via ALLOWED_ADMIN_IP in .env)
+$router->get('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'setupWebhooks']);
 $router->post('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'setupWebhooks']);
+
+// Admin sync/migrations endpoint (IP restricted)
+$syncHandler = function (Request $request, Response $response) {
+    // IP restriction for security
+    $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? null;
+    $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+    $clientIp = explode(',', $clientIp)[0];
+    
+    if ($allowedIp && trim($clientIp) !== trim($allowedIp)) {
+        $response->withStatus(403)->json(['error' => 'Access denied']);
+        return;
+    }
+
+    // Run migrations
+    try {
+        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+        $db = $_ENV['DB_DATABASE'] ?? 'frontpage';
+        $user = $_ENV['DB_USERNAME'] ?? 'root';
+        $pass = $_ENV['DB_PASSWORD'] ?? '';
+        $port = $_ENV['DB_PORT'] ?? '3306';
+        
+        $pdo = new PDO(
+            "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4",
+            $user,
+            $pass,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+        );
+
+        // Create migrations table if needed
+        $pdo->exec("CREATE TABLE IF NOT EXISTS migrations (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            migration VARCHAR(255) UNIQUE,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+
+        // Get applied migrations
+        $stmt = $pdo->query("SELECT migration FROM migrations");
+        $appliedMigrations = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        // Define migrations
+        $migrations = [
+            'create_projects_git_table' => "
+                CREATE TABLE IF NOT EXISTS projects_git (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    project_id INT NOT NULL UNIQUE,
+                    last_updated DATETIME,
+                    last_build DATETIME,
+                    last_commit_message TEXT,
+                    branch VARCHAR(100),
+                    git_commit VARCHAR(100),
+                    environments JSON,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_project_id (project_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ",
+        ];
+
+        $applied = [];
+        foreach ($migrations as $name => $sql) {
+            if (!in_array($name, $appliedMigrations)) {
+                $pdo->exec($sql);
+                $stmt = $pdo->prepare("INSERT INTO migrations (migration) VALUES (:name)");
+                $stmt->execute(['name' => $name]);
+                $applied[] = $name;
+            }
+        }
+
+        $response->success([
+            'migrations_applied' => $applied,
+            'total_migrations' => count($migrations),
+            'already_applied' => count($appliedMigrations)
+        ], empty($applied) ? 'All migrations already applied' : 'Migrations applied successfully');
+
+    } catch (\Exception $e) {
+        $response->error('Sync failed: ' . $e->getMessage(), 500);
+    }
+};
+$router->get('/api/admin/run-sync', $syncHandler);
+$router->post('/api/admin/run-sync', $syncHandler);

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Repositories\UserRepository;
+use App\Config\Config;
+use Firebase\JWT\JWT;
 use Exception;
 
 class RegisterAction
@@ -20,9 +22,6 @@ class RegisterAction
             throw new Exception('Email already registered', 400);
         }
 
-        // Add proper check for username uniqueness in UserRepository if needed
-        // For now, assuming create might fail if there's a unique constraint
-
         // Create user
         $id = $this->userRepository->create([
             'username' => $data['username'],
@@ -34,12 +33,33 @@ class RegisterAction
 
         $user = $this->userRepository->findById($id);
 
-        return [
-            'id' => $user['id'],
-            'username' => $user['username'],
+        // Generate JWT token for auto-login
+        $secret = Config::get('jwt.secret');
+        $expiration = Config::get('jwt.expiration');
+        
+        $payload = [
+            'user_id' => $user['id'],
             'email' => $user['email'],
             'role' => $user['role'],
-            'display_name' => $user['display_name']
+            'iat' => time(),
+            'exp' => time() + $expiration
+        ];
+
+        $token = JWT::encode($payload, $secret, 'HS256');
+
+        // Return same format as login for auto-login
+        return [
+            'user' => [
+                'id' => $user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'display_name' => $user['display_name'] ?? $user['username'],
+                'egg_balance' => (int)($user['egg_balance'] ?? 500)
+            ],
+            'token' => $token,
+            'expires_at' => date('Y-m-d H:i:s', $payload['exp'])
         ];
     }
 }
+
