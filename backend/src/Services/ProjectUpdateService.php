@@ -1,7 +1,17 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Repositories\ProjectRepository;
+use App\Repositories\ProjectGitRepository;
+use Exception;
+
 final class ProjectUpdateService
 {
     public function __construct(
-        private readonly \App\Repositories\ProjectRepository $projectRepository
+        private readonly ProjectRepository $projectRepository,
+        private readonly ProjectGitRepository $projectGitRepository
     ) {}
 
     /**
@@ -10,9 +20,16 @@ final class ProjectUpdateService
     public function getAllProjectUpdates(): array
     {
         $rows = $this->projectRepository->all();
+        
+        // Batch fetch all git metadata
+        $projectIds = array_column($rows, 'id');
+        $gitData = $this->projectGitRepository->findByProjectIds($projectIds);
+        
         $projects = [];
 
         foreach ($rows as $project) {
+            $git = $gitData[$project['id']] ?? null;
+            
             $manifest = [
                 'name' => $project['title'],
                 'title' => $project['title'],
@@ -22,12 +39,12 @@ final class ProjectUpdateService
                 'version' => $project['version'],
                 'type' => $project['project_type'] ?? 'apps',
                 'path' => $project['path'],
-                'lastUpdated' => $project['last_updated'],
-                'lastBuild' => $project['last_build'],
-                'lastCommitMessage' => $project['last_commit_message'],
-                'branch' => $project['branch'],
-                'gitCommit' => $project['git_commit'],
-                'environments' => json_decode($project['environments'] ?? '[]', true),
+                'lastUpdated' => $git['last_updated'] ?? null,
+                'lastBuild' => $git['last_build'] ?? null,
+                'lastCommitMessage' => $git['last_commit_message'] ?? null,
+                'branch' => $git['branch'] ?? null,
+                'gitCommit' => $git['git_commit'] ?? null,
+                'environments' => json_decode($git['environments'] ?? '[]', true),
                 'repository' => [
                     'url' => $project['repository_url'],
                     'type' => $project['repository_type'] ?: 'git'

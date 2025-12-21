@@ -36,6 +36,7 @@ spl_autoload_register(function ($class) {
 }, true, true);
 
 use App\Repositories\ProjectRepository;
+use App\Repositories\ProjectGitRepository;
 use Dotenv\Dotenv;
 
 function log_msg(string $msg) {
@@ -77,6 +78,7 @@ try {
     log_msg("✅ PDO connected.");
 
     $projectRepo = new ProjectRepository($pdo);
+    $projectGitRepo = new ProjectGitRepository($pdo);
 
 log_msg("🚀 Starting Project Synchronization...");
 
@@ -219,6 +221,21 @@ function runMigrations(PDO $pdo): void {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ",
+        '2024_01_01_000009_create_projects_git_table' => "
+            CREATE TABLE IF NOT EXISTS projects_git (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                project_id INT NOT NULL UNIQUE,
+                last_updated DATETIME,
+                last_build DATETIME,
+                last_commit_message TEXT,
+                branch VARCHAR(100),
+                git_commit VARCHAR(100),
+                environments JSON,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_project_id (project_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ",
     ];
 
     foreach ($migrations as $name => $sql) {
@@ -313,28 +330,41 @@ foreach ($filesystemProjects as $p) {
         $project = $projectRepo->findByPathLike($projectName);
     }
     
-    $data = [
+    // Separate core project data from git metadata
+    $projectData = [
         'title' => $projectName,
         'path' => $p['path'] ?? null,
         'description' => $p['description'] ?? '',
         'version' => $p['version'] ?? '0.1.0',
         'project_type' => $p['type'] ?? 'apps',
+        'group_name' => $p['type'] ?? 'other'
+    ];
+
+    // Git-related metadata goes to separate table
+    $gitData = [
         'last_updated' => $p['lastUpdated'] ?? null,
         'last_build' => $p['lastBuild'] ?? null,
         'last_commit_message' => $p['lastCommitMessage'] ?? null,
         'branch' => $p['branch'] ?? null,
         'git_commit' => $p['gitCommit'] ?? null,
         'environments' => $p['environments'] ?? [],
-        'group_name' => $p['type'] ?? 'other'
     ];
 
+    $projectId = null;
     if (!$project) {
         log_msg("➕ Creating new project: $projectName");
-        $projectRepo->create($data);
+        $projectId = $projectRepo->create($projectData);
     } else {
         log_msg("🔄 Updating existing project: {$project['title']}");
-        $projectRepo->update($project['id'], $data);
+        $projectRepo->update($project['id'], $projectData);
+        $projectId = $project['id'];
         $updatedCount++;
+    }
+
+    // Upsert git metadata to separate table
+    if ($projectId) {
+        $projectGitRepo->upsert($projectId, $gitData);
+        log_msg("📝 Synced git metadata for project ID: $projectId");
     }
 
     $syncedCount++;

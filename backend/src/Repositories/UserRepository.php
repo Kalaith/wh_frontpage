@@ -33,15 +33,16 @@ final class UserRepository
     public function create(array $data): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO users (username, email, password_hash, role, display_name) 
-             VALUES (:username, :email, :password_hash, :role, :display_name)'
+            'INSERT INTO users (username, email, password_hash, role, display_name, egg_balance) 
+             VALUES (:username, :email, :password_hash, :role, :display_name, :egg_balance)'
         );
         $stmt->execute([
             'username' => $data['username'],
             'email' => $data['email'],
             'password_hash' => $data['password_hash'],
             'role' => $data['role'] ?? 'user',
-            'display_name' => $data['display_name'] ?? $data['username']
+            'display_name' => $data['display_name'] ?? $data['username'],
+            'egg_balance' => $data['egg_balance'] ?? 500
         ]);
 
         return (int)$this->db->lastInsertId();

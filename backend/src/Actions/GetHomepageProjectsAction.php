@@ -6,7 +6,7 @@ namespace App\Actions;
 use App\Repositories\ProjectRepository;
 use App\Repositories\ProjectGitRepository;
 
-class GetGroupedProjectsAction
+class GetHomepageProjectsAction
 {
     public function __construct(
         private readonly ProjectRepository $projectRepository,
@@ -18,9 +18,9 @@ class GetGroupedProjectsAction
      */
     public function execute(bool $includePrivate = false): array
     {
-        $projects = $this->projectRepository->all();
+        $projects = $this->projectRepository->getHomepageProjects();
         
-        // Batch fetch all git metadata
+        // Collect project IDs and fetch all git metadata in one query
         $projectIds = array_column($projects, 'id');
         $gitMetadata = $this->projectGitRepository->findByProjectIds($projectIds);
         
@@ -53,25 +53,28 @@ class GetGroupedProjectsAction
                 'path' => $project['path'],
             ];
             
-            if ($project['repository_url']) {
+            if ($project['repository_url'] ?? null) {
                 $projectData['repository'] = [
                     'url' => $project['repository_url'],
                     'type' => $project['repository_type'] ?: 'git'
                 ];
             }
-            
-            // Add git metadata from separate table if it exists
-            $git = $gitMetadata[$project['id']] ?? null;
-            if ($git) {
-                if ($git['last_updated'] ?? null) $projectData['lastUpdated'] = $git['last_updated'];
-                if ($git['last_build'] ?? null) $projectData['lastBuild'] = $git['last_build'];
-                if ($git['last_commit_message'] ?? null) $projectData['lastCommitMessage'] = $git['last_commit_message'];
-                if ($git['branch'] ?? null) $projectData['branch'] = $git['branch'];
-                if ($git['git_commit'] ?? null) $projectData['gitCommit'] = $git['git_commit'];
-                if ($git['environments'] ?? null) $projectData['environments'] = json_decode($git['environments'], true);
+
+            // Add project type from main table
+            if ($project['project_type'] ?? null) {
+                $projectData['type'] = $project['project_type'];
             }
             
-            if ($project['project_type'] ?? null) $projectData['type'] = $project['project_type'];
+            // Add git metadata from separate table
+            $git = $gitMetadata[$project['id']] ?? null;
+            if ($git) {
+                if ($git['last_updated']) $projectData['lastUpdated'] = $git['last_updated'];
+                if ($git['last_build']) $projectData['lastBuild'] = $git['last_build'];
+                if ($git['last_commit_message']) $projectData['lastCommitMessage'] = $git['last_commit_message'];
+                if ($git['branch']) $projectData['branch'] = $git['branch'];
+                if ($git['git_commit']) $projectData['gitCommit'] = $git['git_commit'];
+                if ($git['environments']) $projectData['environments'] = json_decode($git['environments'], true);
+            }
             
             $grouped[$groupName]['projects'][] = $projectData;
         }

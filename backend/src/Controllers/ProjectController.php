@@ -10,6 +10,7 @@ use App\Actions\GetProjectsByGroupAction;
 use App\Actions\CreateProjectAction;
 use App\Actions\UpdateProjectAction;
 use App\Actions\DeleteProjectAction;
+use App\Actions\GetHomepageProjectsAction;
 use Exception;
 
 class ProjectController
@@ -19,7 +20,8 @@ class ProjectController
         private readonly GetProjectsByGroupAction $getProjectsByGroupAction,
         private readonly CreateProjectAction $createProjectAction,
         private readonly UpdateProjectAction $updateProjectAction,
-        private readonly DeleteProjectAction $deleteProjectAction
+        private readonly DeleteProjectAction $deleteProjectAction,
+        private readonly GetHomepageProjectsAction $getHomepageProjectsAction
     ) {}
 
     /**
@@ -73,7 +75,7 @@ class ProjectController
             $userRole = $request->getAttribute('user_role', 'user');
             $isAdmin = strtolower((string)$userRole) === 'admin';
 
-            $groupedProjects = \App\Models\Project::getHomepageProjects($isAdmin);
+            $groupedProjects = $this->getHomepageProjectsAction->execute($isAdmin);
 
             // Create flat arrays for frontend compatibility
             $allProjects = [];

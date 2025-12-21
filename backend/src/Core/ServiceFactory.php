@@ -1,3 +1,4 @@
+<?php
 declare(strict_types=1);
 
 namespace App\Core;
@@ -25,6 +26,7 @@ use App\Actions\GetProfileAction;
 use App\Actions\UpdateProfileAction;
 use App\Actions\GetAllFeaturesAction;
 use App\Actions\CreateFeatureAction;
+use App\Actions\GetHomepageProjectsAction;
 use App\Services\AuthService;
 use App\Services\ProjectUpdateService;
 use App\Services\ProjectNewsFeedService;
@@ -45,9 +47,9 @@ final class ServiceFactory
         }
 
         $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $db   = $_ENV['DB_NAME'] ?? 'webhatchery';
-        $user = $_ENV['DB_USER'] ?? 'root';
-        $pass = $_ENV['DB_PASS'] ?? '';
+        $db   = $_ENV['DB_DATABASE'] ?? 'webhatchery';
+        $user = $_ENV['DB_USERNAME'] ?? 'root';
+        $pass = $_ENV['DB_PASSWORD'] ?? '';
         $port = $_ENV['DB_PORT'] ?? '3306';
         $charset = 'utf8mb4';
 
@@ -68,6 +70,7 @@ final class ServiceFactory
 
         // Repositories
         $projectRepo = new \App\Repositories\ProjectRepository($db);
+        $projectGitRepo = new \App\Repositories\ProjectGitRepository($db);
         $userRepo = new \App\Repositories\UserRepository($db);
         $featureRepo = new \App\Repositories\FeatureRequestRepository($db);
         $voteRepo = new \App\Repositories\FeatureVoteRepository($db);
@@ -81,13 +84,17 @@ final class ServiceFactory
             return self::$instances[$class];
         }
 
+        // Shared services
+        $updateService = new \App\Services\ProjectUpdateService($projectRepo, $projectGitRepo);
+
         $instance = match ($class) {
             ProjectController::class => new ProjectController(
-                new \App\Actions\GetGroupedProjectsAction($projectRepo),
+                new \App\Actions\GetGroupedProjectsAction($projectRepo, $projectGitRepo),
                 new \App\Actions\GetProjectsByGroupAction($projectRepo),
                 new \App\Actions\CreateProjectAction($projectRepo),
                 new \App\Actions\UpdateProjectAction($projectRepo),
-                new \App\Actions\DeleteProjectAction($projectRepo)
+                new \App\Actions\DeleteProjectAction($projectRepo),
+                new \App\Actions\GetHomepageProjectsAction($projectRepo, $projectGitRepo)
             ),
             TrackerController::class => new TrackerController(
                 new \App\Actions\GetTrackerStatsAction($projectRepo, $featureRepo, $suggestionRepo),
@@ -107,14 +114,12 @@ final class ServiceFactory
                 new \App\Actions\GetAllFeaturesAction($featureRepo),
                 new \App\Actions\CreateFeatureAction($featureRepo, $activityRepo, $userRepo, $eggRepo)
             ),
-            ProjectUpdateController::class => new ProjectUpdateController(
-                new \App\Services\ProjectUpdateService($projectRepo)
-            ),
+            ProjectUpdateController::class => new ProjectUpdateController($updateService),
             ProjectNewsFeedController::class => new ProjectNewsFeedController(
-                new \App\Services\ProjectNewsFeedService($projectRepo)
+                new \App\Services\ProjectNewsFeedService($updateService)
             ),
             ProjectHealthController::class => new ProjectHealthController(
-                new \App\Services\ProjectHealthService($projectRepo)
+                new \App\Services\ProjectHealthService($updateService)
             ),
             AdminController::class => new AdminController(
                 $userRepo,
@@ -122,6 +127,10 @@ final class ServiceFactory
                 $voteRepo,
                 $eggRepo,
                 $notificationRepo
+            ),
+            \App\Controllers\GitHubWebhookController::class => new \App\Controllers\GitHubWebhookController(
+                $projectRepo,
+                $projectGitRepo
             ),
             default => throw new \Exception("Unknown class: $class")
         };

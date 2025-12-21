@@ -43,7 +43,8 @@ class LoginAction
                 'username' => $user['username'],
                 'email' => $user['email'],
                 'role' => $user['role'],
-                'display_name' => $user['display_name'] ?? $user['username']
+                'display_name' => $user['display_name'] ?? $user['username'],
+                'egg_balance' => (int)($user['egg_balance'] ?? 0)
             ],
             'token' => $token,
             'expires_at' => date('Y-m-d H:i:s', $payload['exp'])

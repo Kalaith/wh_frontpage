@@ -9,6 +9,7 @@ use App\Controllers\FeatureRequestController;
 use App\Controllers\UserController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthProxyController;
+use App\Controllers\GitHubWebhookController;
 use App\Middleware\JwtAuthMiddleware;
 use App\Models\Project;
 use App\Core\Request;
@@ -140,3 +141,9 @@ $router->post('/api/admin/features/bulk-approve', [AdminController::class, 'bulk
 $router->post('/api/admin/users/{id}/eggs', [AdminController::class, 'adjustUserEggs'], [JwtAuthMiddleware::class]);
 $router->get('/api/admin/stats', [AdminController::class, 'getAdminStats'], [JwtAuthMiddleware::class]);
 $router->get('/api/admin/users', [AdminController::class, 'getUserManagement'], [JwtAuthMiddleware::class]);
+
+// Webhook Routes (no auth - verified by signature)
+$router->post('/api/webhooks/github', [GitHubWebhookController::class, 'handlePush']);
+
+// Admin webhook setup (IP restricted via ALLOWED_ADMIN_IP in .env)
+$router->post('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'setupWebhooks']);

@@ -32,6 +32,7 @@ class GetProfileAction
             'display_name' => $user['display_name'] ?? $user['username'],
             'role' => $user['role'],
             'email' => $user['email'],
+            'egg_balance' => (int)($user['egg_balance'] ?? 0),
             'stats' => [
                 'features_created' => $this->featureRepo->countByUser($userId),
                 'votes_cast' => $this->voteRepo->countByUser($userId),
