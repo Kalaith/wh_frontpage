@@ -2,135 +2,57 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Database\Schema\Blueprint;
-
-class User extends Model
+/**
+ * User Data Transfer Object
+ * Previously an Eloquent model, now a simple data structure.
+ */
+final class User
 {
-    protected $table = 'users';
-    
-    protected $fillable = [
-        'username',
-        'email',
-        'password_hash',
-        'display_name',
-        'role',
-        'egg_balance',
-        'last_daily_reward',
-        'is_verified',
-        'verification_token',
-        'email_verified_at',
-        'auth0_id',
-        'provider',
-        'email_verified'
-    ];
+    public int $id;
+    public string $username;
+    public string $email;
+    public ?string $password_hash = null;
+    public ?string $display_name = null;
+    public string $role = 'user';
+    public int $egg_balance = 500;
+    public ?string $last_daily_reward = null;
+    public bool $is_verified = false;
+    public ?string $verification_token = null;
+    public ?string $email_verified_at = null;
+    public ?string $auth0_id = null;
+    public string $provider = 'local';
+    public bool $email_verified = false;
+    public string $created_at;
+    public string $updated_at;
 
-    protected $casts = [
-        'egg_balance' => 'integer',
-        'is_verified' => 'boolean',
-        'email_verified' => 'boolean',
-        'last_daily_reward' => 'datetime',
-        'email_verified_at' => 'datetime'
-    ];
-
-    protected $hidden = [
-        'password_hash',
-        'verification_token'
-    ];
-
-    // Relationships
-    public function featureRequests()
+    public function __construct(array $data = [])
     {
-        return $this->hasMany(FeatureRequest::class, 'user_id');
+        if (!empty($data)) {
+            $this->id = (int)($data['id'] ?? 0);
+            $this->username = (string)($data['username'] ?? '');
+            $this->email = (string)($data['email'] ?? '');
+            $this->password_hash = $data['password_hash'] ?? null;
+            $this->display_name = $data['display_name'] ?? null;
+            $this->role = (string)($data['role'] ?? 'user');
+            $this->egg_balance = (int)($data['egg_balance'] ?? 500);
+            $this->last_daily_reward = $data['last_daily_reward'] ?? null;
+            $this->is_verified = (bool)($data['is_verified'] ?? false);
+            $this->verification_token = $data['verification_token'] ?? null;
+            $this->email_verified_at = $data['email_verified_at'] ?? null;
+            $this->auth0_id = $data['auth0_id'] ?? null;
+            $this->provider = (string)($data['provider'] ?? 'local');
+            $this->email_verified = (bool)($data['email_verified'] ?? false);
+            $this->created_at = (string)($data['created_at'] ?? date('Y-m-d H:i:s'));
+            $this->updated_at = (string)($data['updated_at'] ?? date('Y-m-d H:i:s'));
+        }
     }
 
-    public function votes()
-    {
-        return $this->hasMany(FeatureVote::class, 'user_id');
-    }
-
-    public function eggTransactions()
-    {
-        return $this->hasMany(EggTransaction::class, 'user_id');
-    }
-
-
-    // Methods
-    public function isAdmin()
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    public function canClaimDailyReward()
-    {
-        if (!$this->last_daily_reward) {
-            return true;
-        }
-        
-        $lastReward = $this->last_daily_reward;
-        $today = now();
-        
-        return $lastReward->format('Y-m-d') !== $today->format('Y-m-d');
-    }
-
-    public function claimDailyReward($amount = 100)
-    {
-        if (!$this->canClaimDailyReward()) {
-            return false;
-        }
-
-        $this->increment('egg_balance', $amount);
-        $this->update(['last_daily_reward' => now()]);
-
-        // Record transaction
-        EggTransaction::create([
-            'user_id' => $this->id,
-            'amount' => $amount,
-            'transaction_type' => 'daily_reward',
-            'description' => 'Daily egg reward',
-        ]);
-
-        return true;
-    }
-
-    public function spendEggs($amount, $description, $referenceId = null, $referenceType = null)
-    {
-        if ($this->egg_balance < $amount) {
-            return false;
-        }
-
-        $this->decrement('egg_balance', $amount);
-
-        EggTransaction::create([
-            'user_id' => $this->id,
-            'amount' => -$amount,
-            'transaction_type' => 'spend',
-            'description' => $description,
-            'reference_id' => $referenceId,
-            'reference_type' => $referenceType,
-        ]);
-
-        return true;
-    }
-
-    public function awardEggs($amount, $type, $description, $referenceId = null, $referenceType = null)
-    {
-        $this->increment('egg_balance', $amount);
-
-        EggTransaction::create([
-            'user_id' => $this->id,
-            'amount' => $amount,
-            'transaction_type' => $type,
-            'description' => $description,
-            'reference_id' => $referenceId,
-            'reference_type' => $referenceType,
-        ]);
-
-        return true;
-    }
-
-    public function toApiArray()
+    public function toArray(): array
     {
         return [
             'id' => $this->id,
@@ -140,70 +62,11 @@ class User extends Model
             'role' => $this->role,
             'egg_balance' => $this->egg_balance,
             'is_verified' => $this->is_verified,
-            'can_claim_daily' => $this->canClaimDailyReward(),
-            'member_since' => $this->created_at ? $this->created_at->format('M j, Y') : null,
+            'auth0_id' => $this->auth0_id,
+            'provider' => $this->provider,
+            'email_verified' => $this->email_verified,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
-
-    // Static methods
-    public static function findByEmail($email)
-    {
-        return self::where('email', $email)->first();
-    }
-
-    public static function findByUsername($username)
-    {
-        return self::where('username', $username)->first();
-    }
-
-    public static function createUser(array $data)
-    {
-        $user = self::create([
-            'username' => $data['username'],
-            'email' => $data['email'],
-            'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
-            'display_name' => $data['display_name'] ?? $data['username'],
-            'role' => $data['role'] ?? 'user',
-            'egg_balance' => 500, // New users get 500 eggs
-            'is_verified' => false,
-            'verification_token' => bin2hex(random_bytes(32)),
-        ]);
-
-        // Record registration bonus
-        EggTransaction::create([
-            'user_id' => $user->id,
-            'amount' => 500,
-            'transaction_type' => 'registration_bonus',
-            'description' => 'Welcome bonus for new account',
-        ]);
-
-        return $user;
-    }
-
-    public static function createTable()
-    {
-        if (!Capsule::schema()->hasTable('users')) {
-            Capsule::schema()->create('users', function (Blueprint $table) {
-                $table->increments('id');
-                $table->string('username')->unique();
-                $table->string('email')->unique();
-                $table->string('password_hash')->nullable(); // Nullable for Auth0 users
-                $table->string('display_name')->nullable();
-                $table->enum('role', ['user', 'admin'])->default('user');
-                $table->integer('egg_balance')->default(500);
-                $table->timestamp('last_daily_reward')->nullable();
-                $table->boolean('is_verified')->default(false);
-                $table->string('verification_token')->nullable();
-                $table->timestamp('email_verified_at')->nullable();
-                $table->string('auth0_id')->nullable()->unique(); // Auth0 user ID
-                $table->string('provider')->default('local'); // auth0, local, etc.
-                $table->boolean('email_verified')->default(false); // Auth0 email verification status
-                $table->timestamps();
-            });
-        }
-    }
-}
-
-function now() {
-    return new \DateTime();
 }

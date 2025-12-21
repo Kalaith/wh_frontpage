@@ -4,20 +4,26 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\FeatureRequest;
-use App\Models\ProjectSuggestion;
-use App\Models\Project;
+use App\Repositories\ProjectRepository;
+use App\Repositories\FeatureRequestRepository;
+use App\Repositories\ProjectSuggestionRepository;
 
 class GetTrackerStatsAction
 {
+    public function __construct(
+        private readonly ProjectRepository $projectRepository,
+        private readonly FeatureRequestRepository $featureRequestRepository,
+        private readonly ProjectSuggestionRepository $suggestionRepository
+    ) {}
+
     public function execute(): array
     {
         return [
             'projects' => [
-                'total' => Project::count()
+                'total' => $this->projectRepository->count()
             ],
-            'feature_requests' => FeatureRequest::getStats(),
-            'suggestions' => ProjectSuggestion::getStats()
+            'feature_requests' => $this->featureRequestRepository->getStats(),
+            'suggestions' => $this->suggestionRepository->getStats()
         ];
     }
 }

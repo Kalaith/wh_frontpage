@@ -36,42 +36,97 @@ final class ServiceFactory
     /** @var array<string, object> */
     private static array $instances = [];
 
+    private static ?\PDO $db = null;
+
+    private function getDb(): \PDO
+    {
+        if (self::$db !== null) {
+            return self::$db;
+        }
+
+        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+        $db   = $_ENV['DB_NAME'] ?? 'webhatchery';
+        $user = $_ENV['DB_USER'] ?? 'root';
+        $pass = $_ENV['DB_PASS'] ?? '';
+        $port = $_ENV['DB_PORT'] ?? '3306';
+        $charset = 'utf8mb4';
+
+        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+        $options = [
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES   => false,
+        ];
+
+        self::$db = new \PDO($dsn, $user, $pass, $options);
+        return self::$db;
+    }
+
     public function create(string $class): object
     {
-        // Reusable services
-        $projectUpdateService = new ProjectUpdateService();
-        $projectNewsFeedService = new ProjectNewsFeedService($projectUpdateService);
-        $projectHealthService = new ProjectHealthService($projectUpdateService);
+        $db = $this->getDb();
 
-        return match ($class) {
-            UserController::class => new UserController(
-                new LoginAction(),
-                new RegisterAction(),
-                new GetProfileAction(),
-                new UpdateProfileAction()
-            ),
+        // Repositories
+        $projectRepo = new \App\Repositories\ProjectRepository($db);
+        $userRepo = new \App\Repositories\UserRepository($db);
+        $featureRepo = new \App\Repositories\FeatureRequestRepository($db);
+        $voteRepo = new \App\Repositories\FeatureVoteRepository($db);
+        $activityRepo = new \App\Repositories\ActivityFeedRepository($db);
+        $suggestionRepo = new \App\Repositories\ProjectSuggestionRepository($db);
+        $eggRepo = new \App\Repositories\EggTransactionRepository($db);
+        $notificationRepo = new \App\Repositories\EmailNotificationRepository($db);
+
+        // Reusable services
+        if (isset(self::$instances[$class])) {
+            return self::$instances[$class];
+        }
+
+        $instance = match ($class) {
             ProjectController::class => new ProjectController(
-                new GetGroupedProjectsAction(),
-                new GetProjectsByGroupAction(),
-                new CreateProjectAction(),
-                new UpdateProjectAction(),
-                new DeleteProjectAction()
+                new \App\Actions\GetGroupedProjectsAction($projectRepo),
+                new \App\Actions\GetProjectsByGroupAction($projectRepo),
+                new \App\Actions\CreateProjectAction($projectRepo),
+                new \App\Actions\UpdateProjectAction($projectRepo),
+                new \App\Actions\DeleteProjectAction($projectRepo)
             ),
             TrackerController::class => new TrackerController(
-                new GetTrackerStatsAction(),
-                new GetFeatureRequestsAction(),
-                new CreateFeatureRequestAction()
+                new \App\Actions\GetTrackerStatsAction($projectRepo, $featureRepo, $suggestionRepo),
+                new \App\Actions\GetFeatureRequestsAction($featureRepo),
+                new \App\Actions\CreateFeatureRequestAction($featureRepo, $activityRepo)
             ),
-            AdminController::class => new AdminController(),
-            AuthProxyController::class => new AuthProxyController(new AuthService()),
+            UserController::class => new UserController(
+                new \App\Actions\LoginAction($userRepo),
+                new \App\Actions\RegisterAction($userRepo),
+                new \App\Actions\GetProfileAction($userRepo, $featureRepo, $voteRepo, $eggRepo),
+                new \App\Actions\UpdateProfileAction($userRepo)
+            ),
+            AuthProxyController::class => new AuthProxyController(
+                new \App\Services\AuthService()
+            ),
             FeatureRequestController::class => new FeatureRequestController(
-                new GetAllFeaturesAction(),
-                new CreateFeatureAction()
+                new \App\Actions\GetAllFeaturesAction($featureRepo),
+                new \App\Actions\CreateFeatureAction($featureRepo, $activityRepo, $userRepo, $eggRepo)
             ),
-            ProjectHealthController::class => new ProjectHealthController($projectHealthService),
-            ProjectNewsFeedController::class => new ProjectNewsFeedController($projectNewsFeedService),
-            ProjectUpdateController::class => new ProjectUpdateController($projectUpdateService),
-            default => throw new RuntimeException("Unknown class: $class")
+            ProjectUpdateController::class => new ProjectUpdateController(
+                new \App\Services\ProjectUpdateService($projectRepo)
+            ),
+            ProjectNewsFeedController::class => new ProjectNewsFeedController(
+                new \App\Services\ProjectNewsFeedService($projectRepo)
+            ),
+            ProjectHealthController::class => new ProjectHealthController(
+                new \App\Services\ProjectHealthService($projectRepo)
+            ),
+            AdminController::class => new AdminController(
+                $userRepo,
+                $featureRepo,
+                $voteRepo,
+                $eggRepo,
+                $notificationRepo
+            ),
+            default => throw new \Exception("Unknown class: $class")
         };
+
+        self::$instances[$class] = $instance;
+        return $instance;
     }
 }

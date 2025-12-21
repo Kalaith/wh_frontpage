@@ -2,8 +2,21 @@
   "name": "frontpage/backend",
   "description": "PHP backend for the Frontpage application",
   "type": "project",
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.1",
+    "vlucas/phpdotenv": "^5.4",
+    "firebase/php-jwt": "^6.0"
+  },
   "config": {
-    "process-timeout": 0
+    "process-timeout": 0,
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
   },
   "scripts": {
     "start": "php -S localhost:8000 public/index.php",

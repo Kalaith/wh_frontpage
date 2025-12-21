@@ -4,32 +4,42 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\User;
-use App\Models\FeatureRequest;
-use App\Models\FeatureVote;
-use App\Models\EggTransaction;
+use App\Repositories\UserRepository;
+use App\Repositories\FeatureRequestRepository;
+use App\Repositories\FeatureVoteRepository;
+use App\Repositories\EggTransactionRepository;
 use Exception;
 
 class GetProfileAction
 {
+    public function __construct(
+        private readonly UserRepository $userRepository,
+        private readonly FeatureRequestRepository $featureRepo,
+        private readonly FeatureVoteRepository $voteRepo,
+        private readonly EggTransactionRepository $eggRepo
+    ) {}
+
     public function execute(int $userId): array
     {
-        $user = User::find($userId);
+        $user = $this->userRepository->findById($userId);
         if (!$user) {
             throw new Exception('User not found', 404);
         }
 
-        $profile = $user->toApiArray();
-        
-        $profile['stats'] = [
-            'features_created' => FeatureRequest::where('user_id', $userId)->count(),
-            'votes_cast' => FeatureVote::where('user_id', $userId)->count(),
-            'eggs_spent' => (int)EggTransaction::where('user_id', $userId)->where('amount', '<', 0)->sum('amount') * -1,
-            'eggs_earned' => (int)EggTransaction::where('user_id', $userId)->where('amount', '>', 0)->sum('amount'),
-            'features_approved' => FeatureRequest::where('user_id', $userId)->where('status', 'approved')->count(),
-            'features_completed' => FeatureRequest::where('user_id', $userId)->where('status', 'completed')->count(),
+        return [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'display_name' => $user['display_name'] ?? $user['username'],
+            'role' => $user['role'],
+            'email' => $user['email'],
+            'stats' => [
+                'features_created' => $this->featureRepo->countByUser($userId),
+                'votes_cast' => $this->voteRepo->countByUser($userId),
+                'eggs_spent' => $this->eggRepo->getSpentForUser($userId),
+                'eggs_earned' => $this->eggRepo->getEarnedForUser($userId),
+                'features_approved' => $this->featureRepo->countByUserAndStatus($userId, 'approved'),
+                'features_completed' => $this->featureRepo->countByUserAndStatus($userId, 'completed'),
+            ]
         ];
-
-        return (array)$profile;
     }
 }

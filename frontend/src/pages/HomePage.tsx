@@ -54,17 +54,7 @@ const HomePage: React.FC = () => {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto p-8">
-        <div className="text-center py-8">
-          <p className="text-lg text-gray-600">Loading WebHatchery projects...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !projectsData) {
+  if (error) {
     return (
       <div className="max-w-6xl mx-auto p-8">
         <div className="text-center py-8">
@@ -76,14 +66,14 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      <QuickLinks data={projectsData} />
+      <QuickLinks data={projectsData} isLoading={loading} />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
         {/* Left Column - Main Content */}
         <div className="xl:col-span-2">
           <ProjectLegend />
-          <ProjectShowcase data={projectsData} />
+          <ProjectShowcase data={projectsData} isLoading={loading} />
         </div>
 
         {/* Right Column - Updates and Activity */}
@@ -96,7 +86,7 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      <Footer data={projectsData} />
+      <Footer data={projectsData} isLoading={loading} />
     </div>
   );
 };

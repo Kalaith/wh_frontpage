@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\User;
+use App\Repositories\UserRepository;
 use App\Config\Config;
 use Firebase\JWT\JWT;
 use Exception;
 
 class LoginAction
 {
+    public function __construct(
+        private readonly UserRepository $userRepository
+    ) {}
+
     public function execute(string $email, string $password): array
     {
-        $user = User::where('email', $email)->first();
+        $user = $this->userRepository->findByEmail($email);
         
-        if (!$user || !password_verify($password, $user->password_hash)) {
+        if (!$user || !password_verify($password, $user['password_hash'])) {
             throw new Exception('Invalid credentials', 401);
         }
 
@@ -24,9 +28,9 @@ class LoginAction
         $expiration = Config::get('jwt.expiration');
         
         $payload = [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'role' => $user->role,
+            'user_id' => $user['id'],
+            'email' => $user['email'],
+            'role' => $user['role'],
             'iat' => time(),
             'exp' => time() + $expiration
         ];
@@ -34,7 +38,13 @@ class LoginAction
         $token = JWT::encode($payload, $secret, 'HS256');
 
         return [
-            'user' => $user->toApiArray(),
+            'user' => [
+                'id' => $user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'display_name' => $user['display_name'] ?? $user['username']
+            ],
             'token' => $token,
             'expires_at' => date('Y-m-d H:i:s', $payload['exp'])
         ];

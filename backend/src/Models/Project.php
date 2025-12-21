@@ -2,180 +2,87 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Project extends Model
+/**
+ * Project Data Transfer Object
+ * Previously an Eloquent model, now a simple data structure.
+ */
+final class Project
 {
-    protected $table = 'projects';
-    
-    protected $fillable = [
-        'title',
-        'path',
-        'description',
-        'stage',
-        'status',
-        'version',
-        'group_name',
-        'repository_type',
-        'repository_url',
-        'show_on_homepage'
-    ];
-    
-    protected $casts = [
-        'show_on_homepage' => 'boolean',
-    ];
-    
-    public $timestamps = true;
-    
-    /**
-     * Get projects grouped by group_name
-     */
-    public static function getGroupedProjects(bool $includePrivate = false)
-    {
-        $projects = self::all();
-        
-        $grouped = [];
-        foreach ($projects as $project) {
-            $groupName = $project->group_name;
+    public int $id;
+    public string $title;
+    public ?string $path = null;
+    public ?string $description = null;
+    public string $stage = 'prototype';
+    public string $status = 'prototype';
+    public string $version = '0.1.0';
+    public string $group_name = 'other';
+    public ?string $repository_type = null;
+    public ?string $repository_url = null;
+    public bool $show_on_homepage = true;
+    public ?string $last_updated = null;
+    public ?string $last_build = null;
+    public ?string $last_commit_message = null;
+    public ?string $branch = null;
+    public ?string $git_commit = null;
+    public array $environments = [];
+    public ?string $project_type = null;
+    public string $created_at;
+    public string $updated_at;
 
-            // Skip private group when caller did not request private projects
-            if (!$includePrivate && strtolower($groupName) === 'private') {
-                continue;
+    public function __construct(array $data = [])
+    {
+        if (!empty($data)) {
+            $this->id = (int)($data['id'] ?? 0);
+            $this->title = (string)($data['title'] ?? '');
+            $this->path = $data['path'] ?? null;
+            $this->description = $data['description'] ?? null;
+            $this->stage = (string)($data['stage'] ?? 'prototype');
+            $this->status = (string)($data['status'] ?? 'prototype');
+            $this->version = (string)($data['version'] ?? '0.1.0');
+            $this->group_name = (string)($data['group_name'] ?? 'other');
+            $this->repository_type = $data['repository_type'] ?? null;
+            $this->repository_url = $data['repository_url'] ?? null;
+            $this->show_on_homepage = (bool)($data['show_on_homepage'] ?? true);
+            $this->last_updated = $data['last_updated'] ?? null;
+            $this->last_build = $data['last_build'] ?? null;
+            $this->last_commit_message = $data['last_commit_message'] ?? null;
+            $this->branch = $data['branch'] ?? null;
+            $this->git_commit = $data['git_commit'] ?? null;
+            $this->project_type = $data['project_type'] ?? null;
+            $this->created_at = (string)($data['created_at'] ?? date('Y-m-d H:i:s'));
+            $this->updated_at = (string)($data['updated_at'] ?? date('Y-m-d H:i:s'));
+
+            if (isset($data['environments'])) {
+                $this->environments = is_string($data['environments']) 
+                    ? json_decode($data['environments'], true) 
+                    : (array)$data['environments'];
             }
-            
-            if (!isset($grouped[$groupName])) {
-                $grouped[$groupName] = [
-                    'name' => ucwords(str_replace('_', ' ', $groupName)),
-                    'projects' => []
-                ];
-            }
-            
-            $projectData = [
-                'id' => $project->id,
-                'group_name' => $groupName,
-                'title' => $project->title,
-                'description' => $project->description,
-                'stage' => $project->stage,
-                'status' => $project->status,
-                'version' => $project->version,
-                'show_on_homepage' => $project->show_on_homepage,
-            ];
-            
-            if ($project->path) {
-                $projectData['path'] = $project->path;
-            }
-            
-            if ($project->repository_url) {
-                $repo = [
-                    'url' => $project->repository_url
-                ];
-                if ($project->repository_type) {
-                    $repo['type'] = $project->repository_type;
-                }
-                $projectData['repository'] = $repo;
-            }
-            
-            $grouped[$groupName]['projects'][] = $projectData;
         }
-        
-        return $grouped;
     }
 
-    /**
-     * Get projects that should be shown on the homepage
-     */
-    public static function getHomepageProjects(bool $includePrivate = false)
+    public function toArray(): array
     {
-        $projects = self::where('show_on_homepage', true)
-                       ->get();
-        
-        $grouped = [];
-        foreach ($projects as $project) {
-            $groupName = $project->group_name;
-
-            // Skip private group when caller did not request private projects
-            if (!$includePrivate && strtolower($groupName) === 'private') {
-                continue;
-            }
-            
-            if (!isset($grouped[$groupName])) {
-                $grouped[$groupName] = [
-                    'name' => ucwords(str_replace('_', ' ', $groupName)),
-                    'projects' => []
-                ];
-            }
-            
-            $projectData = [
-                'id' => $project->id,
-                'group_name' => $groupName,
-                'title' => $project->title,
-                'description' => $project->description,
-                'stage' => $project->stage,
-                'status' => $project->status,
-                'version' => $project->version,
-                'show_on_homepage' => $project->show_on_homepage,
-            ];
-            
-            if ($project->path) {
-                $projectData['path'] = $project->path;
-            }
-            
-            if ($project->repository_url) {
-                $repo = [
-                    'url' => $project->repository_url
-                ];
-                if ($project->repository_type) {
-                    $repo['type'] = $project->repository_type;
-                }
-                $projectData['repository'] = $repo;
-            }
-            
-            $grouped[$groupName]['projects'][] = $projectData;
-        }
-        
-        return $grouped;
-    }
-
-    /**
-     * Create the projects table for initialization scripts
-     */
-    public static function createTable(): void
-    {
-        $schema = \Illuminate\Database\Capsule\Manager::schema();
-
-        if (!$schema->hasTable('projects')) {
-            $schema->create('projects', function (\Illuminate\Database\Schema\Blueprint $table) {
-                $table->id();
-                $table->string('title');
-                $table->string('path')->nullable();
-                $table->text('description')->nullable();
-                $table->string('stage')->default('prototype');
-                $table->string('status')->default('prototype');
-                $table->string('version')->default('0.1.0');
-                $table->string('group_name')->default('other');
-                $table->string('repository_type')->nullable();
-                $table->text('repository_url')->nullable();
-                $table->boolean('show_on_homepage')->default(true);
-                $table->timestamps();
-
-                // Indexes
-                $table->index('group_name');
-                $table->index('show_on_homepage');
-            });
-
-            $msg = "✅ Created 'projects' table\n";
-            if (php_sapi_name() === 'cli') {
-                echo $msg;
-            } else {
-                error_log($msg);
-            }
-        } else {
-            $msg = "ℹ️  'projects' table already exists\n";
-            if (php_sapi_name() === 'cli') {
-                echo $msg;
-            } else {
-                error_log($msg);
-            }
-        }
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'path' => $this->path,
+            'description' => $this->description,
+            'stage' => $this->stage,
+            'status' => $this->status,
+            'version' => $this->version,
+            'group_name' => $this->group_name,
+            'repository_type' => $this->repository_type,
+            'repository_url' => $this->repository_url,
+            'show_on_homepage' => $this->show_on_homepage,
+            'last_updated' => $this->last_updated,
+            'last_build' => $this->last_build,
+            'last_commit_message' => $this->last_commit_message,
+            'branch' => $this->branch,
+            'git_commit' => $this->git_commit,
+            'environments' => $this->environments,
+            'project_type' => $this->project_type,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

@@ -3,7 +3,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Capsule\Manager as Capsule;
 use Dotenv\Dotenv;
 use App\Core\Router;
 use App\Core\Request;
@@ -13,10 +12,10 @@ use App\Core\Response;
 $autoloader = null;
 $searchPaths = [
     __DIR__ . '/../vendor/autoload.php',           // Local vendor
-    __DIR__ . '/../../vendor/autoload.php',        // 2 levels up
-    __DIR__ . '/../../../vendor/autoload.php',     // 3 levels up
-    __DIR__ . '/../../../../vendor/autoload.php',  // 4 levels up
-    __DIR__ . '/../../../../../vendor/autoload.php' // 5 levels up
+    __DIR__ . '/../../vendor/autoload.php',        // Parent level
+    __DIR__ . '/../../../vendor/autoload.php',     // 2 levels up
+    __DIR__ . '/../../../../vendor/autoload.php',  // 3 levels up
+    __DIR__ . '/../../../../../vendor/autoload.php' // 4 levels up
 ];
 
 foreach ($searchPaths as $path) {
@@ -66,25 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Global CORS header for all other requests
 header('Access-Control-Allow-Origin: ' . $allowedOrigin);
-
-// Database setup
-if (isset($_ENV['DB_HOST'])) {
-    $capsule = new Capsule;
-    $capsule->addConnection([
-        'driver' => 'mysql',
-        'host' => $_ENV['DB_HOST'],
-        'port' => $_ENV['DB_PORT'],
-        'database' => $_ENV['DB_DATABASE'],
-        'username' => $_ENV['DB_USERNAME'],
-        'password' => $_ENV['DB_PASSWORD'],
-        'charset' => 'utf8mb4',
-        'collation' => 'utf8mb4_unicode_ci',
-        'prefix' => '',
-    ]);
-
-    $capsule->setAsGlobal();
-    $capsule->bootEloquent();
-}
 
 // Create Router
 $router = new Router();

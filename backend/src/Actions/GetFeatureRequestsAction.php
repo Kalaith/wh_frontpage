@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\FeatureRequest;
+use App\Repositories\FeatureRequestRepository;
 
 class GetFeatureRequestsAction
 {
-    public function execute(array $filters = [], string $sortBy = 'votes', string $sortDirection = 'desc', ?int $limit = null): array
+    public function __construct(
+        private readonly FeatureRequestRepository $featureRepo
+    ) {}
+
+    public function execute(array $filters = [], string $sortBy = 'vote_count', string $sortDirection = 'desc', ?int $limit = null): array
     {
-        return (array)FeatureRequest::getByFilters(
-            array_filter($filters), 
+        return $this->featureRepo->getByFilters(
+            $filters, 
             $sortBy, 
             $sortDirection, 
             $limit

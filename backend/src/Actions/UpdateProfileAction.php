@@ -4,35 +4,31 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\User;
+use App\Repositories\UserRepository;
 use Exception;
 
 class UpdateProfileAction
 {
+    public function __construct(
+        private readonly UserRepository $userRepository
+    ) {}
+
     public function execute(int $userId, array $data): array
     {
-        $user = User::find($userId);
+        $user = $this->userRepository->findById($userId);
         if (!$user) {
             throw new Exception('User not found', 404);
         }
 
-        // Update allowed fields
-        $allowedFields = ['display_name', 'username'];
-        foreach ($allowedFields as $field) {
-            if (isset($data[$field])) {
-                // Check if username is unique
-                if ($field === 'username' && $data[$field] !== $user->username) {
-                    $existingUser = User::where('username', $data[$field])->where('id', '!=', $userId)->first();
-                    if ($existingUser) {
-                        throw new Exception('Username already taken', 400);
-                    }
-                }
-                
-                $user->{$field} = $data[$field];
-            }
-        }
+        $this->userRepository->update($userId, $data);
 
-        $user->save();
-        return (array)$user->toApiArray();
+        $updated = $this->userRepository->findById($userId);
+        return [
+            'id' => $updated['id'],
+            'username' => $updated['username'],
+            'display_name' => $updated['display_name'],
+            'role' => $updated['role'],
+            'email' => $updated['email']
+        ];
     }
 }
