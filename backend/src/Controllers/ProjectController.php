@@ -1,30 +1,40 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Core\Request;
+use App\Core\Response;
 use App\Actions\GetGroupedProjectsAction;
 use App\Actions\GetProjectsByGroupAction;
 use App\Actions\CreateProjectAction;
 use App\Actions\UpdateProjectAction;
 use App\Actions\DeleteProjectAction;
+use App\Actions\GetHomepageProjectsAction;
+use Exception;
 
 class ProjectController
 {
+    public function __construct(
+        private readonly GetGroupedProjectsAction $getGroupedProjectsAction,
+        private readonly GetProjectsByGroupAction $getProjectsByGroupAction,
+        private readonly CreateProjectAction $createProjectAction,
+        private readonly UpdateProjectAction $updateProjectAction,
+        private readonly DeleteProjectAction $deleteProjectAction,
+        private readonly GetHomepageProjectsAction $getHomepageProjectsAction
+    ) {}
+
     /**
      * Get all projects grouped by category
      */
-    public function getProjects(Request $request, Response $response): Response
+    public function getProjects(Request $request, Response $response): void
     {
         try {
-            $action = new GetGroupedProjectsAction();
-
             // Determine if the requesting user is an admin
             $userRole = $request->getAttribute('user_role', 'user');
             $isAdmin = strtolower((string)$userRole) === 'admin';
 
-            $groupedProjects = $action->execute($isAdmin);
+            $groupedProjects = $this->getGroupedProjectsAction->execute($isAdmin);
 
             // Create flat arrays for frontend compatibility
             $allProjects = [];
@@ -48,28 +58,24 @@ class ProjectController
                 'grouped' => $groupedArray
             ];
 
-            $payload = json_encode(['success' => true, 'data' => $data]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($data);
 
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to fetch projects', 'details' => $e->getMessage()]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error('Failed to fetch projects: ' . $e->getMessage(), 500);
         }
     }
 
     /**
      * Get projects for homepage (only those with show_on_homepage = true)
      */
-    public function getHomepageProjects(Request $request, Response $response): Response
+    public function getHomepageProjects(Request $request, Response $response): void
     {
         try {
             // Determine if the requesting user is an admin
             $userRole = $request->getAttribute('user_role', 'user');
             $isAdmin = strtolower((string)$userRole) === 'admin';
 
-            $groupedProjects = \App\Models\Project::getHomepageProjects($isAdmin);
+            $groupedProjects = $this->getHomepageProjectsAction->execute($isAdmin);
 
             // Create flat arrays for frontend compatibility
             $allProjects = [];
@@ -93,146 +99,116 @@ class ProjectController
                 'grouped' => $groupedArray
             ];
 
-            $payload = json_encode(['success' => true, 'data' => $data]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($data);
 
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to fetch homepage projects', 'details' => $e->getMessage()]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error('Failed to fetch homepage projects: ' . $e->getMessage(), 500);
         }
     }
     
     /**
      * Get projects by group
      */
-    public function getProjectsByGroup(Request $request, Response $response, array $args): Response
+    public function getProjectsByGroup(Request $request, Response $response): void
     {
         try {
-            $groupName = $args['group'];
+            $groupName = $request->getParam('group');
             // If the group requested is 'private', ensure the user is admin
-            if (strtolower($groupName) === 'private') {
+            if (strtolower((string)$groupName) === 'private') {
                 $userRole = $request->getAttribute('user_role', 'user');
                 $isAdmin = strtolower((string)$userRole) === 'admin';
                 if (!$isAdmin) {
-                    $payload = json_encode(['success' => false, 'error' => ['message' => 'Forbidden']]);
-                    $response->getBody()->write($payload);
-                    return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                    $response->error('Forbidden', 403);
+                    return;
                 }
             }
 
-            $action = new GetProjectsByGroupAction();
-            $mapped = $action->execute($groupName);
+            $mapped = $this->getProjectsByGroupAction->execute((string)$groupName);
 
-            $payload = json_encode(['success' => true, 'data' => $mapped]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($mapped);
 
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to fetch projects for group', 'details' => $e->getMessage()]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error('Failed to fetch projects for group: ' . $e->getMessage(), 500);
         }
     }
     
     /**
      * Create a new project
      */
-    public function createProject(Request $request, Response $response): Response
+    public function createProject(Request $request, Response $response): void
     {
         try {
             // Require admin access
             $userRole = $request->getAttribute('user_role', 'user');
             if (strtolower((string)$userRole) !== 'admin') {
-                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                $response->error('Admin access required', 403);
+                return;
             }
 
-            $data = $request->getParsedBody();
-            $action = new CreateProjectAction();
-            $created = $action->execute($data);
+            $data = $request->getBody();
+            $created = $this->createProjectAction->execute($data);
 
-            $payload = json_encode(['success' => true, 'data' => $created, 'message' => 'Project created successfully']);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+            $response->withStatus(201)->success($created, 'Project created successfully');
 
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to create project', 'details' => $e->getMessage()]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error('Failed to create project: ' . $e->getMessage(), 500);
         }
     }
 
     /**
      * Update a project
      */
-    public function updateProject(Request $request, Response $response, array $args): Response
+    public function updateProject(Request $request, Response $response): void
     {
         try {
             // Require admin access
             $userRole = $request->getAttribute('user_role', 'user');
             if (strtolower((string)$userRole) !== 'admin') {
-                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                $response->error('Admin access required', 403);
+                return;
             }
 
-            $id = (int)($args['id'] ?? 0);
-            $data = $request->getParsedBody();
-            $action = new UpdateProjectAction();
-            $updated = $action->execute($id, $data);
+            $id = (int)$request->getParam('id', 0);
+            $data = $request->getBody();
+            $updated = $this->updateProjectAction->execute($id, $data);
 
             if ($updated === null) {
-                $payload = json_encode(['success' => false, 'error' => ['message' => 'Project not found']]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+                $response->error('Project not found', 404);
+                return;
             }
 
-            $payload = json_encode(['success' => true, 'data' => $updated, 'message' => 'Project updated']);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success($updated, 'Project updated');
 
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to update project', 'details' => $e->getMessage()]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error('Failed to update project: ' . $e->getMessage(), 500);
         }
     }
 
     /**
      * Delete a project
      */
-    public function deleteProject(Request $request, Response $response, array $args): Response
+    public function deleteProject(Request $request, Response $response): void
     {
         try {
             // Require admin access
             $userRole = $request->getAttribute('user_role', 'user');
             if (strtolower((string)$userRole) !== 'admin') {
-                $payload = json_encode(['success' => false, 'error' => ['message' => 'Admin access required']]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                $response->error('Admin access required', 403);
+                return;
             }
 
-            $id = (int)($args['id'] ?? 0);
-            $action = new DeleteProjectAction();
-            $ok = $action->execute($id);
+            $id = (int)$request->getParam('id', 0);
+            $ok = $this->deleteProjectAction->execute($id);
 
             if (!$ok) {
-                $payload = json_encode(['success' => false, 'error' => ['message' => 'Project not found']]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+                $response->error('Project not found', 404);
+                return;
             }
 
-            $payload = json_encode(['success' => true, 'message' => 'Project deleted']);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+            $response->success(null, 'Project deleted');
 
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Failed to delete project', 'details' => $e->getMessage()]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error('Failed to delete project: ' . $e->getMessage(), 500);
         }
     }
 }

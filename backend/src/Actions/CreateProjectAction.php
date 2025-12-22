@@ -1,39 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
-use App\Models\Project;
+use App\Repositories\ProjectRepository;
 
 class CreateProjectAction
 {
+    public function __construct(
+        private readonly ProjectRepository $projectRepository
+    ) {}
+
     public function execute(array $data): array
     {
-        $project = Project::create([
-            'title' => $data['title'],
+        $id = $this->projectRepository->create([
+            'title' => (string)$data['title'],
             'path' => $data['path'] ?? null,
-            'description' => $data['description'] ?? '',
-            'stage' => $data['stage'] ?? 'prototype',
-            'status' => $data['status'] ?? 'prototype',
-            'version' => $data['version'] ?? '0.1.0',
-            'group_name' => $data['group_name'] ?? 'other',
+            'description' => (string)($data['description'] ?? ''),
+            'stage' => (string)($data['stage'] ?? 'prototype'),
+            'status' => (string)($data['status'] ?? 'prototype'),
+            'version' => (string)($data['version'] ?? '0.1.0'),
+            'group_name' => (string)($data['group_name'] ?? 'other'),
             'repository_type' => $data['repository']['type'] ?? null,
             'repository_url' => $data['repository']['url'] ?? null,
-            'show_on_homepage' => $data['show_on_homepage'] ?? true
+            'show_on_homepage' => (bool)($data['show_on_homepage'] ?? true)
         ]);
 
-        $created = [
-            'id' => $project->id,
-            'group_name' => $project->group_name,
-            'title' => $project->title,
-            'description' => $project->description,
-            'stage' => $project->stage,
-            'status' => $project->status,
-            'version' => $project->version,
-        ];
+        $project = $this->projectRepository->findById($id);
 
-        if ($project->path) $created['path'] = $project->path;
-        if ($project->repository_url) $created['repository'] = ['url' => $project->repository_url];
+        if (!$project) {
+            throw new \Exception('Failed to retrieve created project');
+        }
 
-        return $created;
+        return $project;
     }
 }

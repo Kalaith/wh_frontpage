@@ -1,8 +1,8 @@
-import { 
-  FeatureRequest, 
-  CreateFeatureRequest, 
-  CastVote, 
-  User, 
+import {
+  FeatureRequest,
+  CreateFeatureRequest,
+  CastVote,
+  User,
   UserDashboard,
   AdminStats,
   EggTransaction,
@@ -19,30 +19,24 @@ class FeatureRequestApiError extends Error {
   }
 }
 
-// Store Auth0 token getter function
-let getAuth0Token: (() => Promise<string>) | null = null;
-
-export function setAuth0TokenGetter(tokenGetter: () => Promise<string>) {
-  getAuth0Token = tokenGetter;
-}
-
 async function apiRequest<T>(
-  endpoint: string, 
+  endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  let token: string | null = null;
-  
-  // Try to get Auth0 token first
-  if (getAuth0Token) {
+  // Get token from auth-storage (Zustand persist)
+  let token = null;
+  const authStorage = localStorage.getItem('auth-storage');
+  if (authStorage) {
     try {
-      token = await getAuth0Token();
-    } catch (error) {
-      console.warn('Failed to get Auth0 token, falling back to localStorage:', error);
+      const { state } = JSON.parse(authStorage);
+      if (state && state.token) {
+        token = state.token;
+      }
+    } catch (e) {
+      console.error('Failed to parse auth-storage', e);
     }
   }
-  
-  // No fallback needed - Auth0 only
-  
+
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
@@ -54,12 +48,18 @@ async function apiRequest<T>(
 
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, config);
+
+    // Handle status 204 No Content
+    if (response.status === 204) {
+      return { success: true, data: null } as ApiResponse<T>;
+    }
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new FeatureRequestApiError(response.status, data.message ?? 'Request failed', data);
     }
-    
+
     return data;
   } catch (error) {
     if (error instanceof FeatureRequestApiError) {
@@ -88,7 +88,7 @@ export const featureRequestApi = {
         }
       });
     }
-    
+
     const response = await apiRequest<FeatureRequest[]>(`/features?${queryParams}`);
     return response.data ?? [];
   },
@@ -209,7 +209,7 @@ export const featureRequestApi = {
         }
       });
     }
-    
+
     const response = await apiRequest<{
       transactions: EggTransaction[];
       stats: {
@@ -249,7 +249,7 @@ export const featureRequestApi = {
         }
       });
     }
-    
+
     const response = await apiRequest<FeatureRequest[]>(`/admin/features/pending?${queryParams}`);
     return response.data ?? [];
   },
@@ -342,7 +342,7 @@ export const featureRequestApi = {
         }
       });
     }
-    
+
     const response = await apiRequest<User[]>(`/admin/users?${queryParams}`);
     return response.data ?? [];
   },

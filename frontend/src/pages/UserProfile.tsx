@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from '../stores/authStore';
 import { featureRequestApi } from '../api/featureRequestApi';
 
 export const UserProfile: React.FC = () => {
-  const { user, isAuthenticated, isLoading: authLoading, logout, refreshUserInfo } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -27,10 +27,7 @@ export const UserProfile: React.FC = () => {
 
   useEffect(() => {
     if (authLoading) return; // Wait for auth to complete
-    if (isAuthenticated) {
-      refreshUserInfo();
-    }
-  }, [isAuthenticated, authLoading, refreshUserInfo]);
+  }, [isAuthenticated, authLoading]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -54,7 +51,7 @@ export const UserProfile: React.FC = () => {
       setError(null);
       // Use featureRequestApi directly since we removed the store method
       await featureRequestApi.updateProfile(editForm);
-      await refreshUserInfo(); // Refresh user data
+      window.location.reload(); // Simple refresh for now
       setIsEditing(false);
     } catch (err: unknown) {
       setError((err as Error).message || 'Failed to update profile');
@@ -130,11 +127,10 @@ export const UserProfile: React.FC = () => {
                   {user.display_name || user.username}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    user.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span className={`px-2 py-1 text-xs rounded-full ${user.role === 'admin'
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-blue-100 text-blue-800'
+                    }`}>
                     {user.role === 'admin' ? '👑 Admin' : '👤 User'}
                   </span>
                   {user.is_verified && (
@@ -167,7 +163,7 @@ export const UserProfile: React.FC = () => {
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Display Name
@@ -230,7 +226,7 @@ export const UserProfile: React.FC = () => {
             {/* Account Stats */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Account Stats</h3>
-              
+
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">🥚</span>

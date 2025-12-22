@@ -1,114 +1,70 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-
-class FeatureRequest extends Model
+/**
+ * FeatureRequest Data Transfer Object
+ * Previously an Eloquent model, now a simple data structure.
+ */
+final class FeatureRequest
 {
-    protected $table = 'feature_requests';
-    
-    protected $fillable = [
-        'user_id',
-        'project_id',
-        'title',
-        'description', 
-        'feature_type',
-        'status',
-        'approval_notes',
-        'approved_by',
-        'approved_at',
-        'total_eggs',
-        'vote_count',
-        'tags'
-    ];
+    public int $id;
+    public int $user_id;
+    public ?int $project_id = null;
+    public string $title;
+    public string $description;
+    public ?string $category = null;
+    public ?string $use_case = null;
+    public ?string $expected_benefits = null;
+    public string $priority_level = 'medium';
+    public string $feature_type = 'feature';
+    public string $status = 'Open';
+    public ?string $approval_notes = null;
+    public ?int $approved_by = null;
+    public ?string $approved_at = null;
+    public int $total_eggs = 0;
+    public int $vote_count = 0;
+    public array $tags = [];
+    public string $created_at;
+    public string $updated_at;
 
-    protected $casts = [
-        'tags' => 'array',
-        'user_id' => 'integer',
-        'project_id' => 'integer',
-        'approved_by' => 'integer',
-        'total_eggs' => 'integer',
-        'vote_count' => 'integer',
-        'approved_at' => 'datetime'
-    ];
-    
-    protected $attributes = [
-        'category' => null,
-        'use_case' => null,
-        'expected_benefits' => null,
-        'priority_level' => 'medium'
-    ];
-
-    // Relationships
-    public function project()
+    public function __construct(array $data = [])
     {
-        return $this->belongsTo(Project::class);
-    }
+        if (!empty($data)) {
+            $this->id = (int)($data['id'] ?? 0);
+            $this->user_id = (int)($data['user_id'] ?? 0);
+            $this->project_id = isset($data['project_id']) ? (int)$data['project_id'] : null;
+            $this->title = (string)($data['title'] ?? '');
+            $this->description = (string)($data['description'] ?? '');
+            $this->category = $data['category'] ?? null;
+            $this->use_case = $data['use_case'] ?? null;
+            $this->expected_benefits = $data['expected_benefits'] ?? null;
+            $this->priority_level = (string)($data['priority_level'] ?? 'medium');
+            $this->feature_type = (string)($data['feature_type'] ?? 'feature');
+            $this->status = (string)($data['status'] ?? 'Open');
+            $this->approval_notes = $data['approval_notes'] ?? null;
+            $this->approved_by = isset($data['approved_by']) ? (int)$data['approved_by'] : null;
+            $this->approved_at = $data['approved_at'] ?? null;
+            $this->total_eggs = (int)($data['total_eggs'] ?? 0);
+            $this->vote_count = (int)($data['vote_count'] ?? 0);
+            $this->created_at = (string)($data['created_at'] ?? date('Y-m-d H:i:s'));
+            $this->updated_at = (string)($data['updated_at'] ?? date('Y-m-d H:i:s'));
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function approvedBy()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    public function votes()
-    {
-        return $this->hasMany(FeatureVote::class, 'feature_id');
-    }
-
-    // Scopes for filtering
-    public function scopeByStatus(Builder $query, string $status): Builder
-    {
-        return $query->where('status', $status);
-    }
-
-    public function scopeByPriority(Builder $query, string $priority): Builder
-    {
-        return $query->where('priority', $priority);
-    }
-
-    public function scopeByCategory(Builder $query, string $category): Builder
-    {
-        return $query->where('category', $category);
-    }
-
-    public function scopeByProject(Builder $query, int $projectId): Builder
-    {
-        return $query->where('project_id', $projectId);
-    }
-
-    public function scopeOrderByVotes(Builder $query, string $direction = 'desc'): Builder
-    {
-        return $query->orderBy('votes', $direction);
-    }
-
-    public function scopeOrderByDate(Builder $query, string $direction = 'desc'): Builder
-    {
-        return $query->orderBy('created_at', $direction);
-    }
-
-    // Get formatted data for API response
-    public function toApiArray(): array
-    {
-        // Ensure tags is always an array
-        $tags = $this->tags;
-        if (!is_array($tags)) {
-            if (is_string($tags)) {
-                $decoded = json_decode($tags, true);
-                $tags = is_array($decoded) ? $decoded : [];
-            } else {
-                $tags = [];
+            if (isset($data['tags'])) {
+                $this->tags = is_string($data['tags']) 
+                    ? json_decode($data['tags'], true) 
+                    : (array)$data['tags'];
             }
         }
+    }
 
-        $data = [
+    public function toArray(): array
+    {
+        return [
             'id' => $this->id,
+            'user_id' => $this->user_id,
+            'project_id' => $this->project_id,
             'title' => $this->title,
             'description' => $this->description,
             'category' => $this->category,
@@ -118,101 +74,13 @@ class FeatureRequest extends Model
             'feature_type' => $this->feature_type,
             'status' => $this->status,
             'approval_notes' => $this->approval_notes,
+            'approved_by' => $this->approved_by,
+            'approved_at' => $this->approved_at,
             'total_eggs' => $this->total_eggs,
             'vote_count' => $this->vote_count,
-            'tags' => $tags,
-            'project_id' => $this->project_id,
-            'approved_at' => $this->approved_at ? $this->approved_at->format('M j, Y') : null,
-            'created_at' => $this->created_at ? $this->created_at->format('M j, Y') : null,
-            'updated_at' => $this->updated_at ? $this->updated_at->format('M j, Y') : null
-        ];
-
-        // Include user info if loaded
-        if ($this->relationLoaded('user') && $this->user) {
-            $data['user'] = [
-                'id' => $this->user->id,
-                'username' => $this->user->username,
-                'display_name' => $this->user->display_name
-            ];
-        }
-
-        // Include project info if loaded
-        if ($this->relationLoaded('project') && $this->project) {
-            $data['project'] = [
-                'id' => $this->project->id,
-                'title' => $this->project->title,
-                'group_name' => $this->project->group_name ?? null
-            ];
-        }
-
-        // Include approver info if loaded
-        if ($this->relationLoaded('approvedBy') && $this->approvedBy) {
-            $data['approved_by'] = [
-                'id' => $this->approvedBy->id,
-                'username' => $this->approvedBy->username,
-                'display_name' => $this->approvedBy->display_name
-            ];
-        }
-
-        return $data;
-    }
-
-    // Static methods for getting filtered results
-    public static function getByFilters(array $filters = [], string $sortBy = 'votes', string $sortDirection = 'desc', int $limit = null): array
-    {
-        $query = self::query();
-
-        // Apply filters
-        if (!empty($filters['status'])) {
-            $query->byStatus($filters['status']);
-        }
-        
-        if (!empty($filters['priority'])) {
-            $query->byPriority($filters['priority']);
-        }
-        
-        if (!empty($filters['category'])) {
-            $query->byCategory($filters['category']);
-        }
-
-        if (!empty($filters['project_id'])) {
-            $query->byProject((int)$filters['project_id']);
-        }
-
-        // Apply sorting
-        switch ($sortBy) {
-            case 'date':
-                $query->orderByDate($sortDirection);
-                break;
-            case 'priority':
-                $query->orderBy('priority', $sortDirection);
-                break;
-            default:
-                $query->orderByVotes($sortDirection);
-                break;
-        }
-
-        if ($limit) {
-            $query->limit($limit);
-        }
-
-        // Load project relationship for better performance
-        $query->with('project');
-
-        return $query->get()->map(function ($request) {
-            return $request->toApiArray();
-        })->toArray();
-    }
-
-    // Get statistics
-    public static function getStats(): array
-    {
-        return [
-            'total' => self::count(),
-            'open' => self::byStatus('Open')->count(),
-            'in_progress' => self::byStatus('In Progress')->count(),
-            'completed' => self::byStatus('Completed')->count(),
-            'closed' => self::byStatus('Closed')->count()
+            'tags' => $this->tags,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

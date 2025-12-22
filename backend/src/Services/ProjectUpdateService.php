@@ -1,76 +1,60 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Services;
 
-class ProjectUpdateService
-{
-    private array $projectPaths;
+use App\Repositories\ProjectRepository;
+use App\Repositories\ProjectGitRepository;
+use Exception;
 
-    public function __construct()
-    {
-        // Scan deployment directories where projects are actually published
-        $this->projectPaths = [
-            'preview' => $_ENV['PREVIEW_ROOT'] ?? 'H:\\xampp\\htdocs',
-            'production' => $_ENV['PRODUCTION_ROOT'] ?? 'F:\\WebHatchery'
-        ];
-    }
+final class ProjectUpdateService
+{
+    public function __construct(
+        private readonly ProjectRepository $projectRepository,
+        private readonly ProjectGitRepository $projectGitRepository
+    ) {}
 
     /**
-     * Scan all projects and aggregate their manifests
+     * Scan all projects and aggregate their manifests from SQL
      */
     public function getAllProjectUpdates(): array
     {
+        $rows = $this->projectRepository->all();
+        
+        // Batch fetch all git metadata
+        $projectIds = array_column($rows, 'id');
+        $gitData = $this->projectGitRepository->findByProjectIds($projectIds);
+        
         $projects = [];
 
-        // Scan deployment directories (preview and production)
-        foreach ($this->projectPaths as $environment => $basePath) {
-            if (!is_dir($basePath)) {
-                continue;
-            }
+        foreach ($rows as $project) {
+            $git = $gitData[$project['id']] ?? null;
+            
+            $manifest = [
+                'name' => $project['title'],
+                'title' => $project['title'],
+                'description' => $project['description'],
+                'stage' => $project['stage'],
+                'status' => $project['status'],
+                'version' => $project['version'],
+                'type' => $project['project_type'] ?? 'apps',
+                'path' => $project['path'],
+                'lastUpdated' => $git['last_updated'] ?? null,
+                'lastBuild' => $git['last_build'] ?? null,
+                'lastCommitMessage' => $git['last_commit_message'] ?? null,
+                'branch' => $git['branch'] ?? null,
+                'gitCommit' => $git['git_commit'] ?? null,
+                'environments' => json_decode($git['environments'] ?? '[]', true),
+                'repository' => [
+                    'url' => $project['repository_url'],
+                    'type' => $project['repository_type'] ?: 'git'
+                ]
+            ];
 
-            // Scan all subdirectories in the deployment path
-            $projectDirs = glob($basePath . '/*', GLOB_ONLYDIR);
-            foreach ($projectDirs as $projectDir) {
-                $projectName = basename($projectDir);
-
-                // Skip backend directories and other non-project folders
-                if (in_array($projectName, ['backend', 'vendor', 'storage', 'logs', 'tmp'])) {
-                    continue;
-                }
-
-                $manifest = $this->readProjectManifest($projectDir);
-                if ($manifest) {
-                    // Determine project type from manifest or infer from name
-                    $projectType = $manifest['type'] ?? $this->inferProjectType($projectName);
-
-                    $manifest['type'] = $projectType;
-                    $manifest['environment'] = $environment;
-                    $manifest['path'] = $projectDir;
-                    $manifest['deployedName'] = $projectName;
-
-                    // Use a unique key combining name and environment to avoid duplicates
-                    $uniqueKey = $projectName . '_' . $environment;
-                    $projects[$uniqueKey] = $manifest;
-                }
-            }
-
-            // Handle frontpage (root deployment) specially
-            $frontpageManifest = $this->readProjectManifest($basePath);
-            if ($frontpageManifest) {
-                $frontpageManifest['type'] = 'frontpage';
-                $frontpageManifest['environment'] = $environment;
-                $frontpageManifest['path'] = $basePath;
-                $frontpageManifest['deployedName'] = 'frontpage';
-
-                $uniqueKey = 'frontpage_' . $environment;
-                $projects[$uniqueKey] = $frontpageManifest;
-            }
+            $projects[] = $manifest;
         }
 
-        // Convert back to indexed array and merge duplicates by project name
-        $mergedProjects = $this->mergeProjectEnvironments(array_values($projects));
-
-        return $this->processProjectData($mergedProjects);
+        return $this->processProjectData($projects);
     }
 
     /**

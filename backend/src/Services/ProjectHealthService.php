@@ -1,15 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 class ProjectHealthService
 {
-    private ProjectUpdateService $updateService;
-
-    public function __construct()
-    {
-        $this->updateService = new ProjectUpdateService();
-    }
+    public function __construct(
+        private readonly ProjectUpdateService $updateService
+    ) {}
 
     /**
      * Perform comprehensive health checks on all projects

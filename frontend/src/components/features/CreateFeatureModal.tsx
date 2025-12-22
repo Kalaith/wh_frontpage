@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreateFeatureRequest } from '../../types/featureRequest';
-import { useFeatureRequestUser } from '../../stores/featureRequestStore';
+
+interface CreateFeatureModalUser {
+  id: number;
+  egg_balance: number;
+}
 
 interface CreateFeatureModalProps {
   onClose: () => void;
   onCreate: (data: CreateFeatureRequest) => Promise<void>;
   projects?: Array<{ id: number; title: string }>;
+  user: CreateFeatureModalUser;
 }
 
 const FEATURE_TYPES = [
@@ -18,11 +23,10 @@ const FEATURE_TYPES = [
 ];
 
 
-export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateFeatureModalProps) => {
-  const user = useFeatureRequestUser();
+export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: CreateFeatureModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<CreateFeatureRequest>({
     title: '',
     description: '',
@@ -37,7 +41,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       setError('You must be logged in to create a feature request');
       return;
@@ -103,7 +107,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
     }
   };
 
-  if (!user) return null;
+
 
   return (
     <AnimatePresence>
@@ -135,7 +139,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                   </svg>
                 </button>
               </div>
-              
+
               {/* Cost Info */}
               <div className="flex items-center justify-between mt-3 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2">
@@ -185,9 +189,9 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                 {projects.length > 0 ? (
                   <select
                     value={formData.project_id ?? ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      project_id: e.target.value ? parseInt(e.target.value) : undefined 
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      project_id: e.target.value ? parseInt(e.target.value) : undefined
                     }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
@@ -213,8 +217,8 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                 </label>
                 <select
                   value={formData.feature_type}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
                     feature_type: e.target.value as 'enhancement' | 'new_feature' | 'bug_fix' | 'ui_improvement' | 'performance'
                   }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -256,7 +260,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [] }: CreateF
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Add tags (press Enter or comma to add)"
                 />
-                
+
                 {(formData.tags ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {(formData.tags ?? []).map((tag) => (

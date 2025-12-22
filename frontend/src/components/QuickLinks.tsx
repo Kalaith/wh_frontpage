@@ -3,10 +3,30 @@ import type { ProjectsData } from '../types/projects';
 import { getProjectUrl } from '../utils/projectUtils';
 
 interface QuickLinksProps {
-  data: ProjectsData;
+  data?: ProjectsData;
+  isLoading?: boolean;
 }
 
-export const QuickLinks: React.FC<QuickLinksProps> = ({ data }) => {
+export const QuickLinks: React.FC<QuickLinksProps> = ({ data, isLoading }) => {
+  if (isLoading || !data) {
+    return (
+      <nav className="mb-12 animate-pulse">
+        <div className="flex flex-wrap justify-center gap-8 mb-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="text-center mb-8">
+              <div className="h-6 w-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
+              <div className="flex flex-wrap justify-center gap-4">
+                {[1, 2].map((j) => (
+                  <div key={j} className="h-12 w-40 bg-gray-200 rounded-lg"></div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <nav className="mb-12">
       <div className="flex flex-wrap justify-center gap-8 mb-2">

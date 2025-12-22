@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FeatureRequestCard } from '../components/features/FeatureRequestCard';
 import { CreateFeatureModal } from '../components/features/CreateFeatureModal';
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from '../stores/authStore';
 import { featureRequestApi } from '../api/featureRequestApi';
 import api from '../api/api';
 import type { FeatureRequest, CreateFeatureRequest } from '../types/featureRequest';
@@ -22,18 +22,18 @@ export const FeatureRequestDashboard = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const params: {
         limit: number;
         sort_by: string;
         sort_direction: 'asc' | 'desc';
         status?: string;
-      } = { 
+      } = {
         limit: 50,
         sort_by: 'total_eggs',
         sort_direction: 'desc' as const
       };
-      
+
       if (filter !== 'all') {
         params.status = filter;
       }
@@ -52,7 +52,7 @@ export const FeatureRequestDashboard = () => {
     // Only load features when auth is complete and user is authenticated
     if (authLoading) return; // Wait for auth to complete
     if (!isAuthenticated) return; // Must be authenticated
-    
+
     // Reset filter if non-admin user somehow has 'pending' selected
     if (filter === 'pending' && !isAdmin) {
       setFilter('approved');
@@ -81,7 +81,7 @@ export const FeatureRequestDashboard = () => {
 
   const handleCreateFeature = async (data: CreateFeatureRequest) => {
     if (!user) throw new Error('Must be logged in');
-    
+
     try {
       await featureRequestApi.createFeature({ ...data, user_id: user.id });
       await loadFeatures();
@@ -94,7 +94,7 @@ export const FeatureRequestDashboard = () => {
 
   const handleVote = async (featureId: number, eggs: number) => {
     if (!user) return;
-    
+
     try {
       await featureRequestApi.voteOnFeature({
         user_id: user.id,
@@ -165,7 +165,7 @@ export const FeatureRequestDashboard = () => {
         <div className="flex items-center space-x-4">
           {/* Filter Options */}
         </div>
-        
+
         {user && (
           <button
             onClick={() => setShowCreateModal(true)}
@@ -177,95 +177,94 @@ export const FeatureRequestDashboard = () => {
         )}
       </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <span className="text-sm font-medium text-gray-700">Filter:</span>
-          {(['all', 'approved'] as const).map((filterOption) => (
-            <button
-              key={filterOption}
-              onClick={() => setFilter(filterOption)}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                filter === filterOption
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      {/* Filters */}
+      <div className="flex items-center gap-4 mb-6">
+        <span className="text-sm font-medium text-gray-700">Filter:</span>
+        {(['all', 'approved'] as const).map((filterOption) => (
+          <button
+            key={filterOption}
+            onClick={() => setFilter(filterOption)}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${filter === filterOption
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-            >
-              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-            </button>
-          ))}
-          {isAdmin && (
-            <button
-              onClick={() => setFilter('pending')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                filter === 'pending'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          >
+            {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+          </button>
+        ))}
+        {isAdmin && (
+          <button
+            onClick={() => setFilter('pending')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${filter === 'pending'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
+          >
+            Pending
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4">❌ {error}</div>
+          <button
+            onClick={loadFeatures}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      ) : features.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🥚</div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No features yet</h3>
+          <p className="text-gray-600 mb-4">Be the first to create a feature request!</p>
+          {user && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Pending
+              Create First Feature
             </button>
           )}
         </div>
-
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <div className="text-red-500 mb-4">❌ {error}</div>
-            <button
-              onClick={loadFeatures}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      ) : (
+        <div className="grid gap-6">
+          {features.map((feature) => (
+            <motion.div
+              key={feature.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.random() * 0.1 }}
             >
-              Try Again
-            </button>
-          </div>
-        ) : features.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🥚</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No features yet</h3>
-            <p className="text-gray-600 mb-4">Be the first to create a feature request!</p>
-            {user && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Create First Feature
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {features.map((feature) => (
-              <motion.div
-                key={feature.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.random() * 0.1 }}
-              >
-                <FeatureRequestCard
-                  feature={feature}
-                  onVote={handleVote}
-                  onApprove={isAdmin ? handleApprove : undefined}
-                  onReject={isAdmin ? handleReject : undefined}
-                  showProject={true}
-                  compact={false}
-                />
-              </motion.div>
-            ))}
-          </div>
-        )}
+              <FeatureRequestCard
+                feature={feature}
+                onVote={handleVote}
+                onApprove={isAdmin ? handleApprove : undefined}
+                onReject={isAdmin ? handleReject : undefined}
+                showProject={true}
+                compact={false}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
 
-        {/* Create Feature Modal */}
-        {showCreateModal && (
-          <CreateFeatureModal
-            onClose={() => setShowCreateModal(false)}
-            onCreate={handleCreateFeature}
-            projects={projects.map(p => ({ id: p.id as number, title: p.title }))}
-          />
-        )}
+      {/* Create Feature Modal */}
+      {showCreateModal && user && (
+        <CreateFeatureModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateFeature}
+          projects={projects.map(p => ({ id: p.id as number, title: p.title }))}
+          user={user}
+        />
+      )}
     </div>
   );
 };

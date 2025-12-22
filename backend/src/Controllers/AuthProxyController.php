@@ -1,85 +1,59 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Core\Request;
+use App\Core\Response;
+use App\Services\AuthService;
 
 class AuthProxyController
 {
-    private string $authBaseUrl;
+    public function __construct(
+        private readonly AuthService $authService
+    ) {}
 
-    public function __construct()
+    public function login(Request $request, Response $response): void
     {
-        $this->authBaseUrl = rtrim($_ENV['AUTH_SERVICE_URL'] ?? ($_ENV['APP_AUTH_URL'] ?? ($_ENV['AUTH_API_URL'] ?? 'http://localhost:8001/api')), '/');
-    }
+        $data = $request->getBody();
+        $res = $this->authService->forward('/auth/login', $data);
 
-    private function forward(string $path, array $body = [], string $method = 'POST', array $headers = []): array
-    {
-        $url = $this->authBaseUrl . $path;
-
-        $defaultHeaders = ["Content-Type: application/json"];
-        $allHeaders = array_merge($defaultHeaders, $headers);
-
-        $opts = [
-            "http" => [
-                "method" => $method,
-                "header" => implode("\r\n", $allHeaders) . "\r\n",
-                "timeout" => 5
-            ]
-        ];
-
-        if ($method !== 'GET' && !empty($body)) {
-            $opts["http"]["content"] = json_encode($body);
+        if (isset($res['success']) && $res['success']) {
+            $response->success($res['data'] ?? $res);
+        } else {
+            $response->error($res['error']['message'] ?? 'Login failed', 400);
         }
+    }
 
-        $context = stream_context_create($opts);
-        $result = @file_get_contents($url, false, $context);
-        if ($result === false) {
-            $error = error_get_last();
-            return ['success' => false, 'error' => ['message' => 'Failed to contact Auth service', 'details' => $error['message'] ?? 'unknown']];
+    public function register(Request $request, Response $response): void
+    {
+        $data = $request->getBody();
+        $res = $this->authService->forward('/auth/register', $data);
+
+        if (isset($res['success']) && $res['success']) {
+            $response->withStatus(201)->success($res['data'] ?? $res);
+        } else {
+            $response->error($res['error']['message'] ?? 'Registration failed', 400);
         }
-
-        $decoded = json_decode($result, true);
-        return $decoded ?? ['success' => false, 'error' => ['message' => 'Invalid response from auth service']];
     }
 
-    public function login(Request $request, Response $response): Response
-    {
-        $data = $request->getParsedBody();
-        $res = $this->forward('/auth/login', $data);
-
-        $payload = json_encode($res);
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($res['success'] ? 200 : 400);
-    }
-
-    public function register(Request $request, Response $response): Response
-    {
-        $data = $request->getParsedBody();
-        $res = $this->forward('/auth/register', $data);
-
-        $payload = json_encode($res);
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($res['success'] ? 201 : 400);
-    }
-
-    public function getCurrentUser(Request $request, Response $response): Response
+    public function getCurrentUser(Request $request, Response $response): void
     {
         // Get the Authorization header
-        $authHeader = $request->getHeaderLine('Authorization');
-        if (!$authHeader) {
-            $payload = json_encode(['success' => false, 'error' => ['message' => 'Authorization header missing', 'code' => 401]]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        $authHeader = (string)$request->getHeader('authorization');
+        if ($authHeader === '') {
+            $response->error('Authorization header missing', 401);
+            return;
         }
 
         // Forward the request to auth service with the token
         $headers = ["Authorization: $authHeader"];
-        $res = $this->forward('/auth/user', [], 'GET', $headers);
+        $res = $this->authService->forward('/auth/user', [], 'GET', $headers);
 
-        $payload = json_encode($res);
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($res['success'] ? 200 : ($res['error']['code'] ?? 400));
+        if (isset($res['success']) && $res['success']) {
+            $response->success($res['data'] ?? $res);
+        } else {
+            $response->error($res['error']['message'] ?? 'Failed to fetch user', (int)($res['error']['code'] ?? 401));
+        }
     }
 }

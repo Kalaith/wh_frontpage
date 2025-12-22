@@ -1,629 +1,125 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use App\Models\User;
-use App\Models\EggTransaction;
-use App\Models\FeatureRequest;
-use App\Models\FeatureVote;
+use App\Core\Request;
+use App\Core\Response;
+use App\Actions\LoginAction;
+use App\Actions\RegisterAction;
+use App\Actions\GetProfileAction;
+use App\Actions\UpdateProfileAction;
+use App\Config\Config;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Exception;
 
 class UserController
 {
-    public function getProfile(Request $request, Response $response): Response
+    public function __construct(
+        private readonly LoginAction $loginAction,
+        private readonly RegisterAction $registerAction,
+        private readonly GetProfileAction $getProfileAction,
+        private readonly UpdateProfileAction $updateProfileAction
+    ) {}
+
+    public function getProfile(Request $request, Response $response): void
     {
         try {
             $userId = $this->getUserIdFromToken($request);
-            
-            $user = User::find($userId);
-            if (!$user) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-            }
-
-            $profile = $user->toApiArray();
-            
-            // Add additional profile stats
-            $profile['stats'] = [
-                'features_created' => FeatureRequest::where('user_id', $userId)->count(),
-                'votes_cast' => FeatureVote::where('user_id', $userId)->count(),
-                'eggs_spent' => EggTransaction::where('user_id', $userId)->where('amount', '<', 0)->sum('amount') * -1,
-                'eggs_earned' => EggTransaction::where('user_id', $userId)->where('amount', '>', 0)->sum('amount'),
-                'features_approved' => FeatureRequest::where('user_id', $userId)->where('status', 'approved')->count(),
-                'features_completed' => FeatureRequest::where('user_id', $userId)->where('status', 'completed')->count(),
-            ];
-
-            $payload = json_encode([
-                'success' => true,
-                'data' => $profile
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch user profile',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            $profile = $this->getProfileAction->execute($userId);
+            $response->success($profile);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
-    public function updateProfile(Request $request, Response $response): Response
+    public function updateProfile(Request $request, Response $response): void
     {
         try {
             $userId = $this->getUserIdFromToken($request);
-            $data = json_decode($request->getBody()->getContents(), true);
+            $data = $request->getBody();
             
-            $user = User::find($userId);
-            if (!$user) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-            }
+            $profile = $this->updateProfileAction->execute($userId, $data);
+            $response->success($profile, 'Profile updated successfully');
 
-            // Update allowed fields
-            $allowedFields = ['display_name', 'username'];
-            foreach ($allowedFields as $field) {
-                if (isset($data[$field])) {
-                    // Check if username is unique
-                    if ($field === 'username' && $data[$field] !== $user->username) {
-                        $existingUser = User::where('username', $data[$field])->where('id', '!=', $userId)->first();
-                        if ($existingUser) {
-                            $payload = json_encode([
-                                'success' => false,
-                                'message' => 'Username already taken'
-                            ]);
-                            $response->getBody()->write($payload);
-                            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-                        }
-                    }
-                    
-                    $user->{$field} = $data[$field];
-                }
-            }
-
-            $user->save();
-
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'data' => $user->toApiArray()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to update profile',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
-    public function claimDailyEggs(Request $request, Response $response): Response
+    public function register(Request $request, Response $response): void
     {
         try {
-            $userId = $this->getUserIdFromToken($request);
-            
-            $user = User::find($userId);
-            if (!$user) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-            }
-
-            if (!$user->canClaimDailyReward()) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Daily reward already claimed today'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-            }
-
-            $claimed = $user->claimDailyReward(100);
-            
-            if ($claimed) {
-                $payload = json_encode([
-                    'success' => true,
-                    'message' => 'Daily reward claimed! You earned 100 eggs.',
-                    'data' => [
-                        'eggs_earned' => 100,
-                        'new_balance' => $user->fresh()->egg_balance,
-                        'can_claim_tomorrow' => true
-                    ]
-                ]);
-            } else {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Unable to claim daily reward'
-                ]);
-            }
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to claim daily eggs',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
-
-    public function getTransactions(Request $request, Response $response): Response
-    {
-        try {
-            $userId = $this->getUserIdFromToken($request);
-            $queryParams = $request->getQueryParams();
-            
-            $limit = isset($queryParams['limit']) ? (int)$queryParams['limit'] : 50;
-            $type = $queryParams['type'] ?? null;
-
-            $query = EggTransaction::where('user_id', $userId)
-                ->orderBy('created_at', 'desc');
-
-            if ($type) {
-                $query->where('transaction_type', $type);
-            }
-
-            if ($limit > 0) {
-                $query->limit($limit);
-            }
-
-            $transactions = $query->get()->map(function ($transaction) {
-                return $transaction->toApiArray();
-            });
-
-            $stats = EggTransaction::getTransactionStats($userId);
-
-            $payload = json_encode([
-                'success' => true,
-                'data' => [
-                    'transactions' => $transactions,
-                    'stats' => $stats
-                ]
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch transactions',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
-
-    public function getDashboard(Request $request, Response $response): Response
-    {
-        try {
-            $userId = $this->getUserIdFromToken($request);
-            
-            $user = User::find($userId);
-            if (!$user) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-            }
-
-            // Get user's recent features
-            $myFeatures = FeatureRequest::where('user_id', $userId)
-                ->with('project:id,title')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function ($feature) {
-                    return $feature->toApiArray();
-                });
-
-            // Get user's recent votes
-            $myVotes = FeatureVote::where('user_id', $userId)
-                ->with('featureRequest:id,title,status,total_eggs')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function ($vote) {
-                    $data = $vote->toApiArray();
-                    if ($vote->featureRequest) {
-                        $data['feature'] = [
-                            'id' => $vote->featureRequest->id,
-                            'title' => $vote->featureRequest->title,
-                            'status' => $vote->featureRequest->status,
-                            'total_eggs' => $vote->featureRequest->total_eggs
-                        ];
-                    }
-                    return $data;
-                });
-
-            // Get recent transactions
-            $recentTransactions = EggTransaction::where('user_id', $userId)
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function ($transaction) {
-                    return $transaction->toApiArray();
-                });
-
-            // Get top voted features (for inspiration)
-            $popularFeatures = FeatureRequest::where('status', 'approved')
-                ->orderBy('total_eggs', 'desc')
-                ->limit(5)
-                ->with('user:id,username,display_name', 'project:id,title')
-                ->get()
-                ->map(function ($feature) {
-                    return $feature->toApiArray();
-                });
-
-            $dashboard = [
-                'user' => $user->toApiArray(),
-                'my_features' => $myFeatures,
-                'my_votes' => $myVotes,
-                'recent_transactions' => $recentTransactions,
-                'popular_features' => $popularFeatures,
-                'stats' => [
-                    'total_features' => FeatureRequest::where('user_id', $userId)->count(),
-                    'approved_features' => FeatureRequest::where('user_id', $userId)->where('status', 'approved')->count(),
-                    'total_votes' => FeatureVote::where('user_id', $userId)->count(),
-                    'eggs_invested' => FeatureVote::where('user_id', $userId)->sum('eggs_allocated'),
-                ]
-            ];
-
-            $payload = json_encode([
-                'success' => true,
-                'data' => $dashboard
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to fetch dashboard data',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
-
-    public function register(Request $request, Response $response): Response
-    {
-        try {
-            $data = json_decode($request->getBody()->getContents(), true);
+            $data = $request->getBody();
             
             // Validate required fields
             $required = ['username', 'email', 'password'];
             foreach ($required as $field) {
                 if (!isset($data[$field]) || empty($data[$field])) {
-                    $payload = json_encode([
-                        'success' => false,
-                        'message' => "Field '{$field}' is required"
-                    ]);
-                    $response->getBody()->write($payload);
-                    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                    $response->error("Field '{$field}' is required", 400);
+                    return;
                 }
             }
 
             // Validate email format
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Invalid email format'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                $response->error('Invalid email format', 400);
+                return;
             }
 
-            // Check if user already exists
-            if (User::where('email', $data['email'])->exists()) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Email already registered'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-            }
+            $user = $this->registerAction->execute($data);
 
-            if (User::where('username', $data['username'])->exists()) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Username already taken'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-            }
+            $response->withStatus(201)->success($user, 'Account created successfully! You received 500 welcome eggs.');
 
-            // Create user
-            $user = User::createUser([
-                'username' => $data['username'],
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'display_name' => $data['display_name'] ?? $data['username']
-            ]);
-
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Account created successfully! You received 500 welcome eggs.',
-                'data' => $user->toApiArray()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Registration failed',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 500));
         }
     }
 
-    public function login(Request $request, Response $response): Response
+    public function login(Request $request, Response $response): void
     {
         try {
-            $data = json_decode($request->getBody()->getContents(), true);
+            $data = $request->getBody();
             
             if (!isset($data['email']) || !isset($data['password'])) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Email and password are required'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+                $response->error('Email and password are required', 400);
+                return;
             }
 
-            $user = User::where('email', $data['email'])->first();
-            
-            if (!$user || !password_verify($data['password'], $user->password_hash)) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Invalid credentials'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
-            }
+            $result = $this->loginAction->execute((string)$data['email'], (string)$data['password']);
 
-            // Generate JWT token
-            $config = require __DIR__ . '/../../config.php';
-            $payload_jwt = [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-                'iat' => time(),
-                'exp' => time() + $config['jwt']['expiration']
-            ];
+            $response->success($result, 'Login successful');
 
-            $token = JWT::encode($payload_jwt, $config['jwt']['secret'], 'HS256');
-
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Login successful',
-                'data' => [
-                    'user' => $user->toApiArray(),
-                    'token' => $token,
-                    'expires_at' => date('Y-m-d H:i:s', $payload_jwt['exp'])
-                ]
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Login failed',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
-
-    public function deleteAccount(Request $request, Response $response): Response
-    {
-        try {
-            $userId = $this->getUserIdFromToken($request);
-            
-            $user = User::find($userId);
-            if (!$user) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'User not found'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-            }
-
-            // Delete related data first (due to foreign key constraints)
-            FeatureRequest::where('user_id', $userId)->delete();
-            FeatureVote::where('user_id', $userId)->delete();
-            EggTransaction::where('user_id', $userId)->delete();
-            
-            // Delete the user
-            $user->delete();
-
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Account deleted successfully'
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to delete account',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    }
-
-    public function verifyAuth0User(Request $request, Response $response): Response
-    {
-        try {
-            // Get Auth0 user info from middleware
-            $auth0Sub = $request->getAttribute('auth0_sub');
-            $userInfo = $request->getAttribute('auth0_user_info');
-            
-            if (!$auth0Sub || !$userInfo) {
-                $payload = json_encode([
-                    'success' => false,
-                    'message' => 'Auth0 user information not found in request'
-                ]);
-                $response->getBody()->write($payload);
-                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-            }
-
-            $data = json_decode($request->getBody()->getContents(), true);
-            
-            // Try to find existing user by Auth0 ID
-            $user = User::where('auth0_id', $auth0Sub)->first();
-            
-            if (!$user) {
-                // Create new user from Auth0 data
-                $username = $data['username'] ?? $userInfo['nickname'] ?? explode('@', $userInfo['email'])[0] ?? 'user';
-                $displayName = $data['display_name'] ?? $userInfo['name'] ?? $userInfo['email'];
-                
-                // Ensure username is unique
-                $originalUsername = $username;
-                $counter = 1;
-                while (User::where('username', $username)->exists()) {
-                    $username = $originalUsername . $counter;
-                    $counter++;
-                }
-                
-                $user = new User();
-                $user->auth0_id = $auth0Sub;
-                $user->email = $userInfo['email'];
-                $user->username = $username;
-                $user->display_name = $displayName;
-                $user->role = 'user';
-                $user->egg_balance = 500; // Welcome bonus
-                $user->email_verified = $userInfo['email_verified'] ?? false;
-                $user->provider = 'auth0';
-                $user->save();
-                
-                // Create welcome transaction
-                EggTransaction::create([
-                    'user_id' => $user->id,
-                    'amount' => 500,
-                    'transaction_type' => 'registration_bonus',
-                    'description' => 'Welcome bonus for new Auth0 user'
-                ]);
-                
-            } else {
-                // Update existing user with latest Auth0 data
-                $user->email = $userInfo['email'];
-                $user->email_verified = $userInfo['email_verified'] ?? false;
-                
-                // Update display name if provided in request
-                if (isset($data['display_name'])) {
-                    $user->display_name = $data['display_name'];
-                }
-                
-                $user->save();
-            }
-            
-            // Return user data with additional computed fields
-            $userData = $user->toApiArray();
-            $userData['can_claim_daily'] = $user->canClaimDailyReward();
-            
-            $payload = json_encode([
-                'success' => true,
-                'message' => $user->wasRecentlyCreated ? 'User created successfully' : 'User verified successfully',
-                'data' => $userData
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            error_log('Auth0 user verification failed: ' . $e->getMessage());
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Failed to verify Auth0 user',
-                'error' => $e->getMessage()
-            ]);
-
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+        } catch (Exception $e) {
+            $response->error($e->getMessage(), (int)($e->getCode() ?: 401));
         }
     }
 
     private function getUserIdFromToken(Request $request): int
     {
-        // Check if Auth0 user info is available from middleware (preferred)
-        $auth0Sub = $request->getAttribute('auth0_sub');
-        if ($auth0Sub) {
-            $user = User::where('auth0_id', $auth0Sub)->first();
-            if ($user) {
-                return $user->id;
-            }
-            throw new \Exception('Auth0 user not found in database');
+        // Try to get from attribute first (set by middleware)
+        $userId = $request->getAttribute('user_id');
+        if ($userId) {
+            return (int) $userId;
         }
         
-        // Fallback to legacy JWT token handling
-        $authHeader = $request->getHeaderLine('Authorization');
-        
-        if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            throw new \Exception('Authorization token required');
+        // Fallback to manual token handling if needed
+        $token = (string)$request->getHeader('authorization');
+        if ($token !== '' && preg_match('/Bearer\s+(.*)$/i', $token, $matches)) {
+            $token = $matches[1];
+        } else {
+            throw new Exception('Authorization token required', 401);
         }
 
-        $token = $matches[1];
-        $config = require __DIR__ . '/../../config.php';
+        $secret = (string)Config::get('jwt.secret');
         
         try {
-            $decoded = JWT::decode($token, new Key($config['jwt']['secret'], 'HS256'));
-            return $decoded->user_id;
-        } catch (\Exception $e) {
-            throw new \Exception('Invalid token');
+            $decoded = JWT::decode($token, new Key($secret, 'HS256'));
+            return (int) $decoded->user_id;
+        } catch (Exception $e) {
+            throw new Exception('Invalid token', 401);
         }
     }
 }
+

@@ -1,25 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../utils/AuthContext';
+import { useAuth } from '../../stores/authStore';
 import { featureRequestApi } from '../../api/featureRequestApi';
 
 export const FeatureAuthStatus: React.FC = () => {
-  const { isAuthenticated, user, isLoading, loginWithRedirect, logout, refreshUserInfo } = useAuth();
-  
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
+
   const [isClaimingEggs, setIsClaimingEggs] = React.useState(false);
 
   const handleClaimDaily = async () => {
     if (!user) return;
-    
+
     setIsClaimingEggs(true);
     try {
       const result = await featureRequestApi.claimDailyEggs();
       if (result.eggs_earned) {
-        // Show a nice notification
         alert(`🥚 Claimed ${result.eggs_earned} eggs! Your balance is now ${result.new_balance || 0} eggs.`);
-        
-        // Refresh user info to update the balance display
-        await refreshUserInfo();
+        // Note: The balance in the user object should be updated.
+        // For simplicity, we can reload or manually update the store if needed.
+        window.location.reload();
       } else {
         alert('Unable to claim daily eggs');
       }
@@ -30,7 +29,6 @@ export const FeatureAuthStatus: React.FC = () => {
       setIsClaimingEggs(false);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -47,7 +45,7 @@ export const FeatureAuthStatus: React.FC = () => {
         {/* Egg Balance */}
         <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg">
           <span className="text-xl">🥚</span>
-          <span className="font-semibold text-blue-600">{user.egg_balance.toLocaleString()}</span>
+          <span className="font-semibold text-blue-600">{(user.egg_balance || 0).toLocaleString()}</span>
         </div>
 
         {/* Daily Reward Button */}
@@ -100,19 +98,19 @@ export const FeatureAuthStatus: React.FC = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <button
-        onClick={() => loginWithRedirect()}
+      <Link
+        to="/login"
         className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
       >
         Login
-      </button>
-      <button
-        onClick={() => loginWithRedirect()}
+      </Link>
+      <Link
+        to="/register"
         className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center gap-1"
       >
         <span className="text-sm">🥚</span>
         Sign Up (Get 500 eggs!)
-      </button>
+      </Link>
     </div>
   );
 };

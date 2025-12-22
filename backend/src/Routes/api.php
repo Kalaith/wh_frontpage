@@ -1,6 +1,5 @@
 <?php
 
-use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ProjectController;
 use App\Controllers\ProjectUpdateController;
 use App\Controllers\ProjectNewsFeedController;
@@ -9,164 +8,151 @@ use App\Controllers\TrackerController;
 use App\Controllers\FeatureRequestController;
 use App\Controllers\UserController;
 use App\Controllers\AdminController;
+use App\Controllers\AuthProxyController;
+use App\Controllers\GitHubWebhookController;
 use App\Middleware\JwtAuthMiddleware;
 use App\Models\Project;
+use App\Core\Request;
+use App\Core\Response;
 
 // API Routes
-$app->group('/api', function (RouteCollectorProxy $group) {
-    // Public Health Check (No Auth Required)
-    $group->get('/health', function ($request, $response) {
-        try {
-            $payload = json_encode([
-                'success' => true,
-                'message' => 'Frontpage API is running',
-                'timestamp' => date('Y-m-d H:i:s'),
-                'version' => '1.0.0',
-                'environment' => $_ENV['APP_ENV'] ?? 'unknown',
-                'php_version' => PHP_VERSION,
-                'memory_usage' => memory_get_usage(true),
-                'base_path' => $_ENV['APP_BASE_PATH'] ?? 'not set'
-            ]);
-            
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $payload = json_encode([
-                'success' => false,
-                'message' => 'Health check failed',
-                'error' => $e->getMessage(),
-                'timestamp' => date('Y-m-d H:i:s')
-            ]);
-            
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
-        }
-    });
+// Note: $router is provided by the index.php that includes this file
 
-    // Debug endpoint (Development only)
-    $group->get('/debug', function ($request, $response) {
-        if ($_ENV['APP_ENV'] !== 'development') {
-            $payload = json_encode(['success' => false, 'message' => 'Debug endpoint only available in development']);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
-        }
-
-        $debugInfo = [
-            'success' => true,
+// Public Health Check
+$router->get('/api/health', function (Request $request, Response $response) {
+    try {
+        $response->success([
+            'message' => 'Frontpage API is running',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'version' => '1.0.0',
             'environment' => $_ENV['APP_ENV'] ?? 'unknown',
-            'base_path' => $_ENV['APP_BASE_PATH'] ?? 'not set',
             'php_version' => PHP_VERSION,
             'memory_usage' => memory_get_usage(true),
-            'server_info' => [
-                'server_name' => $_SERVER['SERVER_NAME'] ?? 'unknown',
-                'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
-                'script_name' => $_SERVER['SCRIPT_NAME'] ?? 'unknown'
-            ]
-        ];
-
-        $payload = json_encode($debugInfo, JSON_PRETTY_PRINT);
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json');
-    });
-
-    // Public Projects Routes (No Auth Required)
-    $group->get('/projects', [ProjectController::class, 'getProjects']);
-    $group->get('/projects/homepage', [ProjectController::class, 'getHomepageProjects']);
-    $group->get('/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
-
-    // Public Project Update Routes (No Auth Required)
-    $group->get('/projects/updates', [ProjectUpdateController::class, 'getAllUpdates']);
-    $group->get('/projects/updates/recent', [ProjectUpdateController::class, 'getRecentUpdates']);
-    $group->get('/projects/updates/stats', [ProjectUpdateController::class, 'getStatistics']);
-    $group->get('/projects/updates/attention', [ProjectUpdateController::class, 'getProjectsNeedingAttention']);
-
-    // Public News Feed Routes (No Auth Required)
-    $group->get('/news', [ProjectNewsFeedController::class, 'getNewsFeed']);
-    $group->get('/news/recent', [ProjectNewsFeedController::class, 'getRecentActivity']);
-    $group->get('/news/stats', [ProjectNewsFeedController::class, 'getActivityStats']);
-    $group->get('/news/project/{project}', [ProjectNewsFeedController::class, 'getProjectChangelog']);
-
-    // Public Health Monitoring Routes (No Auth Required)
-    $group->get('/health/system', [ProjectHealthController::class, 'getSystemHealth']);
-    $group->get('/health/summary', [ProjectHealthController::class, 'getHealthSummary']);
-    $group->get('/health/critical', [ProjectHealthController::class, 'getCriticalProjects']);
-    $group->get('/health/recommendations', [ProjectHealthController::class, 'getRecommendations']);
-    $group->get('/health/project/{project}', [ProjectHealthController::class, 'getProjectHealth']);
-    $group->post('/health/check', [ProjectHealthController::class, 'runHealthCheck']);
-    
-    // Public Feature Request Routes (No Auth Required for viewing)
-    $group->get('/features', [FeatureRequestController::class, 'getAllFeatures']);
-    $group->get('/features/stats', [FeatureRequestController::class, 'getStats']);
-    $group->get('/features/{id}', [FeatureRequestController::class, 'getFeatureById']);
-    
-    // Public Tracker Routes (Legacy - No Auth Required)
-    $group->get('/tracker/stats', [TrackerController::class, 'getStats']);
-    $group->get('/tracker/feature-requests', [TrackerController::class, 'getFeatureRequests']);
-    $group->get('/tracker/project-suggestions', [TrackerController::class, 'getProjectSuggestions']);
-    $group->get('/tracker/activity', [TrackerController::class, 'getActivityFeed']);
-    $group->post('/tracker/feature-requests', [TrackerController::class, 'createFeatureRequest']);
-    $group->post('/tracker/project-suggestions', [TrackerController::class, 'createProjectSuggestion']);
-    $group->post('/tracker/vote', [TrackerController::class, 'vote']);
-    // Local auth endpoints
-    $group->post('/auth/login', [UserController::class, 'login']);
-    $group->post('/auth/register', [UserController::class, 'register']);
-    
-    // Proxy auth endpoints to central Auth app (backup)
-    $group->post('/auth/proxy/login', [\App\Controllers\AuthProxyController::class, 'login']);
-    $group->post('/auth/proxy/register', [\App\Controllers\AuthProxyController::class, 'register']);
-    $group->get('/auth/proxy/user', [\App\Controllers\AuthProxyController::class, 'getCurrentUser']);
-    
-    // Auth0 endpoints (Protected with Auth0 middleware)
-    $group->group('/auth0', function (RouteCollectorProxy $auth0Group) {
-        $auth0Group->post('/verify-user', [UserController::class, 'verifyAuth0User']);
-    })->add(JwtAuthMiddleware::class);
-
-    // Temporary (UNSECURED) admin endpoint to initialize the database for production
-    // WARNING: This endpoint is intentionally unprotected. Remove it after use.
-    $group->post('/admin/init-db', function ($request, $response) {
-        try {
-            Project::createTable();
-            $payload = json_encode(['success' => true, 'message' => 'Database initialized (projects table created or already exists)']);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $payload = json_encode(['success' => false, 'message' => 'Initialization failed', 'error' => $e->getMessage()]);
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-        }
-    });
-    
-    // Protected Routes (JWT Authentication Required)
-    $group->group('', function (RouteCollectorProxy $protected) {
-        // Protected project management routes
-        $protected->post('/projects', [ProjectController::class, 'createProject']);
-        $protected->put('/projects/{id}', [ProjectController::class, 'updateProject']);
-        $protected->delete('/projects/{id}', [ProjectController::class, 'deleteProject']);
-        
-        // Protected feature request routes
-        $protected->post('/features', [FeatureRequestController::class, 'createFeature']);
-        $protected->post('/features/vote', [FeatureRequestController::class, 'voteOnFeature']);
-        $protected->get('/users/{user_id}/features', [FeatureRequestController::class, 'getUserFeatures']);
-        $protected->get('/users/{user_id}/votes', [FeatureRequestController::class, 'getUserVotes']);
-        
-        // User routes
-        $protected->get('/user/profile', [UserController::class, 'getProfile']);
-        $protected->put('/user/profile', [UserController::class, 'updateProfile']);
-        $protected->post('/user/claim-daily-eggs', [UserController::class, 'claimDailyEggs']);
-        $protected->get('/user/transactions', [UserController::class, 'getTransactions']);
-        $protected->get('/user/dashboard', [UserController::class, 'getDashboard']);
-        $protected->delete('/user/delete-account', [UserController::class, 'deleteAccount']);
-        
-        // Admin routes
-        $protected->get('/admin/features/pending', [AdminController::class, 'getPendingFeatures']);
-        $protected->post('/admin/features/{id}/approve', [AdminController::class, 'approveFeature']);
-        $protected->post('/admin/features/{id}/reject', [AdminController::class, 'rejectFeature']);
-        $protected->put('/admin/features/{id}/status', [AdminController::class, 'updateFeatureStatus']);
-        $protected->post('/admin/features/bulk-approve', [AdminController::class, 'bulkApproveFeatures']);
-        $protected->post('/admin/users/{id}/eggs', [AdminController::class, 'adjustUserEggs']);
-        $protected->get('/admin/stats', [AdminController::class, 'getAdminStats']);
-        $protected->get('/admin/users', [AdminController::class, 'getUserManagement']);
-    })->add(JwtAuthMiddleware::class);
+            'base_path' => $_ENV['APP_BASE_PATH'] ?? 'not set'
+        ]);
+    } catch (\Exception $e) {
+        $response->error('Health check failed: ' . $e->getMessage(), 500);
+    }
 });
+
+// Debug endpoint (Development only)
+$router->get('/api/debug', function (Request $request, Response $response) {
+    if (($_ENV['APP_ENV'] ?? 'production') !== 'development') {
+        $response->error('Debug endpoint only available in development', 403);
+        return;
+    }
+
+    $response->success([
+        'environment' => $_ENV['APP_ENV'] ?? 'unknown',
+        'base_path' => $_ENV['APP_BASE_PATH'] ?? 'not set',
+        'php_version' => PHP_VERSION,
+        'memory_usage' => memory_get_usage(true),
+        'server_info' => [
+            'server_name' => $_SERVER['SERVER_NAME'] ?? 'unknown',
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+            'script_name' => $_SERVER['SCRIPT_NAME'] ?? 'unknown'
+        ]
+    ]);
+});
+
+// Public Projects Routes
+$router->get('/api/projects', [ProjectController::class, 'getProjects']);
+$router->get('/api/projects/homepage', [ProjectController::class, 'getHomepageProjects']);
+$router->get('/api/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
+
+// Public Project Update Routes
+$router->get('/api/projects/updates', [ProjectUpdateController::class, 'getAllUpdates']);
+$router->get('/api/projects/updates/recent', [ProjectUpdateController::class, 'getRecentUpdates']);
+$router->get('/api/projects/updates/stats', [ProjectUpdateController::class, 'getStatistics']);
+$router->get('/api/projects/updates/attention', [ProjectUpdateController::class, 'getProjectsNeedingAttention']);
+
+// Public News Feed Routes
+$router->get('/api/news', [ProjectNewsFeedController::class, 'getNewsFeed']);
+$router->get('/api/news/recent', [ProjectNewsFeedController::class, 'getRecentActivity']);
+$router->get('/api/news/stats', [ProjectNewsFeedController::class, 'getActivityStats']);
+$router->get('/api/news/project/{project}', [ProjectNewsFeedController::class, 'getProjectChangelog']);
+
+// Public Health Monitoring Routes
+$router->get('/api/health/system', [ProjectHealthController::class, 'getSystemHealth']);
+$router->get('/api/health/summary', [ProjectHealthController::class, 'getHealthSummary']);
+$router->get('/api/health/critical', [ProjectHealthController::class, 'getCriticalProjects']);
+$router->get('/api/health/recommendations', [ProjectHealthController::class, 'getRecommendations']);
+$router->get('/api/health/project/{project}', [ProjectHealthController::class, 'getProjectHealth']);
+$router->post('/api/health/check', [ProjectHealthController::class, 'runHealthCheck']);
+
+// Public Feature Request Routes
+$router->get('/api/features', [FeatureRequestController::class, 'getAllFeatures']);
+$router->get('/api/features/stats', [FeatureRequestController::class, 'getStats']);
+$router->get('/api/features/{id}', [FeatureRequestController::class, 'getFeatureById']);
+
+// Public Tracker Routes (Legacy)
+$router->get('/api/tracker/stats', [TrackerController::class, 'getStats']);
+$router->get('/api/tracker/feature-requests', [TrackerController::class, 'getFeatureRequests']);
+$router->get('/api/tracker/project-suggestions', [TrackerController::class, 'getProjectSuggestions']);
+$router->get('/api/tracker/activity', [TrackerController::class, 'getActivityFeed']);
+$router->post('/api/tracker/feature-requests', [TrackerController::class, 'createFeatureRequest']);
+$router->post('/api/tracker/project-suggestions', [TrackerController::class, 'createProjectSuggestion']);
+$router->post('/api/tracker/vote', [TrackerController::class, 'vote']);
+
+// Auth endpoints
+$router->post('/api/auth/login', [UserController::class, 'login']);
+$router->post('/api/auth/register', [UserController::class, 'register']);
+
+// Proxy auth endpoints (backup)
+$router->post('/api/auth/proxy/login', [AuthProxyController::class, 'login']);
+$router->post('/api/auth/proxy/register', [AuthProxyController::class, 'register']);
+$router->get('/api/auth/proxy/user', [AuthProxyController::class, 'getCurrentUser']);
+
+// Temporary (UNSECURED) admin endpoint to initialize the database
+$router->post('/api/admin/init-db', function (Request $request, Response $response) {
+    try {
+        Project::createTable();
+        $response->success(null, 'Database initialized (projects table created or already exists)');
+    } catch (\Exception $e) {
+        $response->error('Initialization failed: ' . $e->getMessage(), 500);
+    }
+});
+
+// Protected project management routes
+$router->post('/api/projects', [ProjectController::class, 'createProject'], [JwtAuthMiddleware::class]);
+$router->put('/api/projects/{id}', [ProjectController::class, 'updateProject'], [JwtAuthMiddleware::class]);
+$router->delete('/api/projects/{id}', [ProjectController::class, 'deleteProject'], [JwtAuthMiddleware::class]);
+
+// Protected feature request routes
+$router->post('/api/features', [FeatureRequestController::class, 'createFeature'], [JwtAuthMiddleware::class]);
+$router->post('/api/features/vote', [FeatureRequestController::class, 'voteOnFeature'], [JwtAuthMiddleware::class]);
+$router->get('/api/users/{user_id}/features', [FeatureRequestController::class, 'getUserFeatures'], [JwtAuthMiddleware::class]);
+$router->get('/api/users/{user_id}/votes', [FeatureRequestController::class, 'getUserVotes'], [JwtAuthMiddleware::class]);
+
+// User routes
+$router->get('/api/user/profile', [UserController::class, 'getProfile'], [JwtAuthMiddleware::class]);
+$router->put('/api/user/profile', [UserController::class, 'updateProfile'], [JwtAuthMiddleware::class]);
+$router->post('/api/user/claim-daily-eggs', [UserController::class, 'claimDailyEggs'], [JwtAuthMiddleware::class]);
+$router->get('/api/user/transactions', [UserController::class, 'getTransactions'], [JwtAuthMiddleware::class]);
+$router->get('/api/user/dashboard', [UserController::class, 'getDashboard'], [JwtAuthMiddleware::class]);
+$router->delete('/api/user/delete-account', [UserController::class, 'deleteAccount'], [JwtAuthMiddleware::class]);
+
+// Admin routes
+$router->get('/api/admin/features/pending', [AdminController::class, 'getPendingFeatures'], [JwtAuthMiddleware::class]);
+$router->post('/api/admin/features/{id}/approve', [AdminController::class, 'approveFeature'], [JwtAuthMiddleware::class]);
+$router->post('/api/admin/features/{id}/reject', [AdminController::class, 'rejectFeature'], [JwtAuthMiddleware::class]);
+$router->put('/api/admin/features/{id}/status', [AdminController::class, 'updateFeatureStatus'], [JwtAuthMiddleware::class]);
+$router->post('/api/admin/features/bulk-approve', [AdminController::class, 'bulkApproveFeatures'], [JwtAuthMiddleware::class]);
+$router->post('/api/admin/users/{id}/eggs', [AdminController::class, 'adjustUserEggs'], [JwtAuthMiddleware::class]);
+$router->get('/api/admin/stats', [AdminController::class, 'getAdminStats'], [JwtAuthMiddleware::class]);
+$router->get('/api/admin/users', [AdminController::class, 'getUserManagement'], [JwtAuthMiddleware::class]);
+
+// Webhook Routes (no auth - verified by signature)
+$router->post('/api/webhooks/github', [GitHubWebhookController::class, 'handlePush']);
+
+// Admin webhook setup (IP restricted via ALLOWED_ADMIN_IP in .env)
+$router->get('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'setupWebhooks']);
+$router->post('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'setupWebhooks']);
+
+// Mark project as deployed (called by publish.ps1)
+$router->get('/api/admin/mark-deployed', [GitHubWebhookController::class, 'markDeployed']);
+$router->post('/api/admin/mark-deployed', [GitHubWebhookController::class, 'markDeployed']);
+
+// Admin sync/migrations endpoint (IP restricted)
+$router->get('/api/admin/run-sync', [\App\Controllers\MigrationController::class, 'runSync']);
+$router->post('/api/admin/run-sync', [\App\Controllers\MigrationController::class, 'runSync']);

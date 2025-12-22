@@ -1,11 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
-use App\Models\Project;
+use App\Repositories\ProjectRepository;
 
 class GetProjectsByGroupAction
 {
+    public function __construct(
+        private readonly ProjectRepository $projectRepository
+    ) {}
+
     /**
      * @param string $groupName
      * @param bool $includePrivate
@@ -17,24 +23,30 @@ class GetProjectsByGroupAction
             return [];
         }
 
-        $projects = Project::where('group_name', $groupName)
-            ->get();
+        $allProjects = $this->projectRepository->all();
+        $groupProjects = array_filter($allProjects, function($project) use ($groupName) {
+            return $project['group_name'] === $groupName;
+        });
 
-        return $projects->map(function ($project) use ($groupName) {
+        return array_map(function ($project) use ($groupName) {
             $p = [
-                'id' => $project->id,
+                'id' => $project['id'],
                 'group_name' => $groupName,
-                'title' => $project->title,
-                'description' => $project->description,
-                'stage' => $project->stage,
-                'status' => $project->status,
-                'version' => $project->version,
+                'title' => $project['title'],
+                'description' => $project['description'],
+                'stage' => $project['stage'],
+                'status' => $project['status'],
+                'version' => $project['version'],
             ];
 
-            if ($project->path) $p['path'] = $project->path;
-            if ($project->repository_url) $p['repository'] = ['url' => $project->repository_url];
+            if ($project['path']) {
+                $p['path'] = $project['path'];
+            }
+            if ($project['repository_url']) {
+                $p['repository'] = ['url' => $project['repository_url']];
+            }
 
             return $p;
-    })->toArray();
+        }, array_values($groupProjects));
     }
 }
