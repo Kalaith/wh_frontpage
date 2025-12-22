@@ -185,8 +185,8 @@ export const FeatureRequestDashboard = () => {
             key={filterOption}
             onClick={() => setFilter(filterOption)}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${filter === filterOption
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
             {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
@@ -196,8 +196,8 @@ export const FeatureRequestDashboard = () => {
           <button
             onClick={() => setFilter('pending')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${filter === 'pending'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
             Pending
@@ -257,11 +257,12 @@ export const FeatureRequestDashboard = () => {
       )}
 
       {/* Create Feature Modal */}
-      {showCreateModal && (
+      {showCreateModal && user && (
         <CreateFeatureModal
           onClose={() => setShowCreateModal(false)}
           onCreate={handleCreateFeature}
           projects={projects.map(p => ({ id: p.id as number, title: p.title }))}
+          user={user}
         />
       )}
     </div>
