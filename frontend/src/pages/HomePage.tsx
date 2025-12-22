@@ -4,7 +4,6 @@ import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
 import ProjectUpdates from '../components/ProjectUpdates';
-import ProjectNewsFeed from '../components/ProjectNewsFeed';
 import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
 
@@ -75,13 +74,10 @@ const HomePage: React.FC = () => {
           <ProjectLegend />
         </div>
 
-        {/* Right Column - Updates and Activity */}
+        {/* Right Column - Updates and Health Dashboard */}
         <div className="xl:col-span-2 space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 gap-8">
-            <ProjectUpdates />
-            <ProjectHealthDashboard />
-          </div>
-          <ProjectNewsFeed />
+          <ProjectUpdates />
+          <ProjectHealthDashboard />
         </div>
       </div>
 
