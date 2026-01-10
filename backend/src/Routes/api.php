@@ -92,6 +92,9 @@ $router->get('/api/tracker/project-suggestions', [TrackerController::class, 'get
 $router->get('/api/tracker/activity', [TrackerController::class, 'getActivityFeed']);
 $router->post('/api/tracker/feature-requests', [TrackerController::class, 'createFeatureRequest']);
 $router->post('/api/tracker/project-suggestions', [TrackerController::class, 'createProjectSuggestion']);
+$router->get('/api/tracker/project-suggestions/{id}/comments', [TrackerController::class, 'getSuggestionComments']);
+$router->post('/api/tracker/project-suggestions/{id}/comments', [TrackerController::class, 'addSuggestionComment']);
+$router->post('/api/tracker/project-suggestions/{id}/publish', [TrackerController::class, 'publishSuggestion'], [JwtAuthMiddleware::class]);
 $router->post('/api/tracker/vote', [TrackerController::class, 'vote']);
 
 // Auth endpoints

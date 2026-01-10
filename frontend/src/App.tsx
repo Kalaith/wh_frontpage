@@ -13,6 +13,8 @@ import RegisterPage from './pages/RegisterPage';
 import AboutPage from './pages/AboutPage';
 import './styles/global.css';
 
+import IdeasPage from './pages/IdeasPage';
+
 const App: React.FC = () => {
   const basename = '/';
 
@@ -28,6 +30,7 @@ const App: React.FC = () => {
             <Route path="/tracker" element={<TrackerDashboard />} />
             <Route path="/tracker/requests" element={<FeatureRequestsPage />} />
             <Route path="/tracker/suggestions" element={<ProjectSuggestionsPage />} />
+            <Route path="/ideas" element={<IdeasPage />} />
             <Route path="/features" element={<FeatureRequestDashboard />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/login" element={<LoginPage />} />

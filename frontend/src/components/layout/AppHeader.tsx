@@ -27,8 +27,8 @@ export const AppHeader: React.FC = () => {
               <Link
                 to="/"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/')
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                   }`}
               >
                 Home
@@ -36,8 +36,8 @@ export const AppHeader: React.FC = () => {
               <Link
                 to="/tracker"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/tracker')
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                   }`}
               >
                 Tracker
@@ -45,18 +45,28 @@ export const AppHeader: React.FC = () => {
               <Link
                 to="/features"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${isActive('/features')
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
+                  ? 'bg-green-100 text-green-700'
+                  : 'text-gray-600 hover:text-green-600 hover:bg-gray-50'
                   }`}
               >
                 <span className="text-base">🥚</span>
                 Feature Requests
               </Link>
               <Link
+                to="/ideas"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${isActive('/ideas')
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'text-gray-600 hover:text-yellow-600 hover:bg-gray-50'
+                  }`}
+              >
+                <span className="text-base">💡</span>
+                Ideas
+              </Link>
+              <Link
                 to="/about"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/about')
-                    ? 'bg-gray-100 text-gray-800'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                   }`}
               >
                 About
@@ -65,8 +75,8 @@ export const AppHeader: React.FC = () => {
                 <Link
                   to="/projects"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/projects')
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
                     }`}
                 >
                   Manage Projects
@@ -84,7 +94,9 @@ export const AppHeader: React.FC = () => {
             >
               <option value="/">Home</option>
               <option value="/tracker">Tracker</option>
+              <option value="/tracker">Tracker</option>
               <option value="/features">🥚 Feature Requests</option>
+              <option value="/ideas">💡 Ideas</option>
               <option value="/about">About</option>
               {isAuthenticated && <option value="/profile">Profile</option>}
               {isAdmin && <option value="/projects">Manage Projects</option>}

@@ -217,5 +217,55 @@ export const trackerApi = {
     }
 
     return result.data as { item_id: number; item_type: string; new_vote_count: number };
+  },
+
+  // Get comments for a suggestion
+  async getSuggestionComments(suggestionId: number): Promise<ProjectSuggestionComment[]> {
+    const result = await api.request<ProjectSuggestionComment[]>(`/tracker/project-suggestions/${suggestionId}/comments`);
+    
+    if (!result.success) {
+      throw new Error(getErrorMessage(result.error, 'Failed to fetch comments'));
+    }
+    
+    return result.data as ProjectSuggestionComment[];
+  },
+
+  // Add a comment to a suggestion
+  async addSuggestionComment(suggestionId: number, content: string, user?: { id: number; name: string }): Promise<ProjectSuggestionComment> {
+    const result = await api.request<ProjectSuggestionComment>(`/tracker/project-suggestions/${suggestionId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({
+        content,
+        user_id: user?.id,
+        user_name: user?.name
+      })
+    });
+
+    if (!result.success) {
+      throw new Error(getErrorMessage(result.error, 'Failed to add comment'));
+    }
+
+    return result.data as ProjectSuggestionComment;
+  },
+
+  // Publish a suggestion
+  async publishSuggestion(suggestionId: number): Promise<void> {
+    const result = await api.request(`/tracker/project-suggestions/${suggestionId}/publish`, {
+      method: 'POST'
+    });
+
+    if (!result.success) {
+      throw new Error(getErrorMessage(result.error, 'Failed to publish suggestion'));
+    }
   }
 };
+
+export interface ProjectSuggestionComment {
+  id: number;
+  project_suggestion_id: number;
+  user_id?: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}

@@ -99,7 +99,9 @@ final class ServiceFactory
             TrackerController::class => new TrackerController(
                 new \App\Actions\GetTrackerStatsAction($projectRepo, $featureRepo, $suggestionRepo),
                 new \App\Actions\GetFeatureRequestsAction($featureRepo),
-                new \App\Actions\CreateFeatureRequestAction($featureRepo, $activityRepo)
+                new \App\Actions\CreateFeatureRequestAction($featureRepo, $activityRepo),
+                new \App\Repositories\ProjectSuggestionCommentRepository($db),
+                $suggestionRepo
             ),
             UserController::class => new UserController(
                 new \App\Actions\LoginAction($userRepo),
