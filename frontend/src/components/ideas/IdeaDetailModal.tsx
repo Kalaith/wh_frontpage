@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectSuggestion, trackerApi, ProjectSuggestionComment } from '../../api/trackerApi';
 import { useAuth } from '../../stores/authStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface IdeaDetailModalProps {
     idea: ProjectSuggestion;
@@ -14,6 +15,9 @@ export const IdeaDetailModal: React.FC<IdeaDetailModalProps> = ({ idea, onClose 
     const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
+
+    // For invalidation
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         loadComments();
@@ -53,9 +57,8 @@ export const IdeaDetailModal: React.FC<IdeaDetailModalProps> = ({ idea, onClose 
         try {
             await trackerApi.publishSuggestion(idea.id);
             alert("Idea published successfully!");
+            queryClient.invalidateQueries({ queryKey: ['tracker'] });
             onClose();
-            // Ideally we should invalidate queries here or refresh the list
-            window.location.reload();
         } catch (err) {
             console.error("Failed to publish", err);
             alert("Failed to publish idea");
@@ -108,6 +111,27 @@ export const IdeaDetailModal: React.FC<IdeaDetailModalProps> = ({ idea, onClose 
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
                             >
                                 {publishing ? 'Publishing...' : '🚀 Publish as Project'}
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    if (!idea.id || !confirm("Are you sure you want to DELETE this suggestion? This cannot be undone.")) return;
+                                    setPublishing(true); // Reuse loading state
+                                    try {
+                                        await trackerApi.deleteProjectSuggestion(idea.id);
+                                        // Refresh list
+                                        queryClient.invalidateQueries({ queryKey: ['tracker'] }); // Invalidate all tracker data
+                                        onClose();
+                                    } catch (err) {
+                                        console.error("Failed to delete", err);
+                                        alert("Failed to delete idea");
+                                        setPublishing(false);
+                                    }
+                                }}
+                                disabled={publishing}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                🗑️ Delete Suggestion
                             </button>
                         </div>
                     )}

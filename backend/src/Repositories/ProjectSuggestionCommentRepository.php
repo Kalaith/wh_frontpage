@@ -47,5 +47,12 @@ final class ProjectSuggestionCommentRepository
         $data['id'] = $id;
         
         return new ProjectSuggestionComment($data);
+        return new ProjectSuggestionComment($data);
+    }
+
+    public function deleteBySuggestionId(int $suggestionId): void
+    {
+        $stmt = $this->db->prepare('DELETE FROM project_suggestion_comments WHERE project_suggestion_id = :id');
+        $stmt->execute(['id' => $suggestionId]);
     }
 }

@@ -45,9 +45,24 @@ final class MigrationRepository
         $applied = [];
         foreach ($migrations as $name => $sql) {
             if (!in_array($name, $appliedMigrations)) {
-                $this->db->exec($sql);
-                $this->markApplied($name);
-                $applied[] = $name;
+                try {
+                    $this->db->exec($sql);
+                    $this->markApplied($name);
+                    $applied[] = $name;
+                } catch (\PDOException $e) {
+                    // Check for "Column already exists" (1060/42S21) or "Duplicate key name" (1061)
+                    // Also check for "Unknown column" (1054/42S22) - e.g. trying to modify 'type' if it doesn't exist
+                    $msg = $e->getMessage();
+                    if (str_contains($msg, '1060') || str_contains($msg, '1061') || str_contains($msg, 'Column already exists')) {
+                        $this->markApplied($name);
+                        $applied[] = $name . ' (skipped - already exists)';
+                    } elseif (str_contains($msg, '1054') || str_contains($msg, "Unknown column")) {
+                         $this->markApplied($name);
+                         $applied[] = $name . ' (skipped - column missing)';
+                    } else {
+                        throw $e;
+                    }
+                }
             }
         }
 
@@ -90,6 +105,82 @@ final class MigrationRepository
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     INDEX idx_project_id (project_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ",
+            'create_suggestion_comments_table' => "
+                CREATE TABLE IF NOT EXISTS project_suggestion_comments (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    project_suggestion_id BIGINT UNSIGNED NOT NULL,
+                    user_id BIGINT UNSIGNED NULL,
+                    user_name VARCHAR(255) NULL,
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_suggestion (project_suggestion_id),
+                    INDEX idx_user (user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ",
+            'add_user_id_to_suggestions' => "
+                ALTER TABLE project_suggestions ADD COLUMN user_id BIGINT UNSIGNED NULL AFTER id;
+            ",
+            'add_user_id_index_to_suggestions' => "
+                CREATE INDEX idx_user_id ON project_suggestions(user_id);
+            ",
+            'add_rationale_to_suggestions' => "
+                ALTER TABLE project_suggestions ADD COLUMN rationale TEXT NULL AFTER description;
+            ",
+            'add_tags_to_suggestions' => "
+                ALTER TABLE project_suggestions ADD COLUMN tags VARCHAR(255) NULL;
+            ",
+            'add_status_to_suggestions' => "
+                ALTER TABLE project_suggestions ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'pending';
+            ",
+            'add_votes_to_suggestions' => "
+                ALTER TABLE project_suggestions ADD COLUMN votes INT NOT NULL DEFAULT 0;
+            ",
+            'add_name_to_suggestions' => "
+                ALTER TABLE project_suggestions ADD COLUMN name VARCHAR(255) NOT NULL;
+            ",
+            'create_activity_feed_table' => "
+                CREATE TABLE IF NOT EXISTS activity_feed (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    user_id BIGINT UNSIGNED NULL,
+                    activity_type VARCHAR(50) NOT NULL,
+                    message TEXT NOT NULL,
+                    reference_id BIGINT UNSIGNED NULL,
+                    reference_type VARCHAR(50) NULL,
+                    metadata JSON NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_user_feed (user_id),
+                    INDEX idx_reference (reference_id, reference_type)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ",
+            'add_user_id_to_activity_feed' => "
+                ALTER TABLE activity_feed ADD COLUMN user_id BIGINT UNSIGNED NULL AFTER id;
+            ",
+            'add_activity_type_to_activity_feed' => "
+                ALTER TABLE activity_feed ADD COLUMN activity_type VARCHAR(50) NOT NULL AFTER user_id;
+            ",
+            'add_message_to_activity_feed' => "
+                ALTER TABLE activity_feed ADD COLUMN message TEXT NOT NULL AFTER activity_type;
+            ",
+            'add_metadata_to_activity_feed' => "
+                ALTER TABLE activity_feed ADD COLUMN metadata JSON NULL;
+            ",
+            'make_type_nullable_in_activity_feed' => "
+                ALTER TABLE activity_feed MODIFY COLUMN type VARCHAR(255) NULL DEFAULT 'info';
+            ",
+            'make_action_nullable_in_activity_feed' => "
+                ALTER TABLE activity_feed MODIFY COLUMN action VARCHAR(255) NULL DEFAULT '';
+            ",
+            'make_title_nullable_in_activity_feed' => "
+                ALTER TABLE activity_feed MODIFY COLUMN title VARCHAR(255) NULL DEFAULT '';
+            ",
+            'make_description_nullable_in_activity_feed' => "
+                ALTER TABLE activity_feed MODIFY COLUMN description TEXT NULL;
+            ",
+            'make_user_nullable_in_activity_feed' => "
+                ALTER TABLE activity_feed MODIFY COLUMN user VARCHAR(255) NULL;
             ",
         ];
     }

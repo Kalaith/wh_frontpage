@@ -21,7 +21,10 @@ class TrackerController
         private readonly GetFeatureRequestsAction $getFeatureRequestsAction,
         private readonly CreateFeatureRequestAction $createFeatureRequestAction,
         private readonly \App\Repositories\ProjectSuggestionCommentRepository $commentRepo,
-        private readonly \App\Repositories\ProjectSuggestionRepository $suggestionRepo
+        private readonly \App\Repositories\ProjectSuggestionRepository $suggestionRepo,
+        private readonly \App\Repositories\ProjectRepository $projectRepo,
+        private readonly \App\Repositories\ActivityFeedRepository $activityRepo,
+        private readonly \App\Repositories\EggTransactionRepository $eggRepo
     ) {}
 
     /**
@@ -130,6 +133,8 @@ class TrackerController
     {
         try {
             $data = $request->getBody();
+            $userRole = $request->getAttribute('user_role', 'user');
+            $userId = $data['user_id'] ?? $request->getAttribute('user_id');
 
             // Validate required fields
             $required = ['name', 'description', 'rationale'];
@@ -140,45 +145,60 @@ class TrackerController
                 }
             }
 
+            // Egg Cost Logic
+            $eggCost = 50;
+            if ($userRole !== 'admin') {
+                if (!$userId) {
+                    $response->error('You must be logged in to submit a suggestion', 401);
+                    return;
+                }
+                
+                $balance = $this->eggRepo->getBalanceForUser((int)$userId);
+                if ($balance < $eggCost) {
+                    $response->error("Insufficient eggs. You need {$eggCost} eggs to submit a suggestion.", 402);
+                    return;
+                }
+            }
+
             // Create project suggestion
             $suggestionId = $this->suggestionRepo->create([
-                'title' => $data['name'], // Repo uses title, DTO uses name. Let's align. The repo uses title. The API expects name.
+                'name' => $data['name'],
                 'description' => $data['description'],
-                'tags' => $data['group'] ?? 'Web Applications', // Repo uses tags, DTO uses suggested_group
-                'rationale' => $data['rationale'], // Repo doesn't seem to have rational in CREATE method?
-                // Wait, checking repo in Step 184: create takes title, description, tags, status, user_id. RATIONALE IS MISSING in Repo::create!
-                // I need to update repo create method first to support rationale and group mapping.
-                // Assuming I will fix repo in next step or use what's available.
-                // Repo create method:
-                // INSERT INTO project_suggestions (title, description, tags, status, user_id) 
-                
-                // DATA MAPPING ISSUE: 
-                // Model: name, suggested_group, rationale
-                // DB/Repo: title, tags (used as group?), rationale (MISSING?)
-                
-                // Let's check the table schema from setup.sql or what I can infer.
-                // I'll proceed with using the repo but I might need to fix the repo or the call.
-                
-                // For now:
+                'tags' => $data['group'] ?? 'Web Applications',
+                'rationale' => $data['rationale'],
                 'status' => 'Suggested',
-                'user_id' => $data['user_id'] ?? null // API might not send user_id directly if auth is via token
+                'user_id' => $userId
             ]);
+            
+            // Deduct Eggs if not admin
+            if ($userRole !== 'admin') {
+                $this->eggRepo->create([
+                    'user_id' => $userId,
+                    'amount' => -$eggCost,
+                    'type' => 'spent',
+                    'description' => 'Project Suggestion Fee',
+                    'reference_id' => $suggestionId,
+                    'reference_type' => 'project_suggestion'
+                ]);
+            }
             
             // I need to fetch the suggestion back to return it
             $suggestion = $this->suggestionRepo->find($suggestionId);
 
             // Log activity
-            ActivityFeed::logActivity(
-                'project_suggestion',
-                'created',
-                'New project suggested',
-                $suggestion->name,
-                $suggestion->id,
-                'project_suggestion',
-                $suggestion->submitted_by
-            );
+            $this->activityRepo->create([
+                'user_id' => $userId,
+                'activity_type' => 'project_suggestion',
+                'message' => 'New project suggested: ' . $suggestion->name,
+                'reference_id' => $suggestion->id,
+                'reference_type' => 'project_suggestion',
+                'metadata' => [
+                    'action' => 'created',
+                    'user_name' => $suggestion->submitted_by
+                ]
+            ]);
 
-            $response->withStatus(201)->success($suggestion->toApiArray(), 'Project suggestion created successfully');
+            $response->withStatus(201)->success($suggestion->toArray(), 'Project suggestion created successfully');
 
         } catch (Exception $e) {
             $response->error('Error creating project suggestion: ' . $e->getMessage(), 400);
@@ -194,7 +214,7 @@ class TrackerController
             $limit = (int)$request->getParam('limit', 10);
             $projectId = $request->getParam('project_id');
 
-            $activity = ActivityFeed::getRecentActivity($limit, $projectId ? (int)$projectId : null);
+            $activity = $this->activityRepo->all((int)$limit);
 
             $response->success($activity);
 
@@ -238,7 +258,6 @@ class TrackerController
                 }
                 
                 $item->votes += $voteValue;
-                // $item->save(); // No AR
                 $this->suggestionRepo->update($itemId, ['votes' => $item->votes]);
             } else {
                 $response->error('Invalid item_type', 400);
@@ -255,13 +274,14 @@ class TrackerController
             $response->error('Error recording vote: ' . $e->getMessage(), 400);
         }
     }
+
     /**
      * Get comments for a project suggestion
      */
     public function getSuggestionComments(Request $request, Response $response): void
     {
         try {
-            $id = (int)$request->getAttribute('id');
+            $id = (int)$request->getParam('id');
             $comments = $this->commentRepo->getBySuggestionId($id);
             
             // Convert to array for response
@@ -279,7 +299,7 @@ class TrackerController
     public function addSuggestionComment(Request $request, Response $response): void
     {
         try {
-            $id = (int)$request->getAttribute('id');
+            $id = (int)$request->getParam('id');
             $data = $request->getBody();
             
             if (empty($data['content'])) {
@@ -303,6 +323,44 @@ class TrackerController
     }
 
     /**
+     * Delete a project suggestion
+     */
+    public function deleteProjectSuggestion(Request $request, Response $response): void
+    {
+        try {
+            // Require admin access
+            $userRole = $request->getAttribute('user_role', 'user');
+            if (strtolower((string)$userRole) !== 'admin') {
+                $response->error('Admin access required', 403);
+                return;
+            }
+
+            $id = (int)$request->getParam('id');
+
+            // 1. Delete comments first (Manual Cascade)
+            $this->commentRepo->deleteBySuggestionId($id);
+
+            // 2. Delete the suggestion
+            $count = $this->suggestionRepo->delete($id);
+
+            // Log activity (Try to get name if possible, else generic)
+            $this->activityRepo->create([
+                'user_id' => $request->getAttribute('user_id'),
+                'activity_type' => 'project_suggestion',
+                'message' => 'Project suggestion deleted (ID: ' . $id . ')',
+                'reference_id' => $id,
+                'reference_type' => 'project_suggestion_deleted',
+                'metadata' => ['action' => 'deleted', 'rows_affected' => $count]
+            ]);
+
+            $response->success([], 'Suggestion deleted successfully');
+
+        } catch (Exception $e) {
+            $response->error('Error deleting suggestion: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Publish a suggestion (promotes it to a real project)
      */
     public function publishSuggestion(Request $request, Response $response): void
@@ -315,7 +373,7 @@ class TrackerController
                 return;
             }
 
-            $id = (int)$request->getAttribute('id');
+            $id = (int)$request->getParam('id');
             $suggestion = $this->suggestionRepo->find($id);
 
             if (!$suggestion) {
@@ -323,51 +381,35 @@ class TrackerController
                 return;
             }
 
-            // Create a new project from the suggestion (logic remains mostly the same, simplified in previous step)
-            // But we need to update the suggestion status using repo
-            
             // 1. Update suggestion status
-            $suggestion->status = 'Published';
-            // $suggestion->save(); // This assumes AR. We need repo update.
             $this->suggestionRepo->update($id, ['status' => 'Published']);
 
             // 2. Create the project
-            // ... (Using existing logic or simpler DB insert)
+            // Convert 'Web Applications' etc to 'apps' group codes
+            $groupMap = [
+                'Fiction Projects' => 'fiction',
+                'Web Applications' => 'apps',
+                'Games & Game Design' => 'games',
+                'Game Design' => 'game_design'
+            ];
+            $groupName = $groupMap[$suggestion->suggested_group] ?? 'other';
+
+            $projectData = [
+                'title' => $suggestion->name,
+                'description' => $suggestion->description,
+                'stage' => 'Concept',
+                'status' => 'planning', 
+                'group_name' => $groupName,
+                'version' => '0.1.0',
+                'hidden' => true // Start hidden until configured
+            ];
             
-            $pdo = \App\Core\Database::getPdo(); // Hypothetical helper - wait, do we have this?
-            // In TrackerController we don't have direct PDO access usually, but we injected Repos that have it.
-            // But we don't have a generic DB accessor.
-            // However, ServiceFactory creates connection.
-            // It doesn't seem to expose a static getPdo() publicly.
-            // But we have $this->suggestionRepo. We can add a method 'promoteToProject' to repo?
-            // OR we can just cheat and use raw SQL if we could... but we can't easily.
-            // OR we inject ProjectRepository? NO, too much change.
-            
-            // Let's retry using the Model's save if it existed? It doesn't.
-            
-            // I'll assume for now I will just update the status and skip the Project creation part relying on manual step
-            // OR I will assume Project::create works if I added it?
-            // Wait, existing ProjectController uses ProjectRepo.
-            
-            // Let's just return success for the update status part. Updating the status IS publishing for now.
-            // The requirement said "moves it to projects". Ideally we create a project.
-            
-            // I'll stick to updating status only for this fix to avoid more errors.
-            
-            /*
-            $stmt = $pdo->prepare("INSERT INTO projects (title, description, stage, status, group_name, created_at) VALUES (?, ?, 'Concept', 'planning', ?, NOW())");
-            $stmt->execute([
-                $suggestion->name,
-                $suggestion->description,
-                $suggestion->suggested_group
-            ]);
-            $projectId = $pdo->lastInsertId();
-            */
-            // Since I can't easily access DB here without injecting ProjectRepo, I'll return success on status update.
-            
-             $response->success([
+            $projectId = $this->projectRepo->create($projectData);
+
+            $response->success([
                 'suggestion' => $suggestion->toArray(),
-                'message' => 'Suggestion marked as published.'
+                'new_project_id' => $projectId,
+                'message' => 'Suggestion published and project created.'
             ], 'Suggestion published');
 
         } catch (Exception $e) {

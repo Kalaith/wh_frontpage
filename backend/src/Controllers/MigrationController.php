@@ -43,4 +43,24 @@ final class MigrationController
             $response->error('Sync failed: ' . $e->getMessage(), 500);
         }
     }
+
+
+    /**
+     * Run migrations publicly (Temporary)
+     */
+    public function runPublicMigration(Request $request, Response $response): void
+    {
+        try {
+            $result = $this->migrationRepository->runPendingMigrations();
+            
+            $message = empty($result['applied']) 
+                ? 'All migrations already applied' 
+                : 'Migrations applied successfully: ' . implode(', ', $result['applied']);
+                
+            $response->success($result, $message);
+
+        } catch (\Exception $e) {
+            $response->error('Migration failed: ' . $e->getMessage(), 500);
+        }
+    }
 }

@@ -78,11 +78,11 @@ export const trackerApi = {
   // Get tracker statistics
   async getStats(): Promise<TrackerStats> {
     const result = await api.request<TrackerStats>('/tracker/stats');
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to fetch tracker stats'));
     }
-    
+
     return result.data as TrackerStats;
   },
 
@@ -222,11 +222,11 @@ export const trackerApi = {
   // Get comments for a suggestion
   async getSuggestionComments(suggestionId: number): Promise<ProjectSuggestionComment[]> {
     const result = await api.request<ProjectSuggestionComment[]>(`/tracker/project-suggestions/${suggestionId}/comments`);
-    
+
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to fetch comments'));
     }
-    
+
     return result.data as ProjectSuggestionComment[];
   },
 
@@ -257,6 +257,19 @@ export const trackerApi = {
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to publish suggestion'));
     }
+  },
+
+  // Delete a suggestion
+  async deleteProjectSuggestion(suggestionId: number): Promise<any> {
+    const result = await api.request(`/tracker/project-suggestions/${suggestionId}`, {
+      method: 'DELETE'
+    });
+
+    if (!result.success) {
+      throw new Error(getErrorMessage(result.error, 'Failed to delete suggestion'));
+    }
+
+    return result; // Return full result for debug
   }
 };
 

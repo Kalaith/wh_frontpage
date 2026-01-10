@@ -101,7 +101,10 @@ final class ServiceFactory
                 new \App\Actions\GetFeatureRequestsAction($featureRepo),
                 new \App\Actions\CreateFeatureRequestAction($featureRepo, $activityRepo),
                 new \App\Repositories\ProjectSuggestionCommentRepository($db),
-                $suggestionRepo
+                $suggestionRepo,
+                $projectRepo,
+                $activityRepo,
+                $eggRepo
             ),
             UserController::class => new UserController(
                 new \App\Actions\LoginAction($userRepo),

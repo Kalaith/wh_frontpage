@@ -95,6 +95,7 @@ $router->post('/api/tracker/project-suggestions', [TrackerController::class, 'cr
 $router->get('/api/tracker/project-suggestions/{id}/comments', [TrackerController::class, 'getSuggestionComments']);
 $router->post('/api/tracker/project-suggestions/{id}/comments', [TrackerController::class, 'addSuggestionComment']);
 $router->post('/api/tracker/project-suggestions/{id}/publish', [TrackerController::class, 'publishSuggestion'], [JwtAuthMiddleware::class]);
+$router->delete('/api/tracker/project-suggestions/{id}', [TrackerController::class, 'deleteProjectSuggestion'], [JwtAuthMiddleware::class]);
 $router->post('/api/tracker/vote', [TrackerController::class, 'vote']);
 
 // Auth endpoints
@@ -155,6 +156,9 @@ $router->post('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'set
 // Mark project as deployed (called by publish.ps1)
 $router->get('/api/admin/mark-deployed', [GitHubWebhookController::class, 'markDeployed']);
 $router->post('/api/admin/mark-deployed', [GitHubWebhookController::class, 'markDeployed']);
+
+// Public migration endpoint (Temporary)
+$router->get('/api/migrate', [\App\Controllers\MigrationController::class, 'runPublicMigration']);
 
 // Admin sync/migrations endpoint (IP restricted)
 $router->get('/api/admin/run-sync', [\App\Controllers\MigrationController::class, 'runSync']);
