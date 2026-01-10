@@ -4,7 +4,7 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AuthUser } from '../entities/Auth';
+import type { AuthUser, RegisterRequest } from '../entities/Auth';
 import api from '../api/api';
 
 interface AuthState {
@@ -15,7 +15,7 @@ interface AuthState {
   // Actions
   setAuth: (user: AuthUser, token: string) => void;
   login: (email: string, password: string) => Promise<AuthUser>;
-  register: (userData: any) => Promise<AuthUser>;
+  register: (userData: RegisterRequest) => Promise<AuthUser>;
   logout: () => void;
   refreshUserInfo: () => Promise<void>;
 }

@@ -38,6 +38,7 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  username: string;
   confirmPassword?: string;
 }
 

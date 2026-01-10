@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppHeader } from './components/layout/AppHeader';
+import { ToastContainer } from './components/ui/Toast';
+import { useToastStore } from './stores/toastStore';
 import HomePage from './pages/HomePage';
 import ProjectsPage from './pages/ProjectsPage';
 import TrackerDashboard from './pages/TrackerDashboard';
@@ -17,10 +19,12 @@ import IdeasPage from './pages/IdeasPage';
 
 const App: React.FC = () => {
   const basename = '/';
+  const { toasts, removeToast } = useToastStore();
 
   return (
     <BrowserRouter basename={basename}>
       <div className="min-h-screen bg-gray-50">
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
         <AppHeader />
         <main>
           <Routes>
@@ -43,3 +47,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

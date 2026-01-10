@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../stores/authStore';
+import { useToastStore } from '../../stores/toastStore';
 import { featureRequestApi } from '../../api/featureRequestApi';
 
 export const FeatureAuthStatus: React.FC = () => {
   const { isAuthenticated, user, isLoading, logout } = useAuth();
+  const toast = useToastStore();
 
   const [isClaimingEggs, setIsClaimingEggs] = React.useState(false);
 
@@ -15,16 +17,16 @@ export const FeatureAuthStatus: React.FC = () => {
     try {
       const result = await featureRequestApi.claimDailyEggs();
       if (result.eggs_earned) {
-        alert(`🥚 Claimed ${result.eggs_earned} eggs! Your balance is now ${result.new_balance || 0} eggs.`);
+        toast.success(`🥚 Claimed ${result.eggs_earned} eggs! Your balance is now ${result.new_balance || 0} eggs.`);
         // Note: The balance in the user object should be updated.
         // For simplicity, we can reload or manually update the store if needed.
         window.location.reload();
       } else {
-        alert('Unable to claim daily eggs');
+        toast.info('Unable to claim daily eggs');
       }
     } catch (error: unknown) {
       console.error('Failed to claim daily eggs:', error);
-      alert('Failed to claim daily eggs. Please try again.');
+      toast.error('Failed to claim daily eggs. Please try again.');
     } finally {
       setIsClaimingEggs(false);
     }

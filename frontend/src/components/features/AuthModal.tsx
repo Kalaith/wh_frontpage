@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFeatureLogin, useFeatureRegister } from '../../stores/featureRequestStore';
+import { useToastStore } from '../../stores/toastStore';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -10,14 +11,15 @@ interface AuthModalProps {
 
 export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  
+
   // Sync internal mode with prop changes
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const toast = useToastStore();
+
   const [loginData, setLoginData] = useState({
     email: '',
     password: '',
@@ -67,12 +69,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
         password: registerData.password,
         display_name: registerData.display_name || registerData.username,
       });
-      
+
       // After successful registration, switch to login mode
       setMode('login');
       setLoginData({ email: registerData.email, password: '' });
       setError(null);
-      alert('Registration successful! Please log in with your credentials.');
+      toast.success('Registration successful! Please log in with your credentials.');
     } catch (error: unknown) {
       setError((error as Error).message || 'Registration failed');
     } finally {
@@ -120,7 +122,7 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                 </svg>
               </button>
             </div>
-            
+
             {mode === 'register' && (
               <div className="mt-3 p-3 bg-green-50 rounded-lg">
                 <p className="text-sm text-green-700">

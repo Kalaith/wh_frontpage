@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FeatureRequestCard } from '../components/features/FeatureRequestCard';
 import { CreateFeatureModal } from '../components/features/CreateFeatureModal';
 import { useAuth } from '../stores/authStore';
+import { useToastStore } from '../stores/toastStore';
 import { featureRequestApi } from '../api/featureRequestApi';
 import api from '../api/api';
 import type { FeatureRequest, CreateFeatureRequest } from '../types/featureRequest';
@@ -110,22 +111,26 @@ export const FeatureRequestDashboard = () => {
   };
 
   const handleApprove = async (featureId: number, notes?: string) => {
+    const toast = useToastStore.getState();
     try {
       await featureRequestApi.approveFeature(featureId, notes);
       await loadFeatures(); // Reload to show updated status
+      toast.success('Feature approved successfully!');
     } catch (error: unknown) {
       console.error('Failed to approve feature:', error);
-      alert('Failed to approve feature: ' + ((error as Error).message || 'Unknown error'));
+      toast.error('Failed to approve feature: ' + ((error as Error).message || 'Unknown error'));
     }
   };
 
   const handleReject = async (featureId: number, notes?: string) => {
+    const toast = useToastStore.getState();
     try {
       await featureRequestApi.rejectFeature(featureId, notes);
       await loadFeatures(); // Reload to show updated status
+      toast.success('Feature rejected.');
     } catch (error: unknown) {
       console.error('Failed to reject feature:', error);
-      alert('Failed to reject feature: ' + ((error as Error).message || 'Unknown error'));
+      toast.error('Failed to reject feature: ' + ((error as Error).message || 'Unknown error'));
     }
   };
 
