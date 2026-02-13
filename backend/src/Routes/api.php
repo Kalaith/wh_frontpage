@@ -66,6 +66,30 @@ $router->get('/api/projects/updates/recent', [ProjectUpdateController::class, 'g
 $router->get('/api/projects/updates/stats', [ProjectUpdateController::class, 'getStatistics']);
 $router->get('/api/projects/updates/attention', [ProjectUpdateController::class, 'getProjectsNeedingAttention']);
 
+// Public Quest Routes (Gamification)
+$router->get('/api/quests', [\App\Controllers\QuestController::class, 'index']);
+
+// Public Leaderboard Routes
+$router->get('/api/leaderboard', [\App\Controllers\LeaderboardController::class, 'index']);
+
+// Public Adventurer Profile Route
+$router->get('/api/adventurers/{username}', [\App\Controllers\AdventurerController::class, 'show']);
+
+// Public Boss Routes
+$router->get('/api/bosses/current', [\App\Controllers\BossController::class, 'current']);
+
+// Public Loot Crate Routes
+$router->get('/api/crates/preview', [\App\Controllers\LootCrateController::class, 'preview']);
+$router->get('/api/adventurers/{username}/crates', [\App\Controllers\LootCrateController::class, 'index']);
+$router->post('/api/crates/{id}/open', [\App\Controllers\LootCrateController::class, 'open']);
+
+// Public Quest Chain Routes
+$router->get('/api/quest-chains', [\App\Controllers\QuestChainController::class, 'index']);
+$router->get('/api/quest-chains/{slug}', [\App\Controllers\QuestChainController::class, 'show']);
+
+// Public Wanderer Routes
+$router->get('/api/adventurers/{username}/wanderer', [\App\Controllers\WandererController::class, 'stats']);
+
 // Public News Feed Routes
 $router->get('/api/news', [ProjectNewsFeedController::class, 'getNewsFeed']);
 $router->get('/api/news/recent', [ProjectNewsFeedController::class, 'getRecentActivity']);

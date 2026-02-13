@@ -1,0 +1,122 @@
+[
+    {
+        "name": "quest",
+        "color": "0E8A16",
+        "description": "This issue is an active Quest for adventurers."
+    },
+    {
+        "name": "difficulty:1",
+        "color": "1D76DB",
+        "description": "Tutorial (15 XP)"
+    },
+    {
+        "name": "difficulty:2",
+        "color": "006B75",
+        "description": "Easy (40 XP)"
+    },
+    {
+        "name": "difficulty:3",
+        "color": "FBCA04",
+        "description": "Standard (80 XP)"
+    },
+    {
+        "name": "difficulty:4",
+        "color": "D93F0B",
+        "description": "Hard (140 XP)"
+    },
+    {
+        "name": "difficulty:5",
+        "color": "B60205",
+        "description": "Raid (Var XP)"
+    },
+    {
+        "name": "class:bug-hunter",
+        "color": "d73a4a",
+        "description": "Bug Hunter Class"
+    },
+    {
+        "name": "class:patch-crafter",
+        "color": "a2eeef",
+        "description": "Patch Crafter Class"
+    },
+    {
+        "name": "class:feature-smith",
+        "color": "7057ff",
+        "description": "Feature Smith Class"
+    },
+    {
+        "name": "class:doc-sage",
+        "color": "008672",
+        "description": "Doc Sage Class"
+    },
+    {
+        "name": "class:ux-alchemist",
+        "color": "e99695",
+        "description": "UX Alchemist Class"
+    },
+    {
+        "name": "class:test-summoner",
+        "color": "f9d0c4",
+        "description": "Test Summoner Class"
+    },
+    {
+        "name": "class:ops-ranger",
+        "color": "fef2c0",
+        "description": "Ops Ranger Class"
+    },
+    {
+        "name": "xp:10",
+        "color": "5319e7",
+        "description": "10 XP Reward"
+    },
+    {
+        "name": "xp:15",
+        "color": "5319e7",
+        "description": "15 XP Reward"
+    },
+    {
+        "name": "xp:20",
+        "color": "5319e7",
+        "description": "20 XP Reward"
+    },
+    {
+        "name": "xp:30",
+        "color": "5319e7",
+        "description": "30 XP Reward"
+    },
+    {
+        "name": "xp:40",
+        "color": "5319e7",
+        "description": "40 XP Reward"
+    },
+    {
+        "name": "xp:60",
+        "color": "5319e7",
+        "description": "60 XP Reward"
+    },
+    {
+        "name": "xp:80",
+        "color": "5319e7",
+        "description": "80 XP Reward"
+    },
+    {
+        "name": "chain:stabilize",
+        "color": "c2e0c6",
+        "description": "Quest Chain: Stabilize"
+    },
+    {
+        "name": "chain:ship",
+        "color": "c2e0c6",
+        "description": "Quest Chain: Ship It"
+    },
+    {
+        "name": "boss:active",
+        "color": "b60205",
+        "description": "Active Boss Battle"
+    },
+    {
+        "name": "boss:defeated",
+        "color": "28a745",
+        "description": "Boss Defeated"
+    }
+]

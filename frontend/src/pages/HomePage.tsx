@@ -6,6 +6,8 @@ import { Footer } from '../components/Footer';
 import ProjectUpdates from '../components/ProjectUpdates';
 import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
+import { SeasonBanner } from '../components/SeasonBanner';
+import WeeklyHeist from '../components/WeeklyHeist';
 
 const HomePage: React.FC = () => {
   const { data: projectsData, isLoading: loading, error } = useHomepageProjects();
@@ -65,6 +67,10 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-8">
+      <SeasonBanner />
+      <div className="mb-8">
+        <WeeklyHeist />
+      </div>
       <QuickLinks data={projectsData} isLoading={loading} />
 
       {/* Top Content Grid - Status Guide and Updates side by side */}

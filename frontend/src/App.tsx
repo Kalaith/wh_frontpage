@@ -12,6 +12,14 @@ import { FeatureRequestDashboard } from './pages/FeatureRequestDashboard';
 import { UserProfile } from './pages/UserProfile';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import QuestBoardPage from './pages/QuestBoardPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import AdventurerProfilePage from './pages/AdventurerProfilePage';
+import BossBattlePage from './pages/BossBattlePage';
+import LootCratesPage from './pages/LootCratesPage';
+import HallOfHeroesPage from './pages/HallOfHeroesPage';
+import QuestChainsPage from './pages/QuestChainsPage';
+import PortfolioPage from './pages/PortfolioPage';
 import AboutPage from './pages/AboutPage';
 import './styles/global.css';
 
@@ -30,6 +38,14 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/quests" element={<QuestBoardPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/adventurers/:username" element={<AdventurerProfilePage />} />
+            <Route path="/bosses" element={<BossBattlePage />} />
+            <Route path="/loot" element={<LootCratesPage />} />
+            <Route path="/hall-of-heroes" element={<HallOfHeroesPage />} />
+            <Route path="/quest-chains" element={<QuestChainsPage />} />
+            <Route path="/portfolio/:username" element={<PortfolioPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/tracker" element={<TrackerDashboard />} />
             <Route path="/tracker/requests" element={<FeatureRequestsPage />} />

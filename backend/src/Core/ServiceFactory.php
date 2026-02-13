@@ -78,6 +78,11 @@ final class ServiceFactory
         $suggestionRepo = new \App\Repositories\ProjectSuggestionRepository($db);
         $eggRepo = new \App\Repositories\EggTransactionRepository($db);
         $notificationRepo = new \App\Repositories\EmailNotificationRepository($db);
+        $adventurerRepo = new \App\Repositories\AdventurerRepository($db);
+        $bossRepo = new \App\Repositories\BossRepository($db);
+        $lootCrateRepo = new \App\Repositories\LootCrateRepository($db);
+        $gamificationService = new \App\Services\GamificationService($db, $adventurerRepo);
+        $lootCrateService = new \App\Services\LootCrateService($db, $lootCrateRepo, $adventurerRepo, $gamificationService);
 
         // Reusable services
         if (isset(self::$instances[$class])) {
@@ -126,6 +131,9 @@ final class ServiceFactory
             ProjectHealthController::class => new ProjectHealthController(
                 new \App\Services\ProjectHealthService($updateService)
             ),
+            \App\Controllers\QuestController::class => new \App\Controllers\QuestController(
+                new \App\Services\GitHubService()
+            ),
             AdminController::class => new AdminController(
                 $userRepo,
                 $featureRepo,
@@ -140,6 +148,12 @@ final class ServiceFactory
             \App\Controllers\MigrationController::class => new \App\Controllers\MigrationController(
                 new \App\Repositories\MigrationRepository($db)
             ),
+            \App\Controllers\LeaderboardController::class => new \App\Controllers\LeaderboardController($adventurerRepo),
+            \App\Controllers\AdventurerController::class => new \App\Controllers\AdventurerController($adventurerRepo),
+            \App\Controllers\BossController::class => new \App\Controllers\BossController($bossRepo),
+            \App\Controllers\LootCrateController::class => new \App\Controllers\LootCrateController($lootCrateService, $lootCrateRepo),
+            \App\Controllers\QuestChainController::class => new \App\Controllers\QuestChainController($db),
+            \App\Controllers\WandererController::class => new \App\Controllers\WandererController($db, $adventurerRepo),
             default => throw new \Exception("Unknown class: $class")
         };
 

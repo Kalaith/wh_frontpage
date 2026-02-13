@@ -1,0 +1,30 @@
+name: Award XP on Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  award-xp:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Award XP
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_USER: ${{ github.event.pull_request.user.login }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels) }}
+        run: |
+          php tools/award_xp.php

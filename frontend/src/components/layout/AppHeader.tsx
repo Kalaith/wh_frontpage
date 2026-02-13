@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FeatureAuthStatus } from '../features/FeatureAuthStatus';
 import { useAuth } from '../../stores/authStore';
+import { XPWidget } from '../XPWidget';
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
@@ -41,6 +42,33 @@ export const AppHeader: React.FC = () => {
                   }`}
               >
                 Tracker
+              </Link>
+              <Link
+                to="/quests"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/quests')
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
+                  }`}
+              >
+                🔮 Quests
+              </Link>
+              <Link
+                to="/leaderboard"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/leaderboard')
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'text-gray-600 hover:text-yellow-600 hover:bg-gray-50'
+                  }`}
+              >
+                🏆 Leaderboard
+              </Link>
+              <Link
+                to="/bosses"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/bosses')
+                  ? 'bg-red-100 text-red-700'
+                  : 'text-gray-600 hover:text-red-600 hover:bg-gray-50'
+                  }`}
+              >
+                ⚔️ Boss Battle
               </Link>
               <Link
                 to="/features"
@@ -94,7 +122,9 @@ export const AppHeader: React.FC = () => {
             >
               <option value="/">Home</option>
               <option value="/tracker">Tracker</option>
-              <option value="/tracker">Tracker</option>
+              <option value="/quests">🔮 Quests</option>
+              <option value="/leaderboard">🏆 Leaderboard</option>
+              <option value="/bosses">⚔️ Boss Battle</option>
               <option value="/features">🥚 Feature Requests</option>
               <option value="/ideas">💡 Ideas</option>
               <option value="/about">About</option>
@@ -104,7 +134,8 @@ export const AppHeader: React.FC = () => {
           </div>
 
           {/* Authentication Status */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <XPWidget />
             <FeatureAuthStatus />
           </div>
         </div>
