@@ -260,7 +260,7 @@ export const trackerApi = {
   },
 
   // Delete a suggestion
-  async deleteProjectSuggestion(suggestionId: number): Promise<any> {
+  async deleteProjectSuggestion(suggestionId: number): Promise<unknown> {
     const result = await api.request(`/tracker/project-suggestions/${suggestionId}`, {
       method: 'DELETE'
     });

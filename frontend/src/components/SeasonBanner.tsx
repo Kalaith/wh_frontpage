@@ -17,7 +17,7 @@ export const SeasonBanner: React.FC = () => {
                     // Assuming local username matches GitHub username for now
                     const data = await fetchAdventurer(user.username);
                     setAdventurer(data);
-                } catch (err) {
+                } catch {
                     console.log('Adventurer profile not found for user', user.username);
                 } finally {
                     setLoading(false);
