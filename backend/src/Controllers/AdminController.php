@@ -250,6 +250,39 @@ class AdminController
         }
     }
 
+    public function updateUserRole(Request $request, Response $response): void
+    {
+        try {
+            $this->requireAdmin($request);
+
+            $userId = (int)$request->getParam('id');
+            if ($userId <= 0) {
+                $this->errorResponse($response, 'Invalid user id', null, 400);
+                return;
+            }
+
+            $data = $request->getBody();
+            $role = strtolower((string)($data['role'] ?? ''));
+            $allowedRoles = ['user', 'guild_master', 'admin'];
+            if (!in_array($role, $allowedRoles, true)) {
+                $this->errorResponse($response, 'Invalid role. Allowed: user, guild_master, admin', null, 400);
+                return;
+            }
+
+            $userArray = $this->userRepo->findById($userId);
+            if (!$userArray) {
+                $this->errorResponse($response, 'User not found', null, 404);
+                return;
+            }
+
+            $this->userRepo->update($userId, ['role' => $role]);
+            $updated = $this->userRepo->findById($userId);
+            $response->success($updated, 'User role updated');
+        } catch (\Exception $e) {
+            $this->errorResponse($response, 'Failed to update user role', $e, (int)$e->getCode() ?: 500);
+        }
+    }
+
     public function bulkApproveFeatures(Request $request, Response $response): void
     {
         try {

@@ -35,8 +35,8 @@ export const FeatureAuthStatus: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-sm text-gray-600">Loading...</span>
+        <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-sm text-slate-400">Loading...</span>
       </div>
     );
   }
@@ -45,9 +45,9 @@ export const FeatureAuthStatus: React.FC = () => {
     return (
       <div className="flex items-center gap-3">
         {/* Egg Balance */}
-        <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg">
-          <span className="text-xl">🥚</span>
-          <span className="font-semibold text-blue-600">{(user.egg_balance || 0).toLocaleString()}</span>
+        <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg shadow-sm">
+          <span className="text-xl filter drop-shadow">🥚</span>
+          <span className="font-semibold text-cyan-400">{(user.egg_balance || 0).toLocaleString()}</span>
         </div>
 
         {/* Daily Reward Button */}
@@ -55,7 +55,7 @@ export const FeatureAuthStatus: React.FC = () => {
           <button
             onClick={handleClaimDaily}
             disabled={isClaimingEggs}
-            className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+            className="px-3 py-1 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white text-sm rounded-md shadow-lg shadow-green-500/20 transition-all disabled:opacity-50 flex items-center gap-1"
           >
             {isClaimingEggs ? (
               <>
@@ -73,23 +73,17 @@ export const FeatureAuthStatus: React.FC = () => {
 
         {/* User Info */}
         <div className="flex items-center gap-2">
-          <div className="px-2 py-1 rounded text-sm">
+          <Link to="/profile" className="px-2 py-1 rounded text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
             Hi {user.display_name || user.username}
             {user.role === 'admin' && (
-              <span className="ml-1 text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded">
+              <span className="ml-1 text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20">
                 Admin
               </span>
             )}
-          </div>
-          <Link
-            to="/profile"
-            className="px-2 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
-          >
-            Profile
           </Link>
           <button
             onClick={logout}
-            className="px-2 py-1 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+            className="px-2 py-1 text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
           >
             Logout
           </button>
@@ -99,19 +93,19 @@ export const FeatureAuthStatus: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <Link
         to="/login"
-        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+        className="px-4 py-1.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-md transition-colors"
       >
         Login
       </Link>
       <Link
         to="/register"
-        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors flex items-center gap-1"
+        className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-sm font-medium rounded-md shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1"
       >
         <span className="text-sm">🥚</span>
-        Sign Up (Get 500 eggs!)
+        Sign Up
       </Link>
     </div>
   );

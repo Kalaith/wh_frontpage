@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import SuggestionCard from '../components/tracker/SuggestionCard';
 import ProjectSuggestionForm from '../components/tracker/ProjectSuggestionForm';
 import { useProjectSuggestions, useCreateProjectSuggestion } from '../hooks/useTrackerQuery';

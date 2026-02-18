@@ -5,10 +5,10 @@
 -- for WebHatchery frontpage application
 --
 -- Usage: 
---   mysql -u username -p database_name < setup.sql
+--   mysql -u username -p database_name < db/setup.sql
 -- 
 -- Or for first-time setup with database creation:
---   mysql -u root -p < setup.sql
+--   mysql -u root -p < db/setup.sql
 -- =====================================================
 
 -- Create database if it doesn't exist
@@ -40,6 +40,7 @@ CREATE TABLE projects (
     repository_type VARCHAR(50) NULL,
     repository_url TEXT NULL,
     hidden BOOLEAN NOT NULL DEFAULT FALSE,
+    owner_user_id BIGINT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -48,6 +49,7 @@ CREATE TABLE projects (
     INDEX idx_hidden (hidden),
     INDEX idx_status (status),
     INDEX idx_stage (stage),
+    INDEX idx_owner_user_id (owner_user_id),
     INDEX idx_group_hidden (group_name, hidden),
     INDEX idx_created_at (created_at),
     INDEX idx_updated_at (updated_at)

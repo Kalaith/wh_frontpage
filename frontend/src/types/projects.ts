@@ -16,6 +16,7 @@ export interface ProjectDeployment {
 
 export interface Project {
   id?: number;
+  owner_user_id?: number | null;
   title: string;
   path?: string;
   description: string;

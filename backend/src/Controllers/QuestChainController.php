@@ -26,12 +26,7 @@ class QuestChainController
             $stmt = $this->db->query("SELECT * FROM quest_chains WHERE is_active = TRUE ORDER BY created_at ASC");
             $chains = $stmt->fetchAll();
 
-            $result = array_map(function ($chain) {
-                $chain['steps'] = json_decode($chain['steps'], true);
-                $chain['total_steps'] = (int)$chain['total_steps'];
-                $chain['reward_xp'] = (int)$chain['reward_xp'];
-                return $chain;
-            }, $chains ?: []);
+            $result = array_map(fn ($chain) => $this->normalizeChain($chain), $chains ?: []);
 
             $response->success($result);
         } catch (\Exception $e) {
@@ -62,7 +57,7 @@ class QuestChainController
                     return;
                 }
             } else {
-                $chain['steps'] = json_decode($chain['steps'], true);
+                $chain = $this->normalizeChain($chain);
             }
 
             $response->success($chain);
@@ -130,6 +125,43 @@ class QuestChainController
                 'reward_title' => 'Master Architect',
                 'is_active' => true,
             ],
+        ];
+    }
+
+    private function normalizeChain(array $chain): array
+    {
+        $metadata = [];
+        $description = (string)($chain['description'] ?? '');
+
+        if (preg_match('/\n\nMetadata:\s*(\{.*\})\s*$/s', $description, $matches)) {
+            $decoded = json_decode($matches[1], true);
+            if (is_array($decoded)) {
+                $metadata = $decoded;
+                $description = trim((string)preg_replace('/\n\nMetadata:\s*\{.*\}\s*$/s', '', $description));
+            }
+        }
+
+        $steps = json_decode((string)($chain['steps'] ?? '[]'), true);
+        if (!is_array($steps)) {
+            $steps = [];
+        }
+
+        return [
+            'id' => (int)($chain['id'] ?? 0),
+            'slug' => (string)($chain['slug'] ?? ''),
+            'name' => (string)($chain['name'] ?? ''),
+            'description' => $description,
+            'steps' => $steps,
+            'total_steps' => (int)($chain['total_steps'] ?? count($steps)),
+            'reward_xp' => (int)($chain['reward_xp'] ?? 0),
+            'reward_badge_slug' => $chain['reward_badge_slug'] ?? null,
+            'reward_title' => $chain['reward_title'] ?? null,
+            'season_id' => isset($chain['season_id']) ? (int)$chain['season_id'] : null,
+            'is_active' => (bool)($chain['is_active'] ?? true),
+            'type' => $metadata['type'] ?? 'quest_chain',
+            'labels' => is_array($metadata['labels'] ?? null) ? $metadata['labels'] : [],
+            'entry_criteria' => is_array($metadata['entry_criteria'] ?? null) ? $metadata['entry_criteria'] : [],
+            'go_no_go_gates' => is_array($metadata['go_no_go_gates'] ?? null) ? $metadata['go_no_go_gates'] : [],
         ];
     }
 }

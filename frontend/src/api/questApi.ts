@@ -1,6 +1,13 @@
-import { Quest } from '../types/Quest';
+import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+
+function authHeaders(): HeadersInit {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+}
 
 export const fetchQuests = async (filters: { class?: string; difficulty?: number } = {}): Promise<Quest[]> => {
     const params = new URLSearchParams();
@@ -14,4 +21,46 @@ export const fetchQuests = async (filters: { class?: string; difficulty?: number
 
     const json = await response.json();
     return json.data || [];
+};
+
+export const acceptQuest = async (questRef: string, rankRequired?: string): Promise<{ status: string; message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/quests/${encodeURIComponent(questRef)}/accept`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ rank_required: rankRequired }),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+        throw new Error(json.error || 'Failed to accept quest');
+    }
+    return json.data;
+};
+
+export const submitQuest = async (questRef: string): Promise<{ status: string; message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/quests/${encodeURIComponent(questRef)}/submit`, {
+        method: 'POST',
+        headers: authHeaders(),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+        throw new Error(json.error || 'Failed to submit quest');
+    }
+    return json.data;
+};
+
+export const fetchMyQuests = async (): Promise<{
+    acceptances: QuestAcceptance[];
+    rank_progress: RankProgress;
+}> => {
+    const response = await fetch(`${API_BASE_URL}/quests/my-quests`, {
+        headers: authHeaders(),
+    });
+    if (!response.ok) {
+        if (response.status === 401) {
+            return { acceptances: [], rank_progress: { current_rank: 'Iron', next_rank: 'Silver', completed_quests: 0, total_xp: 0, quests_needed: 3, xp_needed: 150, progress_percent: 0 } };
+        }
+        throw new Error('Failed to fetch your quests');
+    }
+    const json = await response.json();
+    return json.data;
 };

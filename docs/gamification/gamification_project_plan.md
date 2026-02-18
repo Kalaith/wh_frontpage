@@ -44,7 +44,7 @@ The current frontpage is a fully functional full-stack app:
 | Frontend  | React 18 + TypeScript + Vite  | `frontend/src/`                      |
 | Styling   | Tailwind CSS                  | `tailwind.config.js`                 |
 | Backend   | PHP 8.1 (custom router)       | `backend/src/`                       |
-| Database  | MySQL (InnoDB)                | `setup.sql`                          |
+| Database  | MySQL (InnoDB)                | `db/setup.sql`                          |
 | Auth      | JWT (custom)                  | `Middleware/JwtAuthMiddleware.php`   |
 | Deploy    | PowerShell                    | `publish.ps1`                        |
 
@@ -498,7 +498,8 @@ Initial quests for these 5 habitats can cover the full class spectrum and diffic
 
 1. **Repo Prep:** Apply standard gamification labels to the `wh_frontpage` repo as the first Habitat.
 2. **Standards Doc:** Draft `CONTRIBUTING.md` based on the RPG rules (classes, quests, XP sources).
-3. **DB Migration:** Create and run the gamification schema extension (`setup_gamification.sql`).
+3. **DB Migration:** Create and run the gamification schema extension (`db/setup_gamification.sql`).
 4. **GitHub Service:** Build `Services/GitHubService.php` to read quest-labeled issues.
 5. **Quest Board MVP:** Build `QuestBoard.tsx` page and wire it into the existing nav.
 6. **First Season:** Declare "Season 1: The Awakening" and create 10 starter quests across 5 flagship habitats.
+

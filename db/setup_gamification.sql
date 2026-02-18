@@ -3,7 +3,7 @@
 -- =====================================================
 -- Adds RPG tables to the existing webhatchery_frontpage database.
 -- Run this script to enable gamification features.
--- Usage: mysql -u username -p webhatchery_frontpage < setup_gamification.sql
+-- Usage: mysql -u username -p webhatchery_frontpage < db/setup_gamification.sql
 -- =====================================================
 
 USE webhatchery_frontpage;
@@ -163,3 +163,4 @@ INSERT IGNORE INTO seasons (name, slug, starts_at, ends_at, is_active)
 VALUES ('Season 1: The Awakening', 'season-1', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 6 WEEK), TRUE);
 
 SELECT '🚀 Gamification tables created successfully!' as status;
+

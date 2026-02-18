@@ -11,4 +11,12 @@ export interface Boss {
     season_id?: number;
     created_at: string;
     defeated_at?: string;
+    labels?: string[];
+    threat_type?: string;
+    deadline?: string;
+    risk_level?: 'low' | 'med' | 'high' | string;
+    rollback_plan?: string;
+    kill_criteria?: string[];
+    hp_tasks?: string[];
+    proof_required?: string[];
 }

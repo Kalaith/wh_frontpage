@@ -16,9 +16,9 @@ class AdventurerController
         $this->repo = $repo;
     }
 
-    public function show(Request $request, Response $response, array $args): void
+    public function show(Request $request, Response $response, array $args = []): void
     {
-        $username = $args['username'] ?? null;
+        $username = $args['username'] ?? $request->getParam('username');
         if (!$username) {
             $response->error('Username required');
             return;

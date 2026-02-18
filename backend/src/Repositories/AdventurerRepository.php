@@ -55,6 +55,15 @@ class AdventurerRepository
         return $row ? new Adventurer($row) : null;
     }
 
+    public function findByUserId(int $userId): ?Adventurer
+    {
+        $stmt = $this->db->prepare("SELECT * FROM adventurers WHERE user_id = :user_id");
+        $stmt->execute(['user_id' => $userId]);
+        $row = $stmt->fetch();
+
+        return $row ? new Adventurer($row) : null;
+    }
+
     public function getBadges(int $adventurerId): array
     {
         try {

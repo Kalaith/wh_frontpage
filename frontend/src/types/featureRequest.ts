@@ -56,7 +56,7 @@ export interface User {
   username: string;
   email: string;
   display_name: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'guild_master';
   egg_balance: number;
   is_verified: boolean;
   can_claim_daily: boolean;

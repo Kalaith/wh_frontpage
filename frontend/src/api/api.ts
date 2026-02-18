@@ -1,6 +1,6 @@
 // src/api/api.ts - API client for backend communication
 import type { ProjectsData, Project } from '../types/projects';
-import type { AuthUser } from '../entities/Auth';
+import type { AuthUser, RegisterRequest } from '../entities/Auth';
 import type { ApiResponse } from '../types/common';
 import { createAuthError, createServerError } from '../utils/errorHandling';
 
@@ -175,6 +175,40 @@ class ApiClient {
     });
   }
 
+  async assignProjectOwner(projectId: number, ownerUserId: number | null): Promise<ApiResponse<Project>> {
+    return this.request<Project>(`/projects/${projectId}/owner`, {
+      method: 'PUT',
+      body: JSON.stringify({ owner_user_id: ownerUserId }),
+    });
+  }
+
+  async createProjectQuest(
+    projectId: number,
+    questData: {
+      id?: string;
+      title: string;
+      description: string;
+      rank_required?: string;
+      quest_level?: number;
+      dependency_type?: string;
+      depends_on?: string[];
+      unlock_condition?: string;
+      goal?: string;
+      player_steps?: string[];
+      done_when?: string[];
+      due_date?: string;
+      proof_required?: string[];
+      class?: string;
+      class_fantasy?: string;
+      xp?: number;
+    }
+  ): Promise<ApiResponse> {
+    return this.request(`/projects/${projectId}/quests`, {
+      method: 'POST',
+      body: JSON.stringify(questData),
+    });
+  }
+
 
   // Auth via frontpage proxy -> auth app
   async login(
@@ -189,7 +223,7 @@ class ApiClient {
   }
 
   async register(
-    userData: Record<string, unknown>
+    userData: RegisterRequest
   ): Promise<ApiResponse<{ user: AuthUser; token: string }>> {
     const res = await this.request<{ user: AuthUser; token: string }>(`/auth/register`, {
       method: 'POST',

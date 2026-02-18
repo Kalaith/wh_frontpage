@@ -99,8 +99,14 @@ final class Router
                     $factory = new ServiceFactory();
                     $controller = $factory->create($handler[0]);
                     $methodName = $handler[1];
-                    
-                    $controller->$methodName($request, $response);
+
+                    $method = new \ReflectionMethod($controller, $methodName);
+                    $requiredParams = $method->getNumberOfRequiredParameters();
+                    if ($requiredParams >= 3 || $method->getNumberOfParameters() >= 3) {
+                        $controller->$methodName($request, $response, $routeParams);
+                    } else {
+                        $controller->$methodName($request, $response);
+                    }
                     return;
                 }
             }

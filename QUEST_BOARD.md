@@ -1,150 +1,227 @@
-# ⚔️ Manual Quest Board (Starter Quests)
+# WebHatchery Quest Board Planning Guide
 
-Use these templates to create the first 10 quests manually in GitHub Issues.
-Copy the content, paste into a new issue, and apply the corresponding labels.
+Purpose: plan quests that everyday users can complete, while still keeping optional technical notes for each user's AI helper (`RuneSage` / `RS`).
 
----
-
-## Quest 1: Hatchling Setup Run
-**Title:** `[Quest] Verify Local Dev Setup`
-**Labels:** `quest`, `difficulty:1`, `class:patch-crafter`, `xp:15`
-
-### Objectives
-- [ ] Clone the `frontpage` repo.
-- [ ] Follow `README.md` to start frontend (`npm run dev`) and backend (`php -S`).
-- [ ] Confirm the homepage loads without errors.
-- [ ] Post a screenshot of the running app in comments as proof.
-
-### Rewards
-- **15 XP**
-- **Badge:** Hatchling 🐣
+Last updated: February 18, 2026
 
 ---
 
-## Quest 2: The First Gremlin (Bug Repro)
-**Title:** `[Quest] Find and Reproduce One Bug`
-**Labels:** `quest`, `difficulty:1`, `class:bug-hunter`, `xp:15`
+## 1) Core Rule
 
-### Objectives
-- [ ] Explore the `tracker` or `projects` page.
-- [ ] Find a UI glitch, console error, or broken link.
-- [ ] Create a *new* issue for it with "Steps to Reproduce".
-- [ ] Link that new issue here in the comments.
+Write quests in plain language first.  
+If a non-coder cannot understand the quest in under 30 seconds, rewrite it.
 
-### Rewards
-- **15 XP**
-- **Badge:** Gremlin Whisperer 🐞
+Each quest has two layers:
+- Player Layer: simple task and clear finish line
+- RS Layer: optional technical details for AI help
 
 ---
 
-## Quest 3: Documentation Sage
-**Title:** `[Quest] Add "Tech Stack" to README`
-**Labels:** `quest`, `difficulty:1`, `class:doc-sage`, `xp:20`
+## 2) Rank Tiers (Hard Gate)
 
-### Objectives
-- [ ] Edit `README.md`.
-- [ ] Add a "Tech Stack" section listing React, Vite, Tailwind, PHP, Slim (or Custom Router).
-- [ ] Submit PR.
+Users can only accept quests at or below their rank.
 
-### Rewards
-- **20 XP**
+| Rank | Allowed Quest Levels | Typical Scope |
+|---|---|---|
+| Iron | 1 | small starter task |
+| Silver | 1-2 | short task with light follow-up |
+| Gold | 1-3 | medium task with a few steps |
+| Jade | 1-4 | advanced task with dependencies |
+| Diamond | 1-5 | hardest quests, bosses, raids |
 
----
-
-## Quest 4: The Lint Check
-**Title:** `[Quest] Run and Fix Linter Warnings`
-**Labels:** `quest`, `difficulty:2`, `class:patch-crafter`, `xp:40`
-
-### Objectives
-- [ ] Run `npm run lint` in `frontend/`.
-- [ ] Fix at least 5 warnings (e.g., unused vars, any types).
-- [ ] Submit PR.
-
-### Rewards
-- **40 XP**
+Rules:
+- Never show locked quests as claimable.
+- Show lock reason: `Requires <Rank>`.
+- Rank-up should be tied to completed quests and proof quality.
 
 ---
 
-## Quest 5: UX Polish (Empty States)
-**Title:** `[Quest] Improve Empty State on Ideas Page`
-**Labels:** `quest`, `difficulty:2`, `class:ux-alchemist`, `xp:40`
+## 3) Quest Types
 
-### Objectives
-- [ ] Locate `frontend/src/pages/IdeasPage.tsx`.
-- [ ] If no ideas exist, ensure the empty state looks good (add an icon or "Add Idea" button).
-- [ ] Submit PR with before/after screenshots.
+- Quest: one focused task
+- Boss: one major challenge split into checkpoints
+- Raid: team effort with phases and strict entry conditions
 
-### Rewards
-- **40 XP**
-- **Badge:** Polish Wizard ✨
+Use these for planning only; keep wording user-friendly.
 
 ---
 
-## Quest 6: Test Summoner Initiate
-**Title:** `[Quest] Add Unit Test for Date Formatter`
-**Labels:** `quest`, `difficulty:2`, `class:test-summoner`, `xp:40`
+## 4) Quest Writing Standard
 
-### Objectives
-- [ ] Find a date utility in `frontend/src/utils/`.
-- [ ] Write a simple Vitest test case for it.
-- [ ] Verify `npm run test` passes.
-- [ ] Submit PR.
+Every quest must include:
+- Goal: what the user is trying to achieve
+- Steps: 2-5 plain actions
+- Done When: simple pass/fail result
+- Due Date: exact date (`YYYY-MM-DD`)
+- Rank Required: Iron/Silver/Gold/Jade/Diamond
+- Proof: what the user submits (screenshot, link, short note, etc.)
+- RS Brief (Optional): technical hints for RuneSage
 
-### Rewards
-- **40 XP**
-
----
-
-## Quest 7: Feature Smith (Project Filter)
-**Title:** `[Quest] Add 'Filter by Status' to Projects Page`
-**Labels:** `quest`, `difficulty:3`, `class:feature-smith`, `xp:80`
-
-### Objectives
-- [ ] Update `ProjectsPage.tsx` or `ProjectShowcase.tsx`.
-- [ ] Add a dropdown to filter projects by `status` (MVP, Prototype, Working).
-- [ ] Submit PR.
-
-### Rewards
-- **80 XP**
+Hard rule: no proof, no completion.
 
 ---
 
-## Quest 8: Ops Ranger (Dependabot)
-**Title:** `[Quest] Configure Dependabot`
-**Labels:** `quest`, `difficulty:2`, `class:ops-ranger`, `xp:40`
+## 5) Chaining Rules (Required)
 
-### Objectives
-- [ ] Create `.github/dependabot.yml`.
-- [ ] Configure it for `npm` and `composer` updates (weekly).
-- [ ] Submit PR.
+Use this check before publishing quests:
 
-### Rewards
-- **40 XP**
+- Use `Independent` when work can be done safely without waiting on another quest.
+- Use `Chained` when output from one quest is required by another quest.
+- Use `Blocked` when starting now would create rework, conflicts, or broken assumptions.
+
+Chain triggers (must chain):
+- Shared schema or contract changes
+- Same files/components likely to conflict
+- Work that depends on an approval/sign-off from another quest
+- Validation work that needs another quest's output first
+
+Independent triggers (can run in parallel):
+- Different systems with no shared contract/schema
+- Docs/QA tasks that use stable, already-approved artifacts
+- UI polish tasks that do not alter backend/API assumptions
+
+Hard rule:
+- If two quests can invalidate each other, they must be chained.
+
+Required dependency fields on every quest:
+- Dependency Type: `Independent|Chained|Blocked`
+- Depends On: `<quest id(s) or none>`
+- Unlock Condition (if chained/blocked): `<what must be true first>`
+
+Dependency Decision Tree (quick check):
+1. Does this quest change shared schema/API contracts?
+   - Yes -> `Chained`
+   - No -> go to 2
+2. Can another active quest change the same files/components at the same time?
+   - Yes -> `Chained`
+   - No -> go to 3
+3. Does this quest need another quest's output, approval, or test artifact first?
+   - Yes -> `Blocked` (until ready), then `Chained`
+   - No -> go to 4
+4. If this quest starts now and another quest lands first, would rework be likely?
+   - Yes -> `Blocked` or `Chained`
+   - No -> `Independent`
 
 ---
 
-## Quest 9: Boss Battle Prep
-**Title:** `[Quest] Create "Boss Battle" Issue Template`
-**Labels:** `quest`, `difficulty:2`, `class:doc-sage`, `xp:40`
+## 6) Quest Template (Copy/Paste)
 
-### Objectives
-- [ ] Create `.github/ISSUE_TEMPLATE/boss_battle.md`.
-- [ ] Copy the Boss Card template from the Gamification Plan.
-- [ ] Submit PR.
-
-### Rewards
-- **40 XP**
+### Quest Card
+- Title: `<simple action title>`
+- Type: `Quest`
+- Rank Required: `<Iron|Silver|Gold|Jade|Diamond>`
+- Quest Level: `<1-5>`
+- Dependency Type: `<Independent|Chained|Blocked>`
+- Depends On: `<quest id(s) or none>`
+- Unlock Condition: `<required completion/sign-off or n/a>`
+- Goal: `<one plain sentence>`
+- Steps:
+  - `<step 1>`
+  - `<step 2>`
+  - `<step 3 optional>`
+- Done When:
+  - `<clear completion check>`
+- Due Date: `<YYYY-MM-DD>`
+- Proof Required:
+  - `<screenshot|link|text note>`
+- Reward:
+  - `XP: <number>`
+  - `<optional badge/loot>`
+- RS Brief (Optional):
+  - Context: `<system/page/tool name>`
+  - Constraints: `<must avoid / must include>`
+  - Suggested prompt: `"<prompt user can give RS>"`
 
 ---
 
-## Quest 10: Security Check
-**Title:** `[Quest] Audit NPM Dependencies`
-**Labels:** `quest`, `difficulty:2`, `class:ops-ranger`, `xp:40`
+## 7) Boss Template (Copy/Paste)
 
-### Objectives
-- [ ] Run `npm audit`.
-- [ ] Fix any "High" severity vulnerabilities if possible.
-- [ ] Submit PR or Issue with findings.
+### Boss Card
+- Title: `<challenge name>`
+- Type: `Boss`
+- Rank Required: `Jade` or `Diamond`
+- Quest Level: `4` or `5`
+- Goal: `<major outcome in plain language>`
+- Checkpoints:
+  - [ ] `<checkpoint 1>`
+  - [ ] `<checkpoint 2>`
+  - [ ] `<checkpoint 3>`
+- Done When:
+  - `<measurable result>`
+- Due Date: `<YYYY-MM-DD>`
+- Proof Required:
+  - `<links/screenshots/report>`
+- RS Brief (Optional):
+  - Technical notes: `<short bullets>`
+  - Suggested prompt: `"<prompt user can give RS>"`
 
-### Rewards
-- **40 XP**
+---
+
+## 8) Raid Template (Copy/Paste)
+
+### Raid Card
+- Title: `<team objective>`
+- Type: `Raid`
+- Rank Required: `Diamond`
+- Quest Level: `5`
+- Party Size: `3-5`
+- Goal: `<release or major coordinated outcome>`
+- Entry Requirements:
+  - [ ] `<required quests complete>`
+  - [ ] `<required boss defeated>`
+- Phases:
+  - Phase 1: `<prep>`
+  - Phase 2: `<execution>`
+  - Phase 3: `<verification>`
+- Done When:
+  - `<go/no-go checks pass>`
+- Due Date: `<YYYY-MM-DD>`
+- Proof Required:
+  - `<release proof + validation proof>`
+- RS Brief (Optional):
+  - Technical notes: `<short bullets>`
+  - Suggested prompt: `"<prompt user can give RS>"`
+
+---
+
+## 9) Weekly Planning Ritual
+
+Run once per week per habitat.
+
+Template:
+- Wins completed:
+  - `<quest titles>`
+- Stuck or blocked:
+  - `<short blocker>`
+- Rank progress:
+  - `<user/team>: <old rank> -> <new rank if earned>`
+- Next quests to publish:
+  - `<titles + required rank>`
+- Chain review:
+  - `<new chains created>`
+  - `<quests moved from blocked to ready>`
+
+---
+
+## 10) Anti-Patterns (Reject)
+
+Reject quests that:
+- use technical jargon in the player-facing section
+- have no required rank
+- have no due date
+- have no proof requirement
+- should be chained but are marked independent
+- are blocked but still shown as claimable
+- have vague completion text like "improve things"
+
+---
+
+## 11) Quick Start Checklist
+
+- [ ] Define this cycle's main outcome in plain language
+- [ ] Draft quests users can understand without coding knowledge
+- [ ] Add rank requirement to every quest
+- [ ] Mark each quest as `Independent`, `Chained`, or `Blocked`
+- [ ] Add dependency links for chained/blocked quests
+- [ ] Add optional `RS Brief` to quests that need technical help
+- [ ] Publish only quests with clear proof requirements

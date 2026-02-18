@@ -36,8 +36,8 @@ final class ProjectRepository
     public function create(array $data): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO projects (title, path, description, stage, status, version, group_name, repository_type, repository_url, show_on_homepage) 
-             VALUES (:title, :path, :description, :stage, :status, :version, :group_name, :repository_type, :repository_url, :show_on_homepage)'
+            'INSERT INTO projects (title, path, description, stage, status, version, group_name, repository_type, repository_url, show_on_homepage, owner_user_id) 
+             VALUES (:title, :path, :description, :stage, :status, :version, :group_name, :repository_type, :repository_url, :show_on_homepage, :owner_user_id)'
         );
         $stmt->execute([
             'title' => $data['title'],
@@ -49,7 +49,8 @@ final class ProjectRepository
             'group_name' => $data['group_name'] ?? 'other',
             'repository_type' => $data['repository_type'] ?? null,
             'repository_url' => $data['repository_url'] ?? null,
-            'show_on_homepage' => (int)($data['show_on_homepage'] ?? true)
+            'show_on_homepage' => (int)($data['show_on_homepage'] ?? true),
+            'owner_user_id' => isset($data['owner_user_id']) ? (int)$data['owner_user_id'] : null
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -64,7 +65,7 @@ final class ProjectRepository
             'title', 'path', 'description', 'stage', 'status', 'version', 
             'group_name', 'repository_type', 'repository_url', 'show_on_homepage',
             'last_updated', 'last_build', 'last_commit_message', 'branch', 
-            'git_commit', 'environments', 'project_type'
+            'git_commit', 'environments', 'project_type', 'owner_user_id'
         ];
 
         foreach ($data as $key => $value) {
@@ -120,5 +121,28 @@ final class ProjectRepository
     {
         $stmt = $this->db->query('SELECT COUNT(*) FROM projects');
         return (int)$stmt->fetchColumn();
+    }
+
+    public function assignOwner(int $projectId, ?int $ownerUserId): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE projects SET owner_user_id = :owner_user_id, updated_at = NOW() WHERE id = :id'
+        );
+        return $stmt->execute([
+            'id' => $projectId,
+            'owner_user_id' => $ownerUserId,
+        ]);
+    }
+
+    public function isOwnedBy(int $projectId, int $userId): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM projects WHERE id = :id AND owner_user_id = :owner_user_id'
+        );
+        $stmt->execute([
+            'id' => $projectId,
+            'owner_user_id' => $userId,
+        ]);
+        return (int)$stmt->fetchColumn() > 0;
     }
 }

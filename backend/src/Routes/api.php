@@ -69,6 +69,13 @@ $router->get('/api/projects/updates/attention', [ProjectUpdateController::class,
 // Public Quest Routes (Gamification)
 $router->get('/api/quests', [\App\Controllers\QuestController::class, 'index']);
 
+// Quest Acceptance Routes (Auth required)
+$router->post('/api/quests/{questRef}/accept', [\App\Controllers\QuestAcceptanceController::class, 'accept'], [JwtAuthMiddleware::class]);
+$router->get('/api/quests/my-quests', [\App\Controllers\QuestAcceptanceController::class, 'myQuests'], [JwtAuthMiddleware::class]);
+$router->post('/api/quests/{questRef}/submit', [\App\Controllers\QuestAcceptanceController::class, 'submit'], [JwtAuthMiddleware::class]);
+$router->post('/api/quests/{questRef}/complete', [\App\Controllers\QuestAcceptanceController::class, 'complete'], [JwtAuthMiddleware::class]);
+$router->post('/api/quests/{questRef}/review', [\App\Controllers\QuestAcceptanceController::class, 'review'], [JwtAuthMiddleware::class]);
+
 // Public Leaderboard Routes
 $router->get('/api/leaderboard', [\App\Controllers\LeaderboardController::class, 'index']);
 
@@ -145,6 +152,8 @@ $router->post('/api/admin/init-db', function (Request $request, Response $respon
 $router->post('/api/projects', [ProjectController::class, 'createProject'], [JwtAuthMiddleware::class]);
 $router->put('/api/projects/{id}', [ProjectController::class, 'updateProject'], [JwtAuthMiddleware::class]);
 $router->delete('/api/projects/{id}', [ProjectController::class, 'deleteProject'], [JwtAuthMiddleware::class]);
+$router->put('/api/projects/{id}/owner', [ProjectController::class, 'assignOwner'], [JwtAuthMiddleware::class]);
+$router->post('/api/projects/{id}/quests', [\App\Controllers\QuestController::class, 'createForProject'], [JwtAuthMiddleware::class]);
 
 // Protected feature request routes
 $router->post('/api/features', [FeatureRequestController::class, 'createFeature'], [JwtAuthMiddleware::class]);
@@ -167,6 +176,7 @@ $router->post('/api/admin/features/{id}/reject', [AdminController::class, 'rejec
 $router->put('/api/admin/features/{id}/status', [AdminController::class, 'updateFeatureStatus'], [JwtAuthMiddleware::class]);
 $router->post('/api/admin/features/bulk-approve', [AdminController::class, 'bulkApproveFeatures'], [JwtAuthMiddleware::class]);
 $router->post('/api/admin/users/{id}/eggs', [AdminController::class, 'adjustUserEggs'], [JwtAuthMiddleware::class]);
+$router->put('/api/admin/users/{id}/role', [AdminController::class, 'updateUserRole'], [JwtAuthMiddleware::class]);
 $router->get('/api/admin/stats', [AdminController::class, 'getAdminStats'], [JwtAuthMiddleware::class]);
 $router->get('/api/admin/users', [AdminController::class, 'getUserManagement'], [JwtAuthMiddleware::class]);
 

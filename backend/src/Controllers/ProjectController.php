@@ -11,6 +11,7 @@ use App\Actions\CreateProjectAction;
 use App\Actions\UpdateProjectAction;
 use App\Actions\DeleteProjectAction;
 use App\Actions\GetHomepageProjectsAction;
+use App\Repositories\ProjectRepository;
 use Exception;
 
 class ProjectController
@@ -21,7 +22,8 @@ class ProjectController
         private readonly CreateProjectAction $createProjectAction,
         private readonly UpdateProjectAction $updateProjectAction,
         private readonly DeleteProjectAction $deleteProjectAction,
-        private readonly GetHomepageProjectsAction $getHomepageProjectsAction
+        private readonly GetHomepageProjectsAction $getHomepageProjectsAction,
+        private readonly ProjectRepository $projectRepository
     ) {}
 
     /**
@@ -209,6 +211,49 @@ class ProjectController
 
         } catch (Exception $e) {
             $response->error('Failed to delete project: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Assign or clear a project owner.
+     * Admin only.
+     */
+    public function assignOwner(Request $request, Response $response): void
+    {
+        try {
+            $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
+            if ($userRole !== 'admin') {
+                $response->error('Admin access required', 403);
+                return;
+            }
+
+            $projectId = (int)$request->getParam('id', 0);
+            if ($projectId <= 0) {
+                $response->error('Invalid project id', 400);
+                return;
+            }
+
+            $project = $this->projectRepository->findById($projectId);
+            if (!$project) {
+                $response->error('Project not found', 404);
+                return;
+            }
+
+            $data = $request->getBody();
+            $ownerUserId = null;
+            if (array_key_exists('owner_user_id', $data) && $data['owner_user_id'] !== null && $data['owner_user_id'] !== '') {
+                $ownerUserId = (int)$data['owner_user_id'];
+                if ($ownerUserId <= 0) {
+                    $response->error('owner_user_id must be a positive integer or null', 400);
+                    return;
+                }
+            }
+
+            $this->projectRepository->assignOwner($projectId, $ownerUserId);
+            $updated = $this->projectRepository->findById($projectId);
+            $response->success($updated, 'Project owner updated');
+        } catch (Exception $e) {
+            $response->error('Failed to assign project owner: ' . $e->getMessage(), 500);
         }
     }
 }

@@ -48,7 +48,12 @@ export const IdeaDetailModal: React.FC<IdeaDetailModalProps> = ({ idea, onClose 
 
         setLoading(true);
         try {
-            await trackerApi.addSuggestionComment(idea.id, newComment, user ? { id: user.id as number, name: user.name || 'User' } : undefined);
+            const commenterName = user?.display_name
+                || user?.displayName
+                || user?.username
+                || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+                || 'User';
+            await trackerApi.addSuggestionComment(idea.id, newComment, user ? { id: user.id as number, name: commenterName } : undefined);
             setNewComment('');
             loadComments();
         } catch (err) {

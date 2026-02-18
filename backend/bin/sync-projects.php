@@ -111,6 +111,7 @@ function runMigrations(PDO $pdo): void {
                 repository_type VARCHAR(50),
                 repository_url VARCHAR(255),
                 show_on_homepage TINYINT(1) DEFAULT 1,
+                owner_user_id BIGINT UNSIGNED NULL,
                 last_updated DATETIME,
                 last_build DATETIME,
                 last_commit_message TEXT,
@@ -235,6 +236,10 @@ function runMigrations(PDO $pdo): void {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_project_id (project_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ",
+        '2026_02_18_000010_add_projects_owner_user_id' => "
+            ALTER TABLE projects
+            ADD COLUMN IF NOT EXISTS owner_user_id BIGINT UNSIGNED NULL AFTER show_on_homepage;
         ",
     ];
 

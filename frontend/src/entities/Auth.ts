@@ -12,8 +12,8 @@ export interface AuthUser {
   lastName: string;
   display_name?: string;
   displayName?: string; // Compatibility
-  role: 'member' | 'admin' | 'premium';
-  membershipType?: 'member' | 'admin' | 'premium'; // Compatibility
+  role: 'user' | 'member' | 'admin' | 'premium' | 'guild_master';
+  membershipType?: 'user' | 'member' | 'admin' | 'premium' | 'guild_master'; // Compatibility
   egg_balance: number;
   can_claim_daily: boolean;
   member_since: string;

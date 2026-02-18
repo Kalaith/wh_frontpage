@@ -132,7 +132,8 @@ final class ServiceFactory
                 new \App\Services\ProjectHealthService($updateService)
             ),
             \App\Controllers\QuestController::class => new \App\Controllers\QuestController(
-                new \App\Services\GitHubService()
+                new \App\Services\GitHubService(),
+                $db
             ),
             AdminController::class => new AdminController(
                 $userRepo,
@@ -154,6 +155,12 @@ final class ServiceFactory
             \App\Controllers\LootCrateController::class => new \App\Controllers\LootCrateController($lootCrateService, $lootCrateRepo),
             \App\Controllers\QuestChainController::class => new \App\Controllers\QuestChainController($db),
             \App\Controllers\WandererController::class => new \App\Controllers\WandererController($db, $adventurerRepo),
+            \App\Controllers\QuestAcceptanceController::class => new \App\Controllers\QuestAcceptanceController(
+                $db,
+                new \App\Services\RankService($db),
+                $gamificationService,
+                $adventurerRepo
+            ),
             default => throw new \Exception("Unknown class: $class")
         };
 

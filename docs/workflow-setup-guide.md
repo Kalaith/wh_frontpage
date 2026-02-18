@@ -122,7 +122,7 @@ tools/
 ### Award XP (`award-xp.yml`)
 - **Triggers:** PR closed (only runs if merged)
 - **What it does:** Reads PR labels, calculates XP (base 50 + label bonuses), creates adventurer if new, awards XP, checks for level-ups and badges
-- **Prerequisites:** DB secrets set, `setup_gamification.sql` migration run, `composer install` done
+- **Prerequisites:** DB secrets set, `db/setup_gamification.sql` migration run, `composer install` done
 
 ### Quest Bot (`quest-bot.yml`)
 - **Triggers:** Issue labeled
@@ -148,7 +148,7 @@ tools/
 - [ ] Create quest labels (`quest`, `boss:damage`)
 - [ ] Create class labels (`class:bug-hunter`, `class:stylist`, `class:architect`)
 - [ ] Create difficulty labels (`difficulty:easy`, `difficulty:medium`)
-- [ ] Run `setup_gamification.sql` against the database
+- [ ] Run `db/setup_gamification.sql` against the database
 - [ ] Test: create a test issue and add the `quest` label (bot should comment)
 - [ ] Test: open and merge a test PR with `xp:small` label
 
@@ -158,5 +158,6 @@ tools/
 - [ ] Copy corresponding `tools/` scripts
 - [ ] Add any missing secrets
 - [ ] Create any missing labels
-- [ ] Ensure `setup_gamification.sql` has been run
+- [ ] Ensure `db/setup_gamification.sql` has been run
 - [ ] Test each workflow
+
