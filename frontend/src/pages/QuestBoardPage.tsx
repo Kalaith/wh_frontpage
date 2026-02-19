@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchQuests, fetchMyQuests, acceptQuest } from '../api/questApi';
+import { fetchQuests, fetchMyQuests, acceptQuest, submitQuest } from '../api/questApi';
 import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
 import { QuestCard } from '../components/QuestCard';
 import { RuneSagePromptBuilder } from '../components/RuneSagePromptBuilder';
@@ -14,6 +14,8 @@ interface DependencyStatus {
     reason: string | null;
 }
 
+const RANK_ORDER = ['iron', 'silver', 'gold', 'jade', 'diamond'];
+
 const QuestBoardPage: React.FC = () => {
     const [quests, setQuests] = useState<Quest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -26,6 +28,7 @@ const QuestBoardPage: React.FC = () => {
     const [myAcceptances, setMyAcceptances] = useState<QuestAcceptance[]>([]);
     const [rankProgress, setRankProgress] = useState<RankProgress | null>(null);
     const [accepting, setAccepting] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [showPostModal, setShowPostModal] = useState(false);
@@ -153,12 +156,20 @@ const QuestBoardPage: React.FC = () => {
         quests.forEach((quest) => {
             const dependencyType = (quest.dependency_type ?? 'Independent').toLowerCase();
             const dependsOnRefs = quest.depends_on ?? [];
+            const hasMissingChainedDependencies = dependencyType === 'chained' && dependsOnRefs.length === 0;
 
             const unresolved = dependsOnRefs
-                .map((ref) => questRefMap.get(normalizeRef(ref)))
-                .filter((q): q is Quest => Boolean(q))
-                .filter((q) => q.id !== quest.id)
-                .map((q) => q.title);
+                .map((ref) => {
+                    const depQuest = questRefMap.get(normalizeRef(ref));
+                    if (!depQuest || depQuest.id === quest.id) {
+                        return ref;
+                    }
+
+                    const depAcceptance = getAcceptanceForQuest(depQuest);
+                    const isCompleted = depAcceptance?.status === 'completed';
+                    return isCompleted ? null : depQuest.title;
+                })
+                .filter((label): label is string => Boolean(label));
 
             let blocked = false;
             let reason: string | null = null;
@@ -166,6 +177,9 @@ const QuestBoardPage: React.FC = () => {
             if (dependencyType === 'blocked') {
                 blocked = true;
                 reason = quest.unlock_condition ?? (unresolved.length > 0 ? `Requires: ${unresolved.join(', ')}` : 'Blocked by dependency rules.');
+            } else if (hasMissingChainedDependencies) {
+                blocked = true;
+                reason = quest.unlock_condition ?? 'Locked: chained quest is missing dependency links.';
             } else if (dependencyType === 'chained' && unresolved.length > 0) {
                 blocked = true;
                 reason = `Complete first: ${unresolved.join(', ')}`;
@@ -175,10 +189,45 @@ const QuestBoardPage: React.FC = () => {
         });
 
         return statusMap;
-    }, [questRefMap, quests]);
+    }, [questRefMap, quests, acceptanceMap]);
 
     const getDependencyStatus = (quest: Quest): DependencyStatus => (
         dependencyStatusByQuestId.get(quest.id) ?? { blocked: false, unresolved: [], reason: null }
+    );
+
+    const getQuestLevel = (quest: Quest): number => quest.quest_level ?? quest.difficulty ?? 1;
+    const getQuestRank = (quest: Quest): string => {
+        if (quest.rank_required) return String(quest.rank_required).toLowerCase();
+        const level = getQuestLevel(quest);
+        if (level <= 1) return 'iron';
+        if (level === 2) return 'silver';
+        if (level === 3) return 'gold';
+        if (level === 4) return 'jade';
+        return 'diamond';
+    };
+    const getRankIndex = (rank: string): number => {
+        const idx = RANK_ORDER.indexOf(rank);
+        return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+    };
+
+    const sortedQuests = useMemo(() => (
+        [...quests].sort((a, b) => {
+            const levelDiff = getQuestLevel(a) - getQuestLevel(b);
+            if (levelDiff !== 0) return levelDiff;
+
+            const rankDiff = getRankIndex(getQuestRank(a)) - getRankIndex(getQuestRank(b));
+            if (rankDiff !== 0) return rankDiff;
+
+            const numberDiff = a.number - b.number;
+            if (numberDiff !== 0) return numberDiff;
+
+            return a.id - b.id;
+        })
+    ), [quests]);
+
+    const visibleQuests = useMemo(
+        () => sortedQuests.filter((quest) => !getDependencyStatus(quest).blocked),
+        [sortedQuests, dependencyStatusByQuestId]
     );
 
     const handleAcceptQuest = async (quest: Quest) => {
@@ -265,6 +314,30 @@ const QuestBoardPage: React.FC = () => {
         }
     };
 
+    const handleSubmitQuestPR = async (quest: Quest) => {
+        const questRef = getQuestRef(quest);
+        const prUrl = window.prompt('Paste your GitHub PR URL (example: https://github.com/org/repo/pull/123)');
+        if (!prUrl) return;
+
+        const normalized = prUrl.trim();
+        const isValidGitHubPr = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+$/i.test(normalized);
+        if (!isValidGitHubPr) {
+            window.alert('Please enter a valid GitHub PR URL.');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await submitQuest(questRef, normalized);
+            await loadMyQuests();
+            window.alert('PR submitted for review.');
+        } catch (err) {
+            window.alert(err instanceof Error ? err.message : 'Failed to submit PR.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const selectedQuestStatus = selectedQuest ? getDependencyStatus(selectedQuest) : null;
     const selectedQuestAcceptance = selectedQuest ? getAcceptanceForQuest(selectedQuest) : null;
 
@@ -304,11 +377,14 @@ const QuestBoardPage: React.FC = () => {
                 return (
                     <button
                         type="button"
-                        disabled
-                        className="px-4 py-2 rounded font-semibold bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed"
-                        title="Submission flow coming soon (Step 2)"
+                        onClick={() => handleSubmitQuestPR(selectedQuest)}
+                        disabled={submitting}
+                        className={`px-4 py-2 rounded font-semibold border ${submitting
+                                ? 'bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed'
+                                : 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700'
+                            }`}
                     >
-                        📦 Submit Proof (Coming Soon)
+                        {submitting ? 'Submitting...' : 'Submit PR'}
                     </button>
                 );
             case 'submitted':
@@ -371,6 +447,15 @@ const QuestBoardPage: React.FC = () => {
             {/* Rank Progress Bar */}
             {isAuthenticated && <RankProgressBar rankProgress={rankProgress} />}
 
+            <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+                <span className="font-semibold text-gray-600 mr-1">Rank Colors:</span>
+                <span className="px-2 py-1 rounded border border-stone-200 bg-stone-50 text-stone-700">Iron</span>
+                <span className="px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700">Silver</span>
+                <span className="px-2 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700">Gold</span>
+                <span className="px-2 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700">Jade</span>
+                <span className="px-2 py-1 rounded border border-cyan-200 bg-cyan-50 text-cyan-700">Diamond</span>
+            </div>
+
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-center justify-center">
                 <div className="flex items-center gap-2">
                     <label className="font-semibold text-gray-700">Class:</label>
@@ -418,14 +503,14 @@ const QuestBoardPage: React.FC = () => {
                         Try Again
                     </button>
                 </div>
-            ) : quests.length === 0 ? (
+            ) : visibleQuests.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200 text-gray-500">
-                    <p className="text-xl font-medium mb-2">No active quests found.</p>
-                    <p>Check back later or try adjusting your filters.</p>
+                    <p className="text-xl font-medium mb-2">No unlocked quests right now.</p>
+                    <p>Complete active quests to unlock the next ones.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {quests.map((quest) => (
+                    {visibleQuests.map((quest) => (
                         <QuestCard
                             key={quest.id}
                             quest={quest}
@@ -566,7 +651,7 @@ const QuestBoardPage: React.FC = () => {
                                     </span>
                                 )}
                                 {selectedQuest.due_date && (
-                                    <span className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-800">
+                                    <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
                                         Due: {selectedQuest.due_date}
                                     </span>
                                 )}
@@ -645,19 +730,6 @@ const QuestBoardPage: React.FC = () => {
                                             <li key={`${selectedQuest.id}-done-${index}`}>{item}</li>
                                         ))}
                                     </ul>
-                                </section>
-                            )}
-
-                            {(selectedQuest.proof_required?.length ?? 0) > 0 && (
-                                <section>
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Proof Required</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedQuest.proof_required?.map((proof) => (
-                                            <span key={proof} className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-700">
-                                                {proof}
-                                            </span>
-                                        ))}
-                                    </div>
                                 </section>
                             )}
 

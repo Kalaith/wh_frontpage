@@ -22,7 +22,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    // Get token from auth-storage (Zustand persist)
+    // Get token from auth-storage (Zustand persist).
     let token = null;
     const authStorage = localStorage.getItem('auth-storage');
     if (authStorage) {
@@ -35,7 +35,6 @@ class ApiClient {
         console.error('Failed to parse auth-storage', e);
       }
     }
-
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -110,9 +109,22 @@ class ApiClient {
         };
       }
 
-      // safe parse JSON, tolerate empty body
+      // Safe parse JSON, tolerate empty body and guard against HTML/PHP error pages.
       const text = await response.text();
-      const data = text ? JSON.parse(text) : { success: true, data: null };
+      let data: unknown = { success: true, data: null };
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          return {
+            success: false,
+            error: {
+              message: 'Server returned non-JSON response',
+              details: text.slice(0, 300),
+            },
+          };
+        }
+      }
       return data as ApiResponse<T>;
     } catch (error: unknown) {
       clearTimeout(timer);
@@ -232,8 +244,10 @@ class ApiClient {
     return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 
-  async getCurrentUser(): Promise<ApiResponse<AuthUser>> {
-    return this.request<AuthUser>('/auth/user');
+  async getCurrentUser(tokenOverride?: string): Promise<ApiResponse<AuthUser>> {
+    return this.request<AuthUser>('/auth/user', {
+      headers: tokenOverride ? { Authorization: `Bearer ${tokenOverride}` } : {},
+    });
   }
 }
 

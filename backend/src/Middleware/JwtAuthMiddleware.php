@@ -24,6 +24,9 @@ class JwtAuthMiddleware
         $secret = Config::get('jwt.secret');
         
         try {
+            // Allow minor server/client clock skew.
+            JWT::$leeway = 60;
+
             // Validate local JWT token
             $decoded = JWT::decode($token, new Key($secret, 'HS256'));
             $payload = (array) $decoded;

@@ -8,6 +8,7 @@ use PDO;
 class RankService
 {
     private PDO $db;
+    private ?bool $hasRankColumn = null;
 
     /** Rank thresholds: [rank => [min_completed_quests, min_xp]] */
     private const RANK_THRESHOLDS = [
@@ -39,6 +40,10 @@ class RankService
      */
     public function getAdventurerRank(int $adventurerId): string
     {
+        if (!$this->rankColumnExists()) {
+            return 'Iron';
+        }
+
         $stmt = $this->db->prepare("SELECT `rank` FROM adventurers WHERE id = ?");
         $stmt->execute([$adventurerId]);
         $rank = $stmt->fetchColumn();
@@ -74,7 +79,11 @@ class RankService
         }
 
         // Update if changed
-        if ($newRank !== $oldRank && $this->rankIndex($newRank) > $this->rankIndex($oldRank)) {
+        if (
+            $this->rankColumnExists() &&
+            $newRank !== $oldRank &&
+            $this->rankIndex($newRank) > $this->rankIndex($oldRank)
+        ) {
             $stmt = $this->db->prepare("UPDATE adventurers SET `rank` = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$newRank, $adventurerId]);
         }
@@ -138,5 +147,21 @@ class RankService
     {
         $idx = array_search($rank, self::RANK_ORDER, true);
         return $idx !== false ? (int) $idx : 0;
+    }
+
+    private function rankColumnExists(): bool
+    {
+        if ($this->hasRankColumn !== null) {
+            return $this->hasRankColumn;
+        }
+
+        try {
+            $stmt = $this->db->query("SHOW COLUMNS FROM adventurers LIKE 'rank'");
+            $this->hasRankColumn = (bool)$stmt->fetch();
+        } catch (\Throwable) {
+            $this->hasRankColumn = false;
+        }
+
+        return $this->hasRankColumn;
     }
 }

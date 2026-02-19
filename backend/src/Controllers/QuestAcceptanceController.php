@@ -126,11 +126,16 @@ class QuestAcceptanceController
 
     /**
      * POST /api/quests/{questRef}/submit
-     * Mark a quest as submitted (proof placeholder for Step 2).
+     * Mark a quest as submitted with a GitHub PR URL.
      */
     public function submit(Request $request, Response $response, array $args = []): void
     {
         $questRef = $args['questRef'] ?? '';
+        if (empty($questRef)) {
+            $response->error('Quest reference is required', 400);
+            return;
+        }
+
         $userId = $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
@@ -159,15 +164,32 @@ class QuestAcceptanceController
             return;
         }
 
+        $body = $request->getBody();
+        $prUrl = trim((string)($body['pr_url'] ?? ''));
+        if ($prUrl === '') {
+            $response->error('GitHub PR URL is required', 400);
+            return;
+        }
+
+        if (!preg_match('#^https://github\.com/[^/]+/[^/]+/pull/\d+$#i', $prUrl)) {
+            $response->error('Invalid GitHub PR URL format', 400);
+            return;
+        }
+
         $stmt = $this->db->prepare(
-            "UPDATE quest_acceptances SET status = 'submitted', submitted_at = NOW() WHERE id = ?"
+            "UPDATE quest_acceptances
+             SET status = 'submitted',
+                 submitted_at = NOW(),
+                 review_notes = ?
+             WHERE id = ?"
         );
-        $stmt->execute([$acceptance['id']]);
+        $stmt->execute(["PR: {$prUrl}", $acceptance['id']]);
 
         $response->success([
             'quest_ref' => $questRef,
             'status' => 'submitted',
-            'message' => 'Proof submitted! Awaiting review.',
+            'pr_url' => $prUrl,
+            'message' => 'PR submitted! Awaiting review.',
         ]);
     }
 
@@ -196,7 +218,7 @@ class QuestAcceptanceController
         }
 
         $stmt = $this->db->prepare(
-            "SELECT id, status FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
+            "SELECT id, status, review_notes FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
         );
         $stmt->execute([$targetAdventurerId, $questRef]);
         $acceptance = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -214,6 +236,7 @@ class QuestAcceptanceController
         // Get reviewer adventurer (if exists)
         $reviewer = $this->adventurerRepo->findByUserId($userId);
         $reviewerAdventurerId = $reviewer ? $reviewer->id : null;
+        $finalReviewNotes = trim($reviewNotes) !== '' ? $reviewNotes : (string)($acceptance['review_notes'] ?? '');
 
         // Mark completed
         $stmt = $this->db->prepare(
@@ -221,7 +244,7 @@ class QuestAcceptanceController
              SET status = 'completed', completed_at = NOW(), reviewer_adventurer_id = ?, review_notes = ?
              WHERE id = ?"
         );
-        $stmt->execute([$reviewerAdventurerId, $reviewNotes, $acceptance['id']]);
+        $stmt->execute([$reviewerAdventurerId, $finalReviewNotes, $acceptance['id']]);
 
         // Award XP to the quest completer
         $xpResult = null;

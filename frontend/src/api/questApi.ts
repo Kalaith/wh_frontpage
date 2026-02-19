@@ -2,8 +2,22 @@ import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
+function getAuthToken(): string | null {
+    const authStorage = localStorage.getItem('auth-storage');
+    if (authStorage) {
+        try {
+            const parsed = JSON.parse(authStorage) as { state?: { token?: string | null } };
+            const tokenFromStore = parsed?.state?.token;
+            if (tokenFromStore) return tokenFromStore;
+        } catch (error) {
+            console.error('Failed to parse auth-storage', error);
+        }
+    }
+    return null;
+}
+
 function authHeaders(): HeadersInit {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return headers;
@@ -36,10 +50,11 @@ export const acceptQuest = async (questRef: string, rankRequired?: string): Prom
     return json.data;
 };
 
-export const submitQuest = async (questRef: string): Promise<{ status: string; message: string }> => {
+export const submitQuest = async (questRef: string, prUrl: string): Promise<{ status: string; message: string }> => {
     const response = await fetch(`${API_BASE_URL}/quests/${encodeURIComponent(questRef)}/submit`, {
         method: 'POST',
         headers: authHeaders(),
+        body: JSON.stringify({ pr_url: prUrl }),
     });
     const json = await response.json();
     if (!response.ok) {

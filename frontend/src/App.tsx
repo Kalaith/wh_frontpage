@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppHeader } from './components/layout/AppHeader';
 import { ToastContainer } from './components/ui/Toast';
@@ -24,10 +24,18 @@ import AboutPage from './pages/AboutPage';
 import './styles/global.css';
 
 import IdeasPage from './pages/IdeasPage';
+import { useAuth } from './stores/authStore';
 
 const App: React.FC = () => {
   const basename = '/';
   const { toasts, removeToast } = useToastStore();
+  const { token, refreshUserInfo } = useAuth();
+
+  useEffect(() => {
+    if (token) {
+      void refreshUserInfo();
+    }
+  }, [token, refreshUserInfo]);
 
   return (
     <BrowserRouter basename={basename}>

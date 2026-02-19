@@ -132,6 +132,7 @@ $router->post('/api/tracker/vote', [TrackerController::class, 'vote']);
 // Auth endpoints
 $router->post('/api/auth/login', [UserController::class, 'login']);
 $router->post('/api/auth/register', [UserController::class, 'register']);
+$router->get('/api/auth/user', [UserController::class, 'getProfile'], [JwtAuthMiddleware::class]);
 
 // Proxy auth endpoints (backup)
 $router->post('/api/auth/proxy/login', [AuthProxyController::class, 'login']);

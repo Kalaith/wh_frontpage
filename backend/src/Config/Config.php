@@ -11,7 +11,8 @@ final class Config
         $config = [
             'jwt' => [
                 'secret' => $_ENV['JWT_SECRET'] ?? 'your_jwt_secret_key_here',
-                'expiration' => (int)($_ENV['JWT_EXPIRATION'] ?? 86400),
+                // Default to 90 days for long-lived sessions unless overridden by JWT_EXPIRATION.
+                'expiration' => (int)($_ENV['JWT_EXPIRATION'] ?? 7776000),
             ],
             'app' => [
                 'env' => $_ENV['APP_ENV'] ?? 'production',

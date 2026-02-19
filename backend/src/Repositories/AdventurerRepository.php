@@ -46,6 +46,48 @@ class AdventurerRepository
         return $row ? new Adventurer($row) : null;
     }
 
+    public function findOrCreateByGitHubUsername(string $username): ?Adventurer
+    {
+        $existing = $this->findByGitHubUsername($username);
+        if ($existing) {
+            return $existing;
+        }
+
+        // Fallback: create an adventurer profile for an existing app user.
+        $userStmt = $this->db->prepare("
+            SELECT id, username
+            FROM users
+            WHERE username = :username_exact OR display_name = :display_name_exact
+            LIMIT 1
+        ");
+        $userStmt->execute([
+            'username_exact' => $username,
+            'display_name_exact' => $username,
+        ]);
+        $user = $userStmt->fetch();
+
+        if (!$user) {
+            return null;
+        }
+
+        $userId = (int)$user['id'];
+        $byUser = $this->findByUserId($userId);
+        if ($byUser) {
+            return $byUser;
+        }
+
+        $insertStmt = $this->db->prepare("
+            INSERT INTO adventurers (user_id, github_username, class, xp_total, level, glow_streak, created_at, updated_at)
+            VALUES (:user_id, :github_username, 'hatchling', 0, 1, 0, NOW(), NOW())
+        ");
+        $insertStmt->execute([
+            'user_id' => $userId,
+            'github_username' => (string)$user['username'],
+        ]);
+
+        return $this->findByUserId($userId);
+    }
+
     public function findById(int $id): ?Adventurer
     {
         $stmt = $this->db->prepare("SELECT * FROM adventurers WHERE id = :id");

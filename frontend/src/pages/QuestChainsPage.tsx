@@ -229,7 +229,7 @@ const QuestChainsPage: React.FC = () => {
                                                             </span>
                                                         )}
                                                         {step.due_date && (
-                                                            <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800">Due: {step.due_date}</span>
+                                                            <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">Due: {step.due_date}</span>
                                                         )}
                                                         {isLocked && (
                                                             <span className="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700">
@@ -255,19 +255,6 @@ const QuestChainsPage: React.FC = () => {
                                                             <ul className="list-disc list-inside text-sm text-emerald-900 space-y-1">
                                                                 {step.done_when?.map((item, i) => <li key={i}>{item}</li>)}
                                                             </ul>
-                                                        </div>
-                                                    )}
-
-                                                    {(step.proof_required?.length ?? 0) > 0 && (
-                                                        <div className="mt-3">
-                                                            <p className="text-xs font-semibold text-gray-600 mb-1">Proof Required</p>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {step.proof_required?.map((proof) => (
-                                                                    <span key={proof} className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">
-                                                                        {proof}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
                                                         </div>
                                                     )}
 

@@ -37,6 +37,35 @@ SET @season_id = (
     LIMIT 1
 );
 
+-- ---------------------------------------------------------------------
+-- Reset previous seeded records for this quest program
+-- ---------------------------------------------------------------------
+DELETE FROM quest_acceptances
+WHERE quest_ref IN (
+    'Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8',
+    'R1-P1','R1-P2','R1-P3'
+);
+
+DELETE qcp
+FROM quest_chain_progress qcp
+JOIN quest_chains qc ON qc.id = qcp.chain_id
+WHERE qc.slug IN (
+    'adventurer-guild-backend-foundation',
+    'adventurer-guild-cutover-readiness',
+    'adventurer-guild-backend-cutover-v1'
+);
+
+DELETE FROM quest_chains
+WHERE slug IN (
+    'adventurer-guild-backend-foundation',
+    'adventurer-guild-cutover-readiness',
+    'adventurer-guild-backend-cutover-v1'
+);
+
+DELETE FROM bosses
+WHERE project_id <=> @project_id
+  AND name IN ('Contract Drift Hydra', 'Save Corruption Wraith');
+
 INSERT INTO quest_chains (
     slug,
     name,
@@ -60,7 +89,7 @@ VALUES
             'type', 'Quest',
             'title', 'Create Save Data Tables',
             'description', 'Prepare the database so player and quest progress can be stored safely.',
-            'rank_required', 'Silver',
+            'rank_required', 'Iron',
             'quest_level', 2,
             'dependency_type', 'Independent',
             'depends_on', JSON_ARRAY(),
@@ -86,7 +115,7 @@ VALUES
             'type', 'Quest',
             'title', 'Publish API Contract Guide',
             'description', 'Define what data the frontend and backend expect from each other.',
-            'rank_required', 'Gold',
+            'rank_required', 'Iron',
             'quest_level', 3,
             'dependency_type', 'Chained',
             'depends_on', JSON_ARRAY('Q1'),
@@ -112,7 +141,7 @@ VALUES
             'type', 'Quest',
             'title', 'Ship Read APIs',
             'description', 'Build the read-only APIs needed by the guild home flow.',
-            'rank_required', 'Gold',
+            'rank_required', 'Iron',
             'quest_level', 3,
             'dependency_type', 'Chained',
             'depends_on', JSON_ARRAY('Q2'),
@@ -138,7 +167,7 @@ VALUES
             'type', 'Quest',
             'title', 'Ship Write APIs',
             'description', 'Build the write APIs for assigning and finishing quests plus save/load.',
-            'rank_required', 'Jade',
+            'rank_required', 'Iron',
             'quest_level', 4,
             'dependency_type', 'Chained',
             'depends_on', JSON_ARRAY('Q1','Q2','Q3'),
@@ -177,7 +206,7 @@ VALUES
             'type', 'Quest',
             'title', 'Connect Frontend to Live APIs',
             'description', 'Replace core-loop mock data with real API calls.',
-            'rank_required', 'Jade',
+            'rank_required', 'Iron',
             'quest_level', 4,
             'dependency_type', 'Chained',
             'depends_on', JSON_ARRAY('Q3','Q4'),
@@ -203,7 +232,7 @@ VALUES
             'type', 'Quest',
             'title', 'Stabilize Save and Load',
             'description', 'Protect players from bad save payloads and recovery failures.',
-            'rank_required', 'Jade',
+            'rank_required', 'Iron',
             'quest_level', 4,
             'dependency_type', 'Blocked',
             'depends_on', JSON_ARRAY('Q4'),
@@ -229,7 +258,7 @@ VALUES
             'type', 'Quest',
             'title', 'Add Full-Loop Integration Tests',
             'description', 'Cover the complete recruit-to-reload loop with integration tests.',
-            'rank_required', 'Gold',
+            'rank_required', 'Iron',
             'quest_level', 3,
             'dependency_type', 'Chained',
             'depends_on', JSON_ARRAY('Q3','Q4'),
@@ -255,7 +284,7 @@ VALUES
             'type', 'Quest',
             'title', 'Publish Runbooks',
             'description', 'Write and test runbooks for deploy, rollback, incidents, and data restore.',
-            'rank_required', 'Gold',
+            'rank_required', 'Iron',
             'quest_level', 3,
             'dependency_type', 'Independent',
             'depends_on', JSON_ARRAY(),
@@ -297,7 +326,7 @@ VALUES
             'rank_required', 'Diamond',
             'quest_level', 5,
             'dependency_type', 'Chained',
-            'depends_on', JSON_ARRAY(),
+            'depends_on', JSON_ARRAY('Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'),
             'unlock_condition', 'Raid entry criteria must be met.',
             'goal', 'Confirm release candidate is safe to launch.',
             'player_steps', JSON_ARRAY('Run full regression suite.','Review all gate results.','Publish go/no-go decision record.'),
@@ -374,21 +403,7 @@ VALUES
     'Release Raider',
     @season_id,
     TRUE
-)
-ON DUPLICATE KEY UPDATE
-    name = VALUES(name),
-    description = VALUES(description),
-    steps = VALUES(steps),
-    total_steps = VALUES(total_steps),
-    reward_xp = VALUES(reward_xp),
-    reward_badge_slug = VALUES(reward_badge_slug),
-    reward_title = VALUES(reward_title),
-    season_id = VALUES(season_id),
-    is_active = VALUES(is_active);
-
-DELETE FROM bosses
-WHERE project_id <=> @project_id
-  AND name IN ('Contract Drift Hydra', 'Save Corruption Wraith');
+);
 
 INSERT INTO bosses (
     github_issue_url,

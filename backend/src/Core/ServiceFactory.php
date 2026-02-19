@@ -99,7 +99,8 @@ final class ServiceFactory
                 new \App\Actions\CreateProjectAction($projectRepo),
                 new \App\Actions\UpdateProjectAction($projectRepo),
                 new \App\Actions\DeleteProjectAction($projectRepo),
-                new \App\Actions\GetHomepageProjectsAction($projectRepo, $projectGitRepo)
+                new \App\Actions\GetHomepageProjectsAction($projectRepo, $projectGitRepo),
+                $projectRepo
             ),
             TrackerController::class => new TrackerController(
                 new \App\Actions\GetTrackerStatsAction($projectRepo, $featureRepo, $suggestionRepo),

@@ -24,7 +24,7 @@ class AdventurerController
             return;
         }
 
-        $adventurer = $this->repo->findByGitHubUsername($username);
+        $adventurer = $this->repo->findOrCreateByGitHubUsername((string)$username);
         
         if (!$adventurer) {
             $response->error('Adventurer not found', 404);

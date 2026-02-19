@@ -11,6 +11,7 @@ interface AuthState {
   user: AuthUser | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
 
   // Actions
   setAuth: (user: AuthUser, token: string) => void;
@@ -26,29 +27,46 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      isLoading: false,
 
       setAuth: (user, token) => {
         set({ user, token, isAuthenticated: true });
       },
 
       refreshUserInfo: async () => {
+        const { token } = useAuthStore.getState();
+        if (!token) {
+          set({ user: null, isAuthenticated: false, isLoading: false });
+          return;
+        }
+
+        set({ isLoading: true });
         try {
-          const response = await api.getCurrentUser();
+          const response = await api.getCurrentUser(token);
           if (response.success && response.data) {
-            set({ user: response.data, isAuthenticated: true });
+            set({ user: response.data, isAuthenticated: true, isLoading: false });
+            return;
           }
+
+          // Server is authoritative: clear stale auth state on failed validation.
+          localStorage.removeItem('auth-storage');
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         } catch (error) {
           console.error('Failed to refresh user info:', error);
+          localStorage.removeItem('auth-storage');
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         }
       },
 
       login: async (email, password) => {
+        set({ isLoading: true });
         const response = await api.login(email, password);
         if (response.success && response.data) {
           const { user, token } = response.data;
-          set({ user, token, isAuthenticated: true });
+          set({ user, token, isAuthenticated: true, isLoading: false });
           return user;
         }
+        set({ isLoading: false });
         const message = typeof response.error === 'string'
           ? response.error
           : response.error?.message || 'Login failed';
@@ -56,12 +74,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (userData) => {
+        set({ isLoading: true });
         const response = await api.register(userData);
         if (response.success && response.data) {
           const { user, token } = response.data;
-          set({ user, token, isAuthenticated: true });
+          set({ user, token, isAuthenticated: true, isLoading: false });
           return user;
         }
+        set({ isLoading: false });
         const message = typeof response.error === 'string'
           ? response.error
           : response.error?.message || 'Registration failed';
@@ -76,7 +96,7 @@ export const useAuthStore = create<AuthState>()(
           }
         });
 
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
 
         // Force reload to clear memory
         window.location.href = '/';
@@ -96,7 +116,7 @@ export const useAuth = () => {
     ...store,
     isAdmin: store.user?.role === 'admin',
     loginWithRedirect: () => { window.location.href = '/login'; },
-    isLoading: false, // Legacy field
+    isLoading: store.isLoading,
     error: null,      // Legacy field
   };
 };
