@@ -1,104 +1,146 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FeatureAuthStatus } from '../features/FeatureAuthStatus';
 import { useAuth } from '../../stores/authStore';
 import { XPWidget } from '../XPWidget';
 
+type NavItem = {
+  path: string;
+  label: string;
+};
+
 export const AppHeader: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = useMemo<NavItem[]>(() => {
+    const items: NavItem[] = [
+      { path: '/', label: 'Home' },
+      { path: '/tracker', label: 'Tracker' },
+      { path: '/quests', label: 'Quests' },
+      { path: '/leaderboard', label: 'Leaderboard' },
+      { path: '/bosses', label: 'Bosses' },
+      { path: '/features', label: 'Features' },
+      { path: '/ideas', label: 'Ideas' },
+      { path: '/about', label: 'About' },
+    ];
+
+    if (isAdmin) {
+      items.push({ path: '/projects', label: 'Manage' });
+    }
+
+    return items;
+  }, [isAdmin]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Common styles for nav links
-  const getNavLinkClass = (path: string) => {
-    const baseClass = "px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1.5 border";
+  const navClass = (path: string) => {
+    const base =
+      'inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70';
+
     if (isActive(path)) {
-      return `${baseClass} bg-cyan-950/40 text-cyan-300 border-cyan-500/30 shadow-[0_0_10px_rgba(34,211,238,0.1)]`;
+      return `${base} border-cyan-500/40 bg-cyan-950/40 text-cyan-200`;
     }
-    return `${baseClass} text-slate-400 border-transparent hover:text-cyan-200 hover:bg-slate-800/50 hover:border-slate-700`;
+
+    return `${base} border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900 hover:text-white`;
   };
 
   return (
-    <header className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo and Main Navigation */}
-          <div className="flex items-center space-x-8">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 group"
-            >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-400 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-cyan-500/20 transition-all">
-                <span className="text-white font-bold text-lg">W</span>
-              </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
-                WebHatchery
-              </span>
-            </Link>
+    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur-md">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center gap-3">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-400 text-lg font-bold text-white shadow-lg shadow-cyan-500/20">
+              W
+            </span>
+            <span className="truncate bg-gradient-to-r from-blue-300 to-cyan-200 bg-clip-text text-lg font-bold tracking-tight text-transparent sm:text-xl">
+              WebHatchery
+            </span>
+          </Link>
 
-            <nav className="hidden md:flex space-x-1">
-              <Link to="/" className={getNavLinkClass('/')}>
-                Home
+          <nav className="hidden lg:flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={navClass(item.path)}
+                aria-current={isActive(item.path) ? 'page' : undefined}
+              >
+                {item.label}
               </Link>
-              <Link to="/tracker" className={getNavLinkClass('/tracker')}>
-                Tracker
-              </Link>
-              <Link to="/quests" className={getNavLinkClass('/quests')}>
-                <span className="text-base">🔮</span> Quests
-              </Link>
-              <Link to="/leaderboard" className={getNavLinkClass('/leaderboard')}>
-                <span className="text-base">🏆</span> Leaderboard
-              </Link>
-              <Link to="/bosses" className={getNavLinkClass('/bosses')}>
-                <span className="text-base">⚔️</span> Bosses
-              </Link>
-              <Link to="/features" className={getNavLinkClass('/features')}>
-                <span className="text-base">🥚</span> Features
-              </Link>
-              <Link to="/ideas" className={getNavLinkClass('/ideas')}>
-                <span className="text-base">💡</span> Ideas
-              </Link>
-              <Link to="/about" className={getNavLinkClass('/about')}>
-                About
-              </Link>
-              {isAdmin && (
-                <Link to="/projects" className={getNavLinkClass('/projects')}>
-                  Manage
-                </Link>
-              )}
-            </nav>
-          </div>
+            ))}
+          </nav>
 
-          {/* Mobile Navigation Menu */}
-          <div className="md:hidden">
-            <select
-              value={location.pathname}
-              onChange={(e) => window.location.pathname = e.target.value}
-              className="block w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="/">Home</option>
-              <option value="/tracker">Tracker</option>
-              <option value="/quests">🔮 Quests</option>
-              <option value="/leaderboard">🏆 Leaderboard</option>
-              <option value="/bosses">⚔️ Boss Battle</option>
-              <option value="/features">🥚 Feature Requests</option>
-              <option value="/ideas">💡 Ideas</option>
-              <option value="/about">About</option>
-              {isAuthenticated && <option value="/profile">Profile</option>}
-              {isAdmin && <option value="/projects">Manage Projects</option>}
-            </select>
-          </div>
-
-          {/* Authentication Status */}
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:block">
+          <div className="ml-auto flex items-center gap-2 lg:gap-3">
+            <div className="hidden xl:block">
               <XPWidget />
             </div>
-            <FeatureAuthStatus />
+            <div className="hidden lg:block">
+              <FeatureAuthStatus />
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileOpen((prev) => !prev)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 transition-colors hover:border-cyan-500/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 md:hidden"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+            >
+              <span className="text-xl leading-none">{mobileOpen ? 'X' : '='}</span>
+            </button>
           </div>
         </div>
+
+        {mobileOpen && (
+          <div className="border-t border-slate-800 py-3 md:hidden">
+            <nav className="grid grid-cols-2 gap-2">
+              {navItems.map((item) => (
+                <Link
+                  key={`mobile-${item.path}`}
+                  to={item.path}
+                  className={navClass(item.path)}
+                  aria-current={isActive(item.path) ? 'page' : undefined}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-800 pt-3">
+              {isAuthenticated ? (
+                <>
+                  <Link to="/profile" className={navClass('/profile')}>
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="inline-flex items-center rounded-lg border border-slate-800 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-red-500/40 hover:bg-red-950/30 hover:text-red-200"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className={navClass('/login')}>
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center rounded-lg border border-cyan-500/40 bg-cyan-950/40 px-3 py-2 text-sm font-medium text-cyan-200 transition-colors hover:bg-cyan-900/40"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

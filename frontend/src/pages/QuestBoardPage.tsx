@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchQuests, fetchMyQuests, acceptQuest, submitQuest } from '../api/questApi';
+import { fetchQuests, fetchMyQuests, acceptQuest, submitQuest, cancelQuest } from '../api/questApi';
 import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
 import { QuestCard } from '../components/QuestCard';
 import { RuneSagePromptBuilder } from '../components/RuneSagePromptBuilder';
 import { RankProgressBar } from '../components/RankProgressBar';
-import api from '../api/api';
 import { useAuth } from '../stores/authStore';
-import { Project } from '../types/projects';
 
 interface DependencyStatus {
     blocked: boolean;
@@ -29,25 +27,9 @@ const QuestBoardPage: React.FC = () => {
     const [rankProgress, setRankProgress] = useState<RankProgress | null>(null);
     const [accepting, setAccepting] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [canceling, setCanceling] = useState(false);
 
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [showPostModal, setShowPostModal] = useState(false);
-    const [postError, setPostError] = useState<string | null>(null);
-    const [posting, setPosting] = useState(false);
-    const [postForm, setPostForm] = useState({
-        project_id: '',
-        title: '',
-        description: '',
-        rank_required: 'Iron',
-        quest_level: '1',
-        dependency_type: 'Independent',
-        depends_on: '',
-        unlock_condition: 'n/a',
-    });
-
-    const { user, isAuthenticated } = useAuth();
-    const normalizedRole = (user?.role ?? '').toLowerCase();
-    const canPostQuests = isAuthenticated && (normalizedRole === 'admin' || normalizedRole === 'guild_master');
+    const { isAuthenticated } = useAuth();
 
     const loadQuests = async () => {
         setLoading(true);
@@ -88,28 +70,6 @@ const QuestBoardPage: React.FC = () => {
     useEffect(() => {
         loadMyQuests();
     }, [isAuthenticated]);
-
-    useEffect(() => {
-        const loadProjects = async () => {
-            if (!canPostQuests) {
-                setProjects([]);
-                return;
-            }
-            const res = await api.getProjects();
-            if (res.success && res.data?.projects) {
-                setProjects(res.data.projects);
-            } else {
-                setProjects([]);
-            }
-        };
-        loadProjects();
-    }, [canPostQuests]);
-
-    const availableProjects = useMemo(() => {
-        if (!canPostQuests) return [];
-        if (normalizedRole === 'admin') return projects;
-        return projects.filter((p) => (p.owner_user_id ?? null) === (user?.id ?? -1));
-    }, [canPostQuests, normalizedRole, projects, user?.id]);
 
     // Build a map of quest_ref -> acceptance status
     const acceptanceMap = useMemo(() => {
@@ -262,58 +222,6 @@ const QuestBoardPage: React.FC = () => {
         }
     };
 
-    const handlePostQuest = async () => {
-        setPostError(null);
-        if (!postForm.project_id || !postForm.title.trim() || !postForm.description.trim()) {
-            setPostError('Project, title, and description are required.');
-            return;
-        }
-
-        setPosting(true);
-        try {
-            const dependsOn = postForm.depends_on
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean);
-
-            const res = await api.createProjectQuest(Number(postForm.project_id), {
-                title: postForm.title.trim(),
-                description: postForm.description.trim(),
-                rank_required: postForm.rank_required,
-                quest_level: Number(postForm.quest_level),
-                dependency_type: postForm.dependency_type,
-                depends_on: dependsOn,
-                unlock_condition: postForm.unlock_condition.trim() || 'n/a',
-            });
-
-            if (!res.success) {
-                setPostError(
-                    typeof res.error === 'string'
-                        ? res.error
-                        : res.error?.message ?? 'Failed to post quest.'
-                );
-                return;
-            }
-
-            setShowPostModal(false);
-            setPostForm({
-                project_id: '',
-                title: '',
-                description: '',
-                rank_required: 'Iron',
-                quest_level: '1',
-                dependency_type: 'Independent',
-                depends_on: '',
-                unlock_condition: 'n/a',
-            });
-            await loadQuests();
-        } catch (e) {
-            setPostError(e instanceof Error ? e.message : 'Failed to post quest.');
-        } finally {
-            setPosting(false);
-        }
-    };
-
     const handleSubmitQuestPR = async (quest: Quest) => {
         const questRef = getQuestRef(quest);
         const prUrl = window.prompt('Paste your GitHub PR URL (example: https://github.com/org/repo/pull/123)');
@@ -335,6 +243,23 @@ const QuestBoardPage: React.FC = () => {
             window.alert(err instanceof Error ? err.message : 'Failed to submit PR.');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleCancelQuest = async (quest: Quest) => {
+        const questRef = getQuestRef(quest);
+        const confirmCancel = window.confirm('Cancel this quest? You can accept it again later.');
+        if (!confirmCancel) return;
+
+        setCanceling(true);
+        try {
+            await cancelQuest(questRef);
+            await loadMyQuests();
+            window.alert('Quest canceled.');
+        } catch (err) {
+            window.alert(err instanceof Error ? err.message : 'Failed to cancel quest.');
+        } finally {
+            setCanceling(false);
         }
     };
 
@@ -375,27 +300,53 @@ const QuestBoardPage: React.FC = () => {
         switch (acceptance.status) {
             case 'accepted':
                 return (
-                    <button
-                        type="button"
-                        onClick={() => handleSubmitQuestPR(selectedQuest)}
-                        disabled={submitting}
-                        className={`px-4 py-2 rounded font-semibold border ${submitting
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => handleCancelQuest(selectedQuest)}
+                            disabled={canceling || submitting}
+                            className={`px-4 py-2 rounded font-semibold border ${canceling || submitting
+                                ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed'
+                                : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+                                }`}
+                        >
+                            {canceling ? 'Canceling...' : 'Cancel Quest'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleSubmitQuestPR(selectedQuest)}
+                            disabled={submitting || canceling}
+                            className={`px-4 py-2 rounded font-semibold border ${submitting || canceling
                                 ? 'bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed'
                                 : 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700'
-                            }`}
-                    >
-                        {submitting ? 'Submitting...' : 'Submit PR'}
-                    </button>
+                                }`}
+                        >
+                            {submitting ? 'Submitting...' : 'Submit PR'}
+                        </button>
+                    </div>
                 );
             case 'submitted':
                 return (
-                    <button
-                        type="button"
-                        disabled
-                        className="px-4 py-2 rounded font-semibold bg-blue-100 text-blue-700 border border-blue-200 cursor-not-allowed"
-                    >
-                        ⏳ Awaiting Review
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => handleCancelQuest(selectedQuest)}
+                            disabled={canceling}
+                            className={`px-4 py-2 rounded font-semibold border ${canceling
+                                ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed'
+                                : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+                                }`}
+                        >
+                            {canceling ? 'Canceling...' : 'Cancel Quest'}
+                        </button>
+                        <button
+                            type="button"
+                            disabled
+                            className="px-4 py-2 rounded font-semibold bg-blue-100 text-blue-700 border border-blue-200 cursor-not-allowed"
+                        >
+                            ⏳ Awaiting Review
+                        </button>
+                    </div>
                 );
             case 'completed':
                 return (
@@ -423,25 +374,14 @@ const QuestBoardPage: React.FC = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <header className="mb-8 text-center">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+        <div className="container mx-auto px-4 py-6">
+            <header className="text-center">
+                <h1 className="text-2xl font-bold text-gray-900">
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
                         Quest Board
                     </span>
                 </h1>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Choose your path, adventurer. Chained quests unlock as prerequisites are cleared.
-                </p>
-                {canPostQuests && (
-                    <button
-                        type="button"
-                        onClick={() => setShowPostModal(true)}
-                        className="mt-4 px-4 py-2 rounded bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
-                    >
-                        Post Quest
-                    </button>
-                )}
+                <p className="mt-1 text-sm text-gray-600">Pick a quest and start building.</p>
             </header>
 
             {/* Rank Progress Bar */}
@@ -519,99 +459,6 @@ const QuestBoardPage: React.FC = () => {
                             acceptance={getAcceptanceForQuest(quest)}
                         />
                     ))}
-                </div>
-            )}
-
-            {/* Post Quest Modal */}
-            {showPostModal && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-xl rounded-xl shadow-2xl border border-gray-200">
-                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <h2 className="text-lg font-bold text-gray-900">Post New Quest</h2>
-                            <button type="button" onClick={() => setShowPostModal(false)} className="text-gray-500 hover:text-gray-700">Close</button>
-                        </div>
-                        <div className="p-6 space-y-3">
-                            {postError && <p className="text-sm text-red-600">{postError}</p>}
-                            <select
-                                value={postForm.project_id}
-                                onChange={(e) => setPostForm((prev) => ({ ...prev, project_id: e.target.value }))}
-                                className="w-full border border-gray-300 rounded px-3 py-2"
-                            >
-                                <option value="">Select project</option>
-                                {availableProjects.map((project) => (
-                                    <option key={project.id} value={project.id}>{project.title}</option>
-                                ))}
-                            </select>
-                            <input
-                                value={postForm.title}
-                                onChange={(e) => setPostForm((prev) => ({ ...prev, title: e.target.value }))}
-                                placeholder="Quest title"
-                                className="w-full border border-gray-300 rounded px-3 py-2"
-                            />
-                            <textarea
-                                value={postForm.description}
-                                onChange={(e) => setPostForm((prev) => ({ ...prev, description: e.target.value }))}
-                                placeholder="Quest description"
-                                className="w-full border border-gray-300 rounded px-3 py-2 min-h-24"
-                            />
-                            <div className="grid grid-cols-2 gap-3">
-                                <select
-                                    value={postForm.rank_required}
-                                    onChange={(e) => setPostForm((prev) => ({ ...prev, rank_required: e.target.value }))}
-                                    className="border border-gray-300 rounded px-3 py-2"
-                                >
-                                    <option>Iron</option>
-                                    <option>Silver</option>
-                                    <option>Gold</option>
-                                    <option>Jade</option>
-                                    <option>Diamond</option>
-                                </select>
-                                <select
-                                    value={postForm.quest_level}
-                                    onChange={(e) => setPostForm((prev) => ({ ...prev, quest_level: e.target.value }))}
-                                    className="border border-gray-300 rounded px-3 py-2"
-                                >
-                                    <option value="1">Level 1</option>
-                                    <option value="2">Level 2</option>
-                                    <option value="3">Level 3</option>
-                                    <option value="4">Level 4</option>
-                                    <option value="5">Level 5</option>
-                                </select>
-                            </div>
-                            <select
-                                value={postForm.dependency_type}
-                                onChange={(e) => setPostForm((prev) => ({ ...prev, dependency_type: e.target.value }))}
-                                className="w-full border border-gray-300 rounded px-3 py-2"
-                            >
-                                <option>Independent</option>
-                                <option>Chained</option>
-                                <option>Blocked</option>
-                            </select>
-                            <input
-                                value={postForm.depends_on}
-                                onChange={(e) => setPostForm((prev) => ({ ...prev, depends_on: e.target.value }))}
-                                placeholder="Depends on (comma separated, e.g. Q1,Q2)"
-                                className="w-full border border-gray-300 rounded px-3 py-2"
-                            />
-                            <input
-                                value={postForm.unlock_condition}
-                                onChange={(e) => setPostForm((prev) => ({ ...prev, unlock_condition: e.target.value }))}
-                                placeholder="Unlock condition"
-                                className="w-full border border-gray-300 rounded px-3 py-2"
-                            />
-                        </div>
-                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-                            <button type="button" onClick={() => setShowPostModal(false)} className="px-4 py-2 border border-gray-300 rounded">Cancel</button>
-                            <button
-                                type="button"
-                                disabled={posting}
-                                onClick={handlePostQuest}
-                                className={`px-4 py-2 rounded text-white font-semibold ${posting ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                            >
-                                {posting ? 'Posting...' : 'Post Quest'}
-                            </button>
-                        </div>
-                    </div>
                 </div>
             )}
 

@@ -63,6 +63,18 @@ export const submitQuest = async (questRef: string, prUrl: string): Promise<{ st
     return json.data;
 };
 
+export const cancelQuest = async (questRef: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/quests/${encodeURIComponent(questRef)}/cancel`, {
+        method: 'POST',
+        headers: authHeaders(),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+        throw new Error(json.error || 'Failed to cancel quest');
+    }
+    return json.data;
+};
+
 export const fetchMyQuests = async (): Promise<{
     acceptances: QuestAcceptance[];
     rank_progress: RankProgress;

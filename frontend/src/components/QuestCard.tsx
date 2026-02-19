@@ -44,16 +44,6 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onViewDetails, isBl
             .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
             .join(' ');
 
-    const classLabelMap: Record<string, string> = {
-        'ops-ranger': 'Ranger',
-        'test-summoner': 'Summoner',
-        'bug-hunter': 'Hunter',
-        'patch-crafter': 'Crafter',
-        'feature-smith': 'Smith',
-        'doc-sage': 'Sage',
-        'ux-alchemist': 'Alchemist',
-    };
-
     const normalizeLabel = (raw: string): string => {
         const [prefix, value] = raw.split(':');
         if (!value) return toTitle(raw);

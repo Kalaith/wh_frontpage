@@ -73,6 +73,7 @@ $router->get('/api/quests', [\App\Controllers\QuestController::class, 'index']);
 $router->post('/api/quests/{questRef}/accept', [\App\Controllers\QuestAcceptanceController::class, 'accept'], [JwtAuthMiddleware::class]);
 $router->get('/api/quests/my-quests', [\App\Controllers\QuestAcceptanceController::class, 'myQuests'], [JwtAuthMiddleware::class]);
 $router->post('/api/quests/{questRef}/submit', [\App\Controllers\QuestAcceptanceController::class, 'submit'], [JwtAuthMiddleware::class]);
+$router->post('/api/quests/{questRef}/cancel', [\App\Controllers\QuestAcceptanceController::class, 'cancel'], [JwtAuthMiddleware::class]);
 $router->post('/api/quests/{questRef}/complete', [\App\Controllers\QuestAcceptanceController::class, 'complete'], [JwtAuthMiddleware::class]);
 $router->post('/api/quests/{questRef}/review', [\App\Controllers\QuestAcceptanceController::class, 'review'], [JwtAuthMiddleware::class]);
 

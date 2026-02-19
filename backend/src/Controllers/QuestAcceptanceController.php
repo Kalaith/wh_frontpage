@@ -194,6 +194,55 @@ class QuestAcceptanceController
     }
 
     /**
+     * POST /api/quests/{questRef}/cancel
+     * Cancel an accepted/submitted quest for the authenticated adventurer.
+     */
+    public function cancel(Request $request, Response $response, array $args = []): void
+    {
+        $questRef = $args['questRef'] ?? '';
+        if (empty($questRef)) {
+            $response->error('Quest reference is required', 400);
+            return;
+        }
+
+        $userId = $request->getAttribute('user_id');
+        if (!$userId) {
+            $response->error('Authentication required', 401);
+            return;
+        }
+
+        $adventurer = $this->adventurerRepo->findByUserId($userId);
+        if (!$adventurer) {
+            $response->error('Adventurer profile not found', 404);
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT id, status FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
+        );
+        $stmt->execute([$adventurer->id, $questRef]);
+        $acceptance = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$acceptance) {
+            $response->error('Quest acceptance not found', 404);
+            return;
+        }
+
+        if ($acceptance['status'] === 'completed') {
+            $response->error('Completed quests cannot be canceled', 400);
+            return;
+        }
+
+        $stmt = $this->db->prepare("DELETE FROM quest_acceptances WHERE id = ?");
+        $stmt->execute([(int) $acceptance['id']]);
+
+        $response->success([
+            'quest_ref' => $questRef,
+            'message' => 'Quest canceled.',
+        ]);
+    }
+
+    /**
      * POST /api/quests/{questRef}/complete
      * Admin/reviewer marks quest as completed, awards XP.
      */
