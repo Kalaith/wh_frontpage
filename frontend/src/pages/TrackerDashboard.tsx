@@ -11,7 +11,7 @@ import { getAllProjects } from '../utils/projectUtils';
 
 const TrackerDashboard: React.FC = () => {
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
-  
+
   const {
     selectedProjectIds,
     setSelectedProjectIds,
@@ -22,7 +22,7 @@ const TrackerDashboard: React.FC = () => {
     requestsLoading,
     activityLoading,
     error,
-    featureToProjectMap
+    featureToProjectMap,
   } = useTrackerData();
 
   // Debug logging
@@ -36,7 +36,7 @@ const TrackerDashboard: React.FC = () => {
     filteredRecentActivity,
     activityLoading,
     isLoading,
-    error
+    error,
   });
 
   if (isLoading) {
@@ -53,13 +53,14 @@ const TrackerDashboard: React.FC = () => {
     );
   }
 
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Project Selection */}
       <div className="mb-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Select a Project</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Select a Project
+          </h3>
           {projectsLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
@@ -75,7 +76,9 @@ const TrackerDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('All Projects clicked, clearing selected projects');
+                    console.log(
+                      'All Projects clicked, clearing selected projects'
+                    );
                     setSelectedProjectIds([]);
                   }}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
@@ -86,15 +89,17 @@ const TrackerDashboard: React.FC = () => {
                 >
                   All Projects
                 </button>
-                {getAllProjects(projectsData).map((project) => (
+                {getAllProjects(projectsData).map(project => (
                   <button
                     key={project.id}
                     type="button"
                     onClick={() => {
                       const projectId = project.id;
                       if (!projectId) return;
-                      
-                      console.log(`Project clicked: ${project.title} (ID: ${projectId})`);
+
+                      console.log(
+                        `Project clicked: ${project.title} (ID: ${projectId})`
+                      );
                       setSelectedProjectIds(prev => {
                         if (prev.includes(projectId)) {
                           // Remove from selection
@@ -123,7 +128,6 @@ const TrackerDashboard: React.FC = () => {
         </div>
       </div>
 
-      
       {/* Stats Grid */}
       <div className="mb-8">
         <StatsGrid
@@ -133,7 +137,7 @@ const TrackerDashboard: React.FC = () => {
           completedRequests={stats.completedRequests}
         />
       </div>
-      
+
       {/* Content Grid */}
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Most Voted Requests */}
@@ -142,8 +146,8 @@ const TrackerDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">
               Most Voted Requests
             </h2>
-            <Link 
-              to="/tracker/requests" 
+            <Link
+              to="/tracker/requests"
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               View All →
@@ -156,7 +160,7 @@ const TrackerDashboard: React.FC = () => {
             </div>
           ) : filteredTopRequests && filteredTopRequests.length > 0 ? (
             <div className="space-y-4">
-              {filteredTopRequests.map((request) => (
+              {filteredTopRequests.map(request => (
                 <RequestCard
                   key={request.id}
                   title={request.title}
@@ -175,7 +179,10 @@ const TrackerDashboard: React.FC = () => {
             <div className="text-center py-8">
               <div className="text-gray-400 text-4xl mb-4">📋</div>
               <p className="text-gray-600 mb-2">No feature requests yet.</p>
-              <Link to="/tracker/requests" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link
+                to="/tracker/requests"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
                 Be the first to submit one!
               </Link>
             </div>
@@ -189,10 +196,10 @@ const TrackerDashboard: React.FC = () => {
               Recent Activity
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {selectedProjectIds.length === 0 
-                ? 'All projects' 
-                : selectedProjectIds.length === 1 
-                  ? 'Selected project' 
+              {selectedProjectIds.length === 0
+                ? 'All projects'
+                : selectedProjectIds.length === 1
+                  ? 'Selected project'
                   : `${selectedProjectIds.length} selected projects`}
             </p>
           </div>
@@ -202,8 +209,8 @@ const TrackerDashboard: React.FC = () => {
               <p className="text-gray-600">Loading activity...</p>
             </div>
           ) : filteredRecentActivity && filteredRecentActivity.length > 0 ? (
-            <ActivityFeed 
-              activities={filteredRecentActivity} 
+            <ActivityFeed
+              activities={filteredRecentActivity}
               featureToProjectMap={featureToProjectMap}
             />
           ) : (
@@ -219,8 +226,13 @@ const TrackerDashboard: React.FC = () => {
       <div className="mt-12">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <div className="text-center">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Contribute to WebHatchery</h3>
-            <p className="text-gray-600 mb-6">Help shape the future by submitting feature requests or suggesting new projects</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Contribute to WebHatchery
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Help shape the future by submitting feature requests or suggesting
+              new projects
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/features"

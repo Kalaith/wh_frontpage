@@ -20,7 +20,9 @@ export const useProjects = () => {
     queryFn: async () => {
       const response = await api.getProjects();
       if (!response.success) {
-        throw new Error(getErrorMessage(response.error, 'Failed to fetch projects'));
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to fetch projects')
+        );
       }
       return response.data as ProjectsData;
     },
@@ -33,7 +35,9 @@ export const useHomepageProjects = () => {
     queryFn: async () => {
       const response = await api.getHomepageProjects();
       if (!response.success) {
-        throw new Error(getErrorMessage(response.error, 'Failed to fetch homepage projects'));
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to fetch homepage projects')
+        );
       }
       return response.data as ProjectsData;
     },
@@ -46,7 +50,9 @@ export const useProjectsByGroup = (group: string) => {
     queryFn: async () => {
       const response = await api.getProjectsByGroup(group);
       if (!response.success) {
-        throw new Error(getErrorMessage(response.error, 'Failed to fetch projects by group'));
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to fetch projects by group')
+        );
       }
       return response.data as Project[];
     },
@@ -62,7 +68,9 @@ export const useCreateProject = () => {
     mutationFn: async (projectData: Partial<Project>) => {
       const response = await api.createProject(projectData);
       if (!response.success) {
-        throw new Error(getErrorMessage(response.error, 'Failed to create project'));
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to create project')
+        );
       }
       return response.data as Project;
     },
@@ -77,10 +85,18 @@ export const useUpdateProject = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Project> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<Project>;
+    }) => {
       const response = await api.updateProject(id, data);
       if (!response.success) {
-        throw new Error(getErrorMessage(response.error, 'Failed to update project'));
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to update project')
+        );
       }
       return response.data as Project;
     },
@@ -93,12 +109,14 @@ export const useUpdateProject = () => {
 
 export const useDeleteProject = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await api.deleteProject(id);
       if (!response.success) {
-        throw new Error(getErrorMessage(response.error, 'Failed to delete project'));
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to delete project')
+        );
       }
       return response;
     },

@@ -12,8 +12,10 @@ export const Footer: React.FC<FooterProps> = ({ data, isLoading }) => {
   return (
     <footer className="mt-16 pt-8 border-t border-gray-200 text-center">
       <div className="text-gray-600">
-        <p className="mb-2">&copy; {currentYear} WebHatchery.au · All rights reserved</p>
-        {(isLoading || !data) ? (
+        <p className="mb-2">
+          &copy; {currentYear} WebHatchery.au · All rights reserved
+        </p>
+        {isLoading || !data ? (
           <div className="mt-2 animate-pulse">
             <div className="h-4 w-64 bg-gray-100 rounded mx-auto"></div>
           </div>

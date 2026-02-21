@@ -6,7 +6,10 @@ import { useAuth } from '../stores/authStore';
 import { useToastStore } from '../stores/toastStore';
 import { featureRequestApi } from '../api/featureRequestApi';
 import api from '../api/api';
-import type { FeatureRequest, CreateFeatureRequest } from '../types/featureRequest';
+import type {
+  FeatureRequest,
+  CreateFeatureRequest,
+} from '../types/featureRequest';
 import type { Project } from '../types/projects';
 
 export const FeatureRequestDashboard = () => {
@@ -15,9 +18,17 @@ export const FeatureRequestDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('approved');
+  const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>(
+    'approved'
+  );
 
-  const { isAuthenticated, isLoading: authLoading, isAdmin, user, refreshUserInfo } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    isAdmin,
+    user,
+    refreshUserInfo,
+  } = useAuth();
 
   const loadFeatures = useCallback(async () => {
     try {
@@ -32,7 +43,7 @@ export const FeatureRequestDashboard = () => {
       } = {
         limit: 50,
         sort_by: 'total_eggs',
-        sort_direction: 'desc' as const
+        sort_direction: 'desc' as const,
       };
 
       if (filter !== 'all') {
@@ -118,7 +129,10 @@ export const FeatureRequestDashboard = () => {
       toast.success('Feature approved successfully!');
     } catch (error: unknown) {
       console.error('Failed to approve feature:', error);
-      toast.error('Failed to approve feature: ' + ((error as Error).message || 'Unknown error'));
+      toast.error(
+        'Failed to approve feature: ' +
+          ((error as Error).message || 'Unknown error')
+      );
     }
   };
 
@@ -130,7 +144,10 @@ export const FeatureRequestDashboard = () => {
       toast.success('Feature rejected.');
     } catch (error: unknown) {
       console.error('Failed to reject feature:', error);
-      toast.error('Failed to reject feature: ' + ((error as Error).message || 'Unknown error'));
+      toast.error(
+        'Failed to reject feature: ' +
+          ((error as Error).message || 'Unknown error')
+      );
     }
   };
 
@@ -151,9 +168,12 @@ export const FeatureRequestDashboard = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="text-4xl mb-4">🥚</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Feature Request System</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Feature Request System
+          </h2>
           <p className="text-gray-600 mb-6">
-            Please log in to access the feature request system and start voting with your eggs!
+            Please log in to access the feature request system and start voting
+            with your eggs!
           </p>
           <p className="text-sm text-gray-500">
             New users receive 500 welcome eggs + 100 eggs daily
@@ -185,14 +205,15 @@ export const FeatureRequestDashboard = () => {
       {/* Filters */}
       <div className="flex items-center gap-4 mb-6">
         <span className="text-sm font-medium text-gray-700">Filter:</span>
-        {(['all', 'approved'] as const).map((filterOption) => (
+        {(['all', 'approved'] as const).map(filterOption => (
           <button
             key={filterOption}
             onClick={() => setFilter(filterOption)}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${filter === filterOption
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              filter === filterOption
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
             {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
           </button>
@@ -200,10 +221,11 @@ export const FeatureRequestDashboard = () => {
         {isAdmin && (
           <button
             onClick={() => setFilter('pending')}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${filter === 'pending'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              filter === 'pending'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
             Pending
           </button>
@@ -228,8 +250,12 @@ export const FeatureRequestDashboard = () => {
       ) : features.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🥚</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No features yet</h3>
-          <p className="text-gray-600 mb-4">Be the first to create a feature request!</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No features yet
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Be the first to create a feature request!
+          </p>
           {user && (
             <button
               onClick={() => setShowCreateModal(true)}
@@ -241,7 +267,7 @@ export const FeatureRequestDashboard = () => {
         </div>
       ) : (
         <div className="grid gap-6">
-          {features.map((feature) => (
+          {features.map(feature => (
             <motion.div
               key={feature.id}
               initial={{ opacity: 0, y: 20 }}

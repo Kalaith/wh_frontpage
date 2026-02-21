@@ -6,8 +6,20 @@ export interface FeatureRequest {
   use_case?: string;
   expected_benefits?: string;
   priority_level: 'low' | 'medium' | 'high';
-  feature_type: 'enhancement' | 'new_feature' | 'bug_fix' | 'ui_improvement' | 'performance';
-  status: 'pending' | 'approved' | 'open' | 'planned' | 'in_progress' | 'completed' | 'rejected';
+  feature_type:
+    | 'enhancement'
+    | 'new_feature'
+    | 'bug_fix'
+    | 'ui_improvement'
+    | 'performance';
+  status:
+    | 'pending'
+    | 'approved'
+    | 'open'
+    | 'planned'
+    | 'in_progress'
+    | 'completed'
+    | 'rejected';
   approval_notes?: string;
   total_eggs: number;
   vote_count: number;
@@ -74,7 +86,14 @@ export interface User {
 export interface EggTransaction {
   id: number;
   amount: number;
-  type: 'earn' | 'spend' | 'vote' | 'daily_reward' | 'registration_bonus' | 'kofi_reward' | 'admin_adjustment';
+  type:
+    | 'earn'
+    | 'spend'
+    | 'vote'
+    | 'daily_reward'
+    | 'registration_bonus'
+    | 'kofi_reward'
+    | 'admin_adjustment';
   description: string;
   reference_id?: number;
   reference_type?: string;
@@ -88,7 +107,12 @@ export interface CreateFeatureRequest {
   use_case?: string;
   expected_benefits?: string;
   priority_level?: 'low' | 'medium' | 'high';
-  feature_type?: 'enhancement' | 'new_feature' | 'bug_fix' | 'ui_improvement' | 'performance';
+  feature_type?:
+    | 'enhancement'
+    | 'new_feature'
+    | 'bug_fix'
+    | 'ui_improvement'
+    | 'performance';
   project_id?: number;
   tags?: string[];
 }

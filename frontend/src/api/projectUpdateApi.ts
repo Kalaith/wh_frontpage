@@ -1,5 +1,9 @@
 import api from './api';
-import type { ProjectUpdateResponse, ProjectUpdateStatsResponse, ProjectUpdateAttentionResponse } from '../types/projectUpdates';
+import type {
+  ProjectUpdateResponse,
+  ProjectUpdateStatsResponse,
+  ProjectUpdateAttentionResponse,
+} from '../types/projectUpdates';
 import type { ApiResponse } from '../types/common';
 
 export class ProjectUpdateApi {
@@ -20,14 +24,20 @@ export class ProjectUpdateApi {
   /**
    * Get project update statistics
    */
-  static async getStatistics(): Promise<ApiResponse<ProjectUpdateStatsResponse>> {
+  static async getStatistics(): Promise<
+    ApiResponse<ProjectUpdateStatsResponse>
+  > {
     return api.request<ProjectUpdateStatsResponse>('/projects/updates/stats');
   }
 
   /**
    * Get projects that need attention
    */
-  static async getProjectsNeedingAttention(): Promise<ApiResponse<ProjectUpdateAttentionResponse>> {
-    return api.request<ProjectUpdateAttentionResponse>('/projects/updates/attention');
+  static async getProjectsNeedingAttention(): Promise<
+    ApiResponse<ProjectUpdateAttentionResponse>
+  > {
+    return api.request<ProjectUpdateAttentionResponse>(
+      '/projects/updates/attention'
+    );
   }
 }

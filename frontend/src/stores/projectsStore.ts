@@ -25,7 +25,10 @@ interface ProjectsActions {
 
   // CRUD operations
   createProject: (projectData: Partial<ProjectsData>) => Promise<Project>;
-  updateProject: (projectId: number, projectData: Partial<ProjectsData>) => Promise<Project>;
+  updateProject: (
+    projectId: number,
+    projectData: Partial<ProjectsData>
+  ) => Promise<Project>;
   deleteProject: (projectId: number) => Promise<void>;
 
   // Cache management
@@ -123,7 +126,9 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return response.data;
       }
-      throw new Error(getErrorMessage(response.error, 'Failed to create project'));
+      throw new Error(
+        getErrorMessage(response.error, 'Failed to create project')
+      );
     } catch (error) {
       const projectsError: StoreError = {
         code: 'CREATE_FAILED',
@@ -135,7 +140,10 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
     }
   },
 
-  updateProject: async (projectId: number, projectData: Partial<ProjectsData>) => {
+  updateProject: async (
+    projectId: number,
+    projectData: Partial<ProjectsData>
+  ) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -149,7 +157,9 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return response.data;
       }
-      throw new Error(getErrorMessage(response.error, 'Failed to update project'));
+      throw new Error(
+        getErrorMessage(response.error, 'Failed to update project')
+      );
     } catch (error) {
       const projectsError: StoreError = {
         code: 'UPDATE_FAILED',
@@ -175,7 +185,9 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         });
         return;
       }
-      throw new Error(getErrorMessage(response.error, 'Failed to delete project'));
+      throw new Error(
+        getErrorMessage(response.error, 'Failed to delete project')
+      );
     } catch (error) {
       const projectsError: StoreError = {
         code: 'DELETE_FAILED',

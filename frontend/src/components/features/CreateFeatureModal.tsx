@@ -22,8 +22,12 @@ const FEATURE_TYPES = [
   { value: 'performance', label: 'Performance', icon: '🚀' },
 ];
 
-
-export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: CreateFeatureModalProps) => {
+export const CreateFeatureModal = ({
+  onClose,
+  onCreate,
+  projects = [],
+  user,
+}: CreateFeatureModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +62,9 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
     }
 
     if (projects.length === 0) {
-      setError('No projects available. Contact an admin to create projects first.');
+      setError(
+        'No projects available. Contact an admin to create projects first.'
+      );
       return;
     }
 
@@ -87,7 +93,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
       if (tag && !(formData.tags ?? []).includes(tag)) {
         setFormData(prev => ({
           ...prev,
-          tags: [...(prev.tags ?? []), tag]
+          tags: [...(prev.tags ?? []), tag],
         }));
         setTagInput('');
       }
@@ -97,7 +103,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: (prev.tags ?? []).filter(tag => tag !== tagToRemove)
+      tags: (prev.tags ?? []).filter(tag => tag !== tagToRemove),
     }));
   };
 
@@ -106,8 +112,6 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
       onClose();
     }
   };
-
-
 
   return (
     <AnimatePresence>
@@ -128,14 +132,26 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Create Feature Request</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Create Feature Request
+                </h3>
                 <button
                   type="button"
                   onClick={onClose}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -144,11 +160,15 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
               <div className="flex items-center justify-between mt-3 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🥚</span>
-                  <span className="text-sm font-medium text-gray-700">Cost: 100 eggs</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Cost: 100 eggs
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Your balance:</span>
-                  <span className={`font-semibold ${canAfford ? 'text-green-600' : 'text-red-600'}`}>
+                  <span
+                    className={`font-semibold ${canAfford ? 'text-green-600' : 'text-red-600'}`}
+                  >
                     {user.egg_balance.toLocaleString()}
                   </span>
                 </div>
@@ -157,7 +177,9 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
               {!canAfford && (
                 <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
                   <p className="text-sm text-red-600">
-                    You don't have enough eggs to create a feature request. Claim your daily reward or vote on features to earn more eggs!
+                    You don't have enough eggs to create a feature request.
+                    Claim your daily reward or vote on features to earn more
+                    eggs!
                   </p>
                 </div>
               )}
@@ -173,7 +195,9 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, title: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Brief, descriptive title for your feature request"
                   maxLength={255}
@@ -189,15 +213,19 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
                 {projects.length > 0 ? (
                   <select
                     value={formData.project_id ?? ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      project_id: e.target.value ? parseInt(e.target.value) : undefined
-                    }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        project_id: e.target.value
+                          ? parseInt(e.target.value)
+                          : undefined,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
                     <option value="">Select a project</option>
-                    {projects.map((project) => (
+                    {projects.map(project => (
                       <option key={project.id} value={project.id}>
                         {project.title}
                       </option>
@@ -217,13 +245,20 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
                 </label>
                 <select
                   value={formData.feature_type}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    feature_type: e.target.value as 'enhancement' | 'new_feature' | 'bug_fix' | 'ui_improvement' | 'performance'
-                  }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      feature_type: e.target.value as
+                        | 'enhancement'
+                        | 'new_feature'
+                        | 'bug_fix'
+                        | 'ui_improvement'
+                        | 'performance',
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  {FEATURE_TYPES.map((type) => (
+                  {FEATURE_TYPES.map(type => (
                     <option key={type.value} value={type.value}>
                       {type.icon} {type.label}
                     </option>
@@ -238,14 +273,18 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={4}
                   placeholder="Detailed description of the feature you're requesting"
                   required
                 />
               </div>
-
 
               {/* Tags */}
               <div>
@@ -255,7 +294,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
                 <input
                   type="text"
                   value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
+                  onChange={e => setTagInput(e.target.value)}
                   onKeyDown={handleAddTag}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Add tags (press Enter or comma to add)"
@@ -263,7 +302,7 @@ export const CreateFeatureModal = ({ onClose, onCreate, projects = [], user }: C
 
                 {(formData.tags ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {(formData.tags ?? []).map((tag) => (
+                    {(formData.tags ?? []).map(tag => (
                       <span
                         key={tag}
                         className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-md"

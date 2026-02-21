@@ -10,14 +10,16 @@ export function getProjectUrl(project: Project): string {
 /**
  * Get all projects as a flat array from ProjectsData
  */
-export function getAllProjects(data: ProjectsData | null | undefined): Project[] {
+export function getAllProjects(
+  data: ProjectsData | null | undefined
+): Project[] {
   if (!data) return [];
-  
+
   // Use the flat projects array if available (new backend structure)
   if (data.projects && Array.isArray(data.projects)) {
     return data.projects;
   }
-  
+
   // Fallback to extracting from groups (legacy compatibility)
   if (data.groups) {
     const projects: Project[] = [];
@@ -28,7 +30,7 @@ export function getAllProjects(data: ProjectsData | null | undefined): Project[]
     });
     return projects;
   }
-  
+
   return [];
 }
 
@@ -42,14 +44,16 @@ export function getProjectCount(data: ProjectsData | null | undefined): number {
 /**
  * Get grouped projects object from ProjectsData
  */
-export function getGroupedProjects(data: ProjectsData | null | undefined): Record<string, Project[]> {
+export function getGroupedProjects(
+  data: ProjectsData | null | undefined
+): Record<string, Project[]> {
   if (!data) return {};
-  
+
   // Use the grouped object if available (new backend structure)
   if (data.grouped && typeof data.grouped === 'object') {
     return data.grouped;
   }
-  
+
   // Fallback to extracting from groups (legacy compatibility)
   if (data.groups) {
     const grouped: Record<string, Project[]> = {};
@@ -60,14 +64,17 @@ export function getGroupedProjects(data: ProjectsData | null | undefined): Recor
     });
     return grouped;
   }
-  
+
   return {};
 }
 
 /**
  * Get projects by specific group
  */
-export function getProjectsByGroup(data: ProjectsData | null | undefined, groupName: string): Project[] {
+export function getProjectsByGroup(
+  data: ProjectsData | null | undefined,
+  groupName: string
+): Project[] {
   const grouped = getGroupedProjects(data);
   return grouped[groupName] ?? [];
 }

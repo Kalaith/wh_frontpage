@@ -62,7 +62,7 @@ export const AppHeader: React.FC = () => {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            {navItems.map((item) => (
+            {navItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -83,12 +83,14 @@ export const AppHeader: React.FC = () => {
             </div>
             <button
               type="button"
-              onClick={() => setMobileOpen((prev) => !prev)}
+              onClick={() => setMobileOpen(prev => !prev)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-200 transition-colors hover:border-cyan-500/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 md:hidden"
               aria-label="Toggle menu"
               aria-expanded={mobileOpen}
             >
-              <span className="text-xl leading-none">{mobileOpen ? 'X' : '='}</span>
+              <span className="text-xl leading-none">
+                {mobileOpen ? 'X' : '='}
+              </span>
             </button>
           </div>
         </div>
@@ -96,7 +98,7 @@ export const AppHeader: React.FC = () => {
         {mobileOpen && (
           <div className="border-t border-slate-800 py-3 md:hidden">
             <nav className="grid grid-cols-2 gap-2">
-              {navItems.map((item) => (
+              {navItems.map(item => (
                 <Link
                   key={`mobile-${item.path}`}
                   to={item.path}

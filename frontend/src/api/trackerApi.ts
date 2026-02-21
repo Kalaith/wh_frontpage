@@ -68,7 +68,10 @@ export interface TrackerStats {
 import type { ApiResponse } from '../types/common';
 
 // Helper function to extract error message from ApiResponse
-const getErrorMessage = (error: ApiResponse['error'], defaultMessage: string): string => {
+const getErrorMessage = (
+  error: ApiResponse['error'],
+  defaultMessage: string
+): string => {
   if (typeof error === 'string') return error;
   return error?.message ?? defaultMessage;
 };
@@ -80,7 +83,9 @@ export const trackerApi = {
     const result = await api.request<TrackerStats>('/tracker/stats');
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to fetch tracker stats'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to fetch tracker stats')
+      );
     }
 
     return result.data as TrackerStats;
@@ -110,7 +115,9 @@ export const trackerApi = {
     const result = await api.request<FeatureRequest[]>(url);
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to fetch feature requests'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to fetch feature requests')
+      );
     }
 
     return result.data as FeatureRequest[];
@@ -125,13 +132,18 @@ export const trackerApi = {
     tags?: string;
     submitted_by?: string;
   }): Promise<FeatureRequest> {
-    const result = await api.request<FeatureRequest>('/tracker/feature-requests', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+    const result = await api.request<FeatureRequest>(
+      '/tracker/feature-requests',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to create feature request'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to create feature request')
+      );
     }
 
     return result.data as FeatureRequest;
@@ -159,7 +171,9 @@ export const trackerApi = {
     const result = await api.request<ProjectSuggestion[]>(url);
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to fetch project suggestions'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to fetch project suggestions')
+      );
     }
 
     return result.data as ProjectSuggestion[];
@@ -173,20 +187,28 @@ export const trackerApi = {
     rationale: string;
     submitted_by?: string;
   }): Promise<ProjectSuggestion> {
-    const result = await api.request<ProjectSuggestion>('/tracker/project-suggestions', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+    const result = await api.request<ProjectSuggestion>(
+      '/tracker/project-suggestions',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to create project suggestion'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to create project suggestion')
+      );
     }
 
     return result.data as ProjectSuggestion;
   },
 
   // Get activity feed
-  async getActivityFeed(limit?: number, projectId?: number): Promise<ActivityItem[]> {
+  async getActivityFeed(
+    limit?: number,
+    projectId?: number
+  ): Promise<ActivityItem[]> {
     const params = new URLSearchParams();
     if (limit) params.append('limit', limit.toString());
     if (projectId) params.append('project_id', projectId.toString());
@@ -195,7 +217,9 @@ export const trackerApi = {
     const result = await api.request<ActivityItem[]>(url);
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to fetch activity feed'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to fetch activity feed')
+      );
     }
 
     return result.data as ActivityItem[];
@@ -207,39 +231,60 @@ export const trackerApi = {
     item_id: number;
     vote_value: 1 | -1;
   }): Promise<{ item_id: number; item_type: string; new_vote_count: number }> {
-    const result = await api.request<{ item_id: number; item_type: string; new_vote_count: number }>('/tracker/vote', {
+    const result = await api.request<{
+      item_id: number;
+      item_type: string;
+      new_vote_count: number;
+    }>('/tracker/vote', {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
 
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to record vote'));
     }
 
-    return result.data as { item_id: number; item_type: string; new_vote_count: number };
+    return result.data as {
+      item_id: number;
+      item_type: string;
+      new_vote_count: number;
+    };
   },
 
   // Get comments for a suggestion
-  async getSuggestionComments(suggestionId: number): Promise<ProjectSuggestionComment[]> {
-    const result = await api.request<ProjectSuggestionComment[]>(`/tracker/project-suggestions/${suggestionId}/comments`);
+  async getSuggestionComments(
+    suggestionId: number
+  ): Promise<ProjectSuggestionComment[]> {
+    const result = await api.request<ProjectSuggestionComment[]>(
+      `/tracker/project-suggestions/${suggestionId}/comments`
+    );
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to fetch comments'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to fetch comments')
+      );
     }
 
     return result.data as ProjectSuggestionComment[];
   },
 
   // Add a comment to a suggestion
-  async addSuggestionComment(suggestionId: number, content: string, user?: { id: number; name: string }): Promise<ProjectSuggestionComment> {
-    const result = await api.request<ProjectSuggestionComment>(`/tracker/project-suggestions/${suggestionId}/comments`, {
-      method: 'POST',
-      body: JSON.stringify({
-        content,
-        user_id: user?.id,
-        user_name: user?.name
-      })
-    });
+  async addSuggestionComment(
+    suggestionId: number,
+    content: string,
+    user?: { id: number; name: string }
+  ): Promise<ProjectSuggestionComment> {
+    const result = await api.request<ProjectSuggestionComment>(
+      `/tracker/project-suggestions/${suggestionId}/comments`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          content,
+          user_id: user?.id,
+          user_name: user?.name,
+        }),
+      }
+    );
 
     if (!result.success) {
       throw new Error(getErrorMessage(result.error, 'Failed to add comment'));
@@ -250,27 +295,37 @@ export const trackerApi = {
 
   // Publish a suggestion
   async publishSuggestion(suggestionId: number): Promise<void> {
-    const result = await api.request(`/tracker/project-suggestions/${suggestionId}/publish`, {
-      method: 'POST'
-    });
+    const result = await api.request(
+      `/tracker/project-suggestions/${suggestionId}/publish`,
+      {
+        method: 'POST',
+      }
+    );
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to publish suggestion'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to publish suggestion')
+      );
     }
   },
 
   // Delete a suggestion
   async deleteProjectSuggestion(suggestionId: number): Promise<unknown> {
-    const result = await api.request(`/tracker/project-suggestions/${suggestionId}`, {
-      method: 'DELETE'
-    });
+    const result = await api.request(
+      `/tracker/project-suggestions/${suggestionId}`,
+      {
+        method: 'DELETE',
+      }
+    );
 
     if (!result.success) {
-      throw new Error(getErrorMessage(result.error, 'Failed to delete suggestion'));
+      throw new Error(
+        getErrorMessage(result.error, 'Failed to delete suggestion')
+      );
     }
 
     return result; // Return full result for debug
-  }
+  },
 };
 
 export interface ProjectSuggestionComment {

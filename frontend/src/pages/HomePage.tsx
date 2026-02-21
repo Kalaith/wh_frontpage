@@ -10,7 +10,11 @@ import { SeasonBanner } from '../components/SeasonBanner';
 import WeeklyHeist from '../components/WeeklyHeist';
 
 const HomePage: React.FC = () => {
-  const { data: projectsData, isLoading: loading, error } = useHomepageProjects();
+  const {
+    data: projectsData,
+    isLoading: loading,
+    error,
+  } = useHomepageProjects();
 
   // Inject Ko-fi overlay widget
   useEffect(() => {
@@ -21,7 +25,13 @@ const HomePage: React.FC = () => {
 
     const initWidget = () => {
       try {
-        const kofi = (window as { kofiWidgetOverlay?: { draw?: (id: string, config: Record<string, string>) => void } }).kofiWidgetOverlay;
+        const kofi = (
+          window as {
+            kofiWidgetOverlay?: {
+              draw?: (id: string, config: Record<string, string>) => void;
+            };
+          }
+        ).kofiWidgetOverlay;
         if (kofi && typeof kofi.draw === 'function') {
           kofi.draw('webhatchery', {
             type: 'floating-chat',
@@ -59,7 +69,9 @@ const HomePage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto p-8">
         <div className="text-center py-8">
-          <p className="text-lg text-red-600">Error: {error?.message ?? 'Failed to load projects data'}</p>
+          <p className="text-lg text-red-600">
+            Error: {error?.message ?? 'Failed to load projects data'}
+          </p>
         </div>
       </div>
     );
@@ -68,7 +80,6 @@ const HomePage: React.FC = () => {
   return (
     <div className="w-full mx-auto px-4 md:px-8 lg:px-12 py-8">
       <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
-
         {/* Main Content Area (Left side on XL screens) */}
         <div className="flex-1 min-w-0">
           <QuickLinks data={projectsData} isLoading={loading} />
@@ -93,7 +104,6 @@ const HomePage: React.FC = () => {
           <SeasonBanner />
           <WeeklyHeist />
         </div>
-
       </div>
     </div>
   );

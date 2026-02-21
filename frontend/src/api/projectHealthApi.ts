@@ -1,5 +1,9 @@
 import api from './api';
-import type { HealthResponse, HealthSummaryResponse, CriticalProjectsResponse } from '../types/projectHealth';
+import type {
+  HealthResponse,
+  HealthSummaryResponse,
+  CriticalProjectsResponse,
+} from '../types/projectHealth';
 import type { ApiResponse } from '../types/common';
 
 export class ProjectHealthApi {
@@ -20,14 +24,20 @@ export class ProjectHealthApi {
   /**
    * Get health status for a specific project
    */
-  static async getProjectHealth(projectName: string): Promise<ApiResponse<HealthResponse>> {
-    return api.request<HealthResponse>(`/health/project/${encodeURIComponent(projectName)}`);
+  static async getProjectHealth(
+    projectName: string
+  ): Promise<ApiResponse<HealthResponse>> {
+    return api.request<HealthResponse>(
+      `/health/project/${encodeURIComponent(projectName)}`
+    );
   }
 
   /**
    * Get projects with critical issues
    */
-  static async getCriticalProjects(): Promise<ApiResponse<CriticalProjectsResponse>> {
+  static async getCriticalProjects(): Promise<
+    ApiResponse<CriticalProjectsResponse>
+  > {
     return api.request<CriticalProjectsResponse>('/health/critical');
   }
 

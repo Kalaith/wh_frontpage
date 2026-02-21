@@ -4,8 +4,7 @@ import type { AuthUser, RegisterRequest } from '../entities/Auth';
 import type { ApiResponse } from '../types/common';
 import { createAuthError, createServerError } from '../utils/errorHandling';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const DEFAULT_TIMEOUT_MS = 10_000; // 10s
 
 class ApiClient {
@@ -59,7 +58,8 @@ class ApiClient {
 
       if (!response.ok) {
         // try to parse error body if possible
-        let errBody: { message?: string; error?: { message?: string } } | null = null;
+        let errBody: { message?: string; error?: { message?: string } } | null =
+          null;
         try {
           errBody = await response.json();
         } catch {
@@ -68,8 +68,12 @@ class ApiClient {
 
         // Handle authentication errors specially
         if (response.status === 401) {
-          console.warn('Authentication failed - token may be invalid or expired');
-          const authError = createAuthError('Authentication required. Please log in again.');
+          console.warn(
+            'Authentication failed - token may be invalid or expired'
+          );
+          const authError = createAuthError(
+            'Authentication required. Please log in again.'
+          );
           return {
             success: false,
             error: {
@@ -187,7 +191,10 @@ class ApiClient {
     });
   }
 
-  async assignProjectOwner(projectId: number, ownerUserId: number | null): Promise<ApiResponse<Project>> {
+  async assignProjectOwner(
+    projectId: number,
+    ownerUserId: number | null
+  ): Promise<ApiResponse<Project>> {
     return this.request<Project>(`/projects/${projectId}/owner`, {
       method: 'PUT',
       body: JSON.stringify({ owner_user_id: ownerUserId }),
@@ -221,32 +228,39 @@ class ApiClient {
     });
   }
 
-
   // Auth via frontpage proxy -> auth app
   async login(
     email: string,
     password: string
   ): Promise<ApiResponse<{ user: AuthUser; token: string }>> {
-    const res = await this.request<{ user: AuthUser; token: string }>(`/auth/login`, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    const res = await this.request<{ user: AuthUser; token: string }>(
+      `/auth/login`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }
+    );
     return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 
   async register(
     userData: RegisterRequest
   ): Promise<ApiResponse<{ user: AuthUser; token: string }>> {
-    const res = await this.request<{ user: AuthUser; token: string }>(`/auth/register`, {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    const res = await this.request<{ user: AuthUser; token: string }>(
+      `/auth/register`,
+      {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      }
+    );
     return res as ApiResponse<{ user: AuthUser; token: string }>;
   }
 
   async getCurrentUser(tokenOverride?: string): Promise<ApiResponse<AuthUser>> {
     return this.request<AuthUser>('/auth/user', {
-      headers: tokenOverride ? { Authorization: `Bearer ${tokenOverride}` } : {},
+      headers: tokenOverride
+        ? { Authorization: `Bearer ${tokenOverride}` }
+        : {},
     });
   }
 }

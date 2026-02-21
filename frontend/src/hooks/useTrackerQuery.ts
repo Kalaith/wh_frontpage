@@ -6,7 +6,8 @@ export const trackerKeys = {
   all: ['tracker'] as const,
   stats: () => [...trackerKeys.all, 'stats'] as const,
   featureRequests: () => [...trackerKeys.all, 'feature-requests'] as const,
-  projectSuggestions: () => [...trackerKeys.all, 'project-suggestions'] as const,
+  projectSuggestions: () =>
+    [...trackerKeys.all, 'project-suggestions'] as const,
   activity: () => [...trackerKeys.all, 'activity'] as const,
 };
 
@@ -56,7 +57,7 @@ export const useActivityFeed = (limit?: number, projectId?: number) => {
 // Tracker mutations
 export const useCreateFeatureRequest = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: {
       title: string;
@@ -68,7 +69,9 @@ export const useCreateFeatureRequest = () => {
     }) => trackerApi.createFeatureRequest(data),
     onSuccess: () => {
       // Invalidate and refetch tracker data
-      queryClient.invalidateQueries({ queryKey: trackerKeys.featureRequests() });
+      queryClient.invalidateQueries({
+        queryKey: trackerKeys.featureRequests(),
+      });
       queryClient.invalidateQueries({ queryKey: trackerKeys.stats() });
       queryClient.invalidateQueries({ queryKey: trackerKeys.activity() });
     },
@@ -77,7 +80,7 @@ export const useCreateFeatureRequest = () => {
 
 export const useCreateProjectSuggestion = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: {
       name: string;
@@ -88,7 +91,9 @@ export const useCreateProjectSuggestion = () => {
     }) => trackerApi.createProjectSuggestion(data),
     onSuccess: () => {
       // Invalidate and refetch tracker data
-      queryClient.invalidateQueries({ queryKey: trackerKeys.projectSuggestions() });
+      queryClient.invalidateQueries({
+        queryKey: trackerKeys.projectSuggestions(),
+      });
       queryClient.invalidateQueries({ queryKey: trackerKeys.stats() });
       queryClient.invalidateQueries({ queryKey: trackerKeys.activity() });
     },
@@ -97,7 +102,7 @@ export const useCreateProjectSuggestion = () => {
 
 export const useVote = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: {
       item_type: 'feature_request' | 'project_suggestion';
@@ -106,8 +111,12 @@ export const useVote = () => {
     }) => trackerApi.vote(data),
     onSuccess: () => {
       // Invalidate and refetch relevant data
-      queryClient.invalidateQueries({ queryKey: trackerKeys.featureRequests() });
-      queryClient.invalidateQueries({ queryKey: trackerKeys.projectSuggestions() });
+      queryClient.invalidateQueries({
+        queryKey: trackerKeys.featureRequests(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trackerKeys.projectSuggestions(),
+      });
       queryClient.invalidateQueries({ queryKey: trackerKeys.stats() });
     },
   });

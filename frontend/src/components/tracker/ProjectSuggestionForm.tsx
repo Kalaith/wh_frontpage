@@ -8,13 +8,13 @@ interface ProjectSuggestionFormProps {
 
 const ProjectSuggestionForm: React.FC<ProjectSuggestionFormProps> = ({
   onSubmit,
-  onCancel
+  onCancel,
 }) => {
   const [formData, setFormData] = useState<ProjectSuggestionData>({
     name: '',
     description: '',
     group: 'Fiction Projects',
-    rationale: ''
+    rationale: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,30 +29,36 @@ const ProjectSuggestionForm: React.FC<ProjectSuggestionFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-8">
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Project Name *</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Project Name *
+        </label>
         <input
           type="text"
           value={formData.name}
-          onChange={(e) => handleChange('name', e.target.value)}
+          onChange={e => handleChange('name', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Description *</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Description *
+        </label>
         <textarea
           value={formData.description}
-          onChange={(e) => handleChange('description', e.target.value)}
+          onChange={e => handleChange('description', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           rows={4}
           required
         />
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Suggested Group</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Suggested Group
+        </label>
         <select
           value={formData.group}
-          onChange={(e) => handleChange('group', e.target.value)}
+          onChange={e => handleChange('group', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option>Fiction Projects</option>
@@ -63,10 +69,12 @@ const ProjectSuggestionForm: React.FC<ProjectSuggestionFormProps> = ({
         </select>
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Rationale *</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Rationale *
+        </label>
         <textarea
           value={formData.rationale}
-          onChange={(e) => handleChange('rationale', e.target.value)}
+          onChange={e => handleChange('rationale', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           rows={3}
           required

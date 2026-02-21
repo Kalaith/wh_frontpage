@@ -23,9 +23,7 @@ const ProjectNewsFeed: React.FC = () => {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-        <div className="animate-pulse space-y-3">
-          {loadingSkeletons}
-        </div>
+        <div className="animate-pulse space-y-3">{loadingSkeletons}</div>
       </div>
     );
   }
@@ -34,9 +32,7 @@ const ProjectNewsFeed: React.FC = () => {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-        <div className="text-red-600 text-sm">
-          Unable to load activity feed
-        </div>
+        <div className="text-red-600 text-sm">Unable to load activity feed</div>
       </div>
     );
   }
@@ -56,7 +52,7 @@ const ProjectNewsFeed: React.FC = () => {
 
       {recentActivity.length > 0 ? (
         <div className="space-y-4">
-          {recentActivity.slice(0, 8).map((item) => (
+          {recentActivity.slice(0, 8).map(item => (
             <NewsItemCard key={item.id} item={item} />
           ))}
         </div>
@@ -76,28 +72,40 @@ interface NewsItemCardProps {
 const NewsItemCard: React.FC<NewsItemCardProps> = ({ item }) => {
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'code_update': return '💻';
-      case 'deployment': return '🚀';
-      case 'status_change': return '📊';
-      default: return '📝';
+      case 'code_update':
+        return '💻';
+      case 'deployment':
+        return '🚀';
+      case 'status_change':
+        return '📊';
+      default:
+        return '📝';
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'code_update': return 'bg-blue-100 text-blue-800';
-      case 'deployment': return 'bg-green-100 text-green-800';
-      case 'status_change': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'code_update':
+        return 'bg-blue-100 text-blue-800';
+      case 'deployment':
+        return 'bg-green-100 text-green-800';
+      case 'status_change':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getProjectTypeColor = (type: string) => {
     switch (type) {
-      case 'frontpage': return 'bg-blue-50 text-blue-700';
-      case 'apps': return 'bg-green-50 text-green-700';
-      case 'game_apps': return 'bg-purple-50 text-purple-700';
-      default: return 'bg-gray-50 text-gray-700';
+      case 'frontpage':
+        return 'bg-blue-50 text-blue-700';
+      case 'apps':
+        return 'bg-green-50 text-green-700';
+      case 'game_apps':
+        return 'bg-purple-50 text-purple-700';
+      default:
+        return 'bg-gray-50 text-gray-700';
     }
   };
 
@@ -129,18 +137,22 @@ const NewsItemCard: React.FC<NewsItemCardProps> = ({ item }) => {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-sm text-gray-900">{item.projectName}</span>
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${getProjectTypeColor(item.projectType)}`}>
+          <span className="font-medium text-sm text-gray-900">
+            {item.projectName}
+          </span>
+          <span
+            className={`px-2 py-0.5 rounded text-xs font-medium ${getProjectTypeColor(item.projectType)}`}
+          >
             {item.projectType.replace('_', ' ')}
           </span>
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(item.type)}`}>
+          <span
+            className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(item.type)}`}
+          >
             {item.type.replace('_', ' ')}
           </span>
         </div>
 
-        <p className="text-sm text-gray-700 mb-2">
-          {item.message}
-        </p>
+        <p className="text-sm text-gray-700 mb-2">{item.message}</p>
 
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <span>{formatTimeAgo(item.timestamp)}</span>

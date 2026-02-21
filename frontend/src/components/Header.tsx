@@ -2,7 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { ProjectsData } from '../types/projects';
 import { GitHubIcon } from './GitHubIcon';
-import { useFeatureRequestUser, useIsFeatureAuthenticated } from '../stores/featureRequestStore';
+import {
+  useFeatureRequestUser,
+  useIsFeatureAuthenticated,
+} from '../stores/featureRequestStore';
 
 interface HeaderProps {
   data: ProjectsData;
@@ -32,14 +35,20 @@ export const Header: React.FC<HeaderProps> = ({ data }) => {
           )}
         </div>
       </div>
-      <h1 className="text-4xl font-bold mb-4 text-blue-600">Welcome to WebHatchery.au</h1>
-      <p className="text-lg italic text-teal-500 mb-4">Where ideas hatch into websites.</p>
+      <h1 className="text-4xl font-bold mb-4 text-blue-600">
+        Welcome to WebHatchery.au
+      </h1>
+      <p className="text-lg italic text-teal-500 mb-4">
+        Where ideas hatch into websites.
+      </p>
       <p className="text-lg leading-relaxed max-w-2xl mx-auto mb-4 text-gray-700">
         {data.description ||
           'Your gateway to experimental web apps, game previews, and digital prototypes. Claim quests, build features, and earn rewards.'}
       </p>
       {data.version && (
-        <p className="text-sm text-teal-500 italic mb-0">Platform Version: {data.version}</p>
+        <p className="text-sm text-teal-500 italic mb-0">
+          Platform Version: {data.version}
+        </p>
       )}
 
       {data.global?.repository && (

@@ -62,13 +62,25 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Vote on Feature</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Vote on Feature
+              </h3>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -78,9 +90,13 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
           <div className="px-6 py-4">
             {/* Feature Info */}
             <div className="mb-6">
-              <h4 className="font-medium text-gray-900 mb-2">{feature.title}</h4>
-              <p className="text-sm text-gray-600 line-clamp-3">{feature.description}</p>
-              
+              <h4 className="font-medium text-gray-900 mb-2">
+                {feature.title}
+              </h4>
+              <p className="text-sm text-gray-600 line-clamp-3">
+                {feature.description}
+              </p>
+
               <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <span className="text-base">🥚</span>
@@ -96,7 +112,9 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
             {/* Your Balance */}
             <div className="mb-6 p-3 bg-blue-50 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Your Egg Balance</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Your Egg Balance
+                </span>
                 <span className="flex items-center gap-1 font-semibold text-blue-600">
                   <span className="text-base">🥚</span>
                   {maxEggs.toLocaleString()}
@@ -109,10 +127,10 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 How many eggs do you want to allocate?
               </label>
-              
+
               {/* Quick Amount Buttons */}
               <div className="grid grid-cols-4 gap-2 mb-3">
-                {quickAmounts.map((amount) => (
+                {quickAmounts.map(amount => (
                   <button
                     key={amount}
                     onClick={() => setEggAmount(amount)}
@@ -121,8 +139,8 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
                       eggAmount === amount
                         ? 'bg-blue-600 text-white'
                         : amount > maxEggs
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {amount}
@@ -132,18 +150,27 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
 
               {/* Custom Input */}
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg">🥚</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg">
+                  🥚
+                </span>
                 <input
                   type="number"
                   min="1"
                   max={maxEggs}
                   value={eggAmount}
-                  onChange={(e) => setEggAmount(Math.max(1, Math.min(maxEggs, parseInt(e.target.value) || 1)))}
+                  onChange={e =>
+                    setEggAmount(
+                      Math.max(
+                        1,
+                        Math.min(maxEggs, parseInt(e.target.value) || 1)
+                      )
+                    )
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter amount"
                 />
               </div>
-              
+
               <div className="mt-2 text-xs text-gray-500">
                 You can vote with 1 to {maxEggs.toLocaleString()} eggs
               </div>
@@ -151,12 +178,16 @@ export const VoteModal = ({ feature, onClose, onVote }: VoteModalProps) => {
 
             {/* Voting Impact */}
             <div className="mb-6 p-3 bg-green-50 rounded-lg">
-              <h5 className="text-sm font-medium text-gray-700 mb-1">Voting Impact</h5>
+              <h5 className="text-sm font-medium text-gray-700 mb-1">
+                Voting Impact
+              </h5>
               <p className="text-xs text-gray-600">
-                Your {eggAmount} eggs will increase this feature's priority. Features with more eggs are more likely to be implemented.
+                Your {eggAmount} eggs will increase this feature's priority.
+                Features with more eggs are more likely to be implemented.
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                New total: {(feature.total_eggs + eggAmount).toLocaleString()} eggs
+                New total: {(feature.total_eggs + eggAmount).toLocaleString()}{' '}
+                eggs
               </p>
             </div>
 

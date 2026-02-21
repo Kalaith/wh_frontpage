@@ -23,7 +23,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    set => ({
       user: null,
       token: null,
       isAuthenticated: false,
@@ -44,17 +44,31 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await api.getCurrentUser(token);
           if (response.success && response.data) {
-            set({ user: response.data, isAuthenticated: true, isLoading: false });
+            set({
+              user: response.data,
+              isAuthenticated: true,
+              isLoading: false,
+            });
             return;
           }
 
           // Server is authoritative: clear stale auth state on failed validation.
           localStorage.removeItem('auth-storage');
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         } catch (error) {
           console.error('Failed to refresh user info:', error);
           localStorage.removeItem('auth-storage');
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         }
       },
 
@@ -67,13 +81,14 @@ export const useAuthStore = create<AuthState>()(
           return user;
         }
         set({ isLoading: false });
-        const message = typeof response.error === 'string'
-          ? response.error
-          : response.error?.message ?? 'Login failed';
+        const message =
+          typeof response.error === 'string'
+            ? response.error
+            : (response.error?.message ?? 'Login failed');
         throw new Error(message);
       },
 
-      register: async (userData) => {
+      register: async userData => {
         set({ isLoading: true });
         const response = await api.register(userData);
         if (response.success && response.data) {
@@ -82,9 +97,10 @@ export const useAuthStore = create<AuthState>()(
           return user;
         }
         set({ isLoading: false });
-        const message = typeof response.error === 'string'
-          ? response.error
-          : response.error?.message ?? 'Registration failed';
+        const message =
+          typeof response.error === 'string'
+            ? response.error
+            : (response.error?.message ?? 'Registration failed');
         throw new Error(message);
       },
 
@@ -96,7 +112,12 @@ export const useAuthStore = create<AuthState>()(
           }
         });
 
-        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
 
         // Force reload to clear memory
         window.location.href = '/';
@@ -115,8 +136,10 @@ export const useAuth = () => {
   return {
     ...store,
     isAdmin: store.user?.role === 'admin',
-    loginWithRedirect: () => { window.location.href = '/login'; },
+    loginWithRedirect: () => {
+      window.location.href = '/login';
+    },
     isLoading: store.isLoading,
-    error: null,      // Legacy field
+    error: null, // Legacy field
   };
 };

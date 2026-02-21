@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import RequestCard from '../components/tracker/RequestCard';
 import FeatureRequestForm from '../components/tracker/FeatureRequestForm';
-import { useFeatureRequests, useCreateFeatureRequest } from '../hooks/useTrackerQuery';
+import {
+  useFeatureRequests,
+  useCreateFeatureRequest,
+} from '../hooks/useTrackerQuery';
 import { useProjects } from '../hooks/useProjectsQuery';
 import { getAllProjects } from '../utils/projectUtils';
 
@@ -14,7 +17,7 @@ const FeatureRequestsPage: React.FC = () => {
     priority: '',
     category: '',
     project_id: '',
-    sort_by: 'votes'
+    sort_by: 'votes',
   });
 
   // Initialize filters from URL parameters
@@ -23,13 +26,13 @@ const FeatureRequestsPage: React.FC = () => {
     const statusFromUrl = searchParams.get('status');
     const priorityFromUrl = searchParams.get('priority');
     const categoryFromUrl = searchParams.get('category');
-    
+
     setFilters(prev => ({
       ...prev,
       project_id: projectFromUrl ?? '',
       status: statusFromUrl ?? '',
       priority: priorityFromUrl ?? '',
-      category: categoryFromUrl ?? ''
+      category: categoryFromUrl ?? '',
     }));
   }, [searchParams]);
 
@@ -37,7 +40,7 @@ const FeatureRequestsPage: React.FC = () => {
   const updateFilter = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    
+
     // Update URL parameters
     const newSearchParams = new URLSearchParams(searchParams);
     if (value) {
@@ -48,17 +51,28 @@ const FeatureRequestsPage: React.FC = () => {
     setSearchParams(newSearchParams);
   };
 
-  const { data: requests, isLoading, error } = useFeatureRequests({
+  const {
+    data: requests,
+    isLoading,
+    error,
+  } = useFeatureRequests({
     ...filters,
     project_id: filters.project_id ? parseInt(filters.project_id) : undefined,
-    sort_direction: 'desc'
+    sort_direction: 'desc',
   });
-  
+
   const { data: projectsData } = useProjects();
 
   const createRequestMutation = useCreateFeatureRequest();
 
-  const handleSubmitRequest = async (data: { title: string; description: string; category: string; priority: string; tags: string; project_id?: number }) => {
+  const handleSubmitRequest = async (data: {
+    title: string;
+    description: string;
+    category: string;
+    priority: string;
+    tags: string;
+    project_id?: number;
+  }) => {
     try {
       // Prepare data for API
       const submitData = {
@@ -67,7 +81,7 @@ const FeatureRequestsPage: React.FC = () => {
         category: data.category,
         priority: data.priority,
         project_id: data.project_id?.toString(),
-        tags: data.tags
+        tags: data.tags,
       };
       await createRequestMutation.mutateAsync(submitData);
       setShowForm(false);
@@ -90,7 +104,9 @@ const FeatureRequestsPage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div className="text-center py-8">
-          <p className="text-lg text-red-600">Error loading feature requests: {error.message}</p>
+          <p className="text-lg text-red-600">
+            Error loading feature requests: {error.message}
+          </p>
         </div>
       </div>
     );
@@ -100,7 +116,9 @@ const FeatureRequestsPage: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Navigation */}
       <nav className="mb-6 text-sm text-blue-600">
-        <Link to="/tracker" className="hover:text-blue-800">← Back to Tracker</Link>
+        <Link to="/tracker" className="hover:text-blue-800">
+          ← Back to Tracker
+        </Link>
       </nav>
 
       {/* Header */}
@@ -148,21 +166,21 @@ const FeatureRequestsPage: React.FC = () => {
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-2">
-        <select 
+        <select
           value={filters.project_id}
-          onChange={(e) => updateFilter('project_id', e.target.value)}
+          onChange={e => updateFilter('project_id', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Projects</option>
-          {getAllProjects(projectsData).map((project) => (
+          {getAllProjects(projectsData).map(project => (
             <option key={project.id} value={project.id}>
               {project.title}
             </option>
           ))}
         </select>
-        <select 
+        <select
           value={filters.status}
-          onChange={(e) => updateFilter('status', e.target.value)}
+          onChange={e => updateFilter('status', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Status</option>
@@ -171,9 +189,9 @@ const FeatureRequestsPage: React.FC = () => {
           <option value="Completed">Completed</option>
           <option value="Closed">Closed</option>
         </select>
-        <select 
+        <select
           value={filters.priority}
-          onChange={(e) => updateFilter('priority', e.target.value)}
+          onChange={e => updateFilter('priority', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Priority</option>
@@ -182,9 +200,9 @@ const FeatureRequestsPage: React.FC = () => {
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>
         </select>
-        <select 
+        <select
           value={filters.category}
-          onChange={(e) => updateFilter('category', e.target.value)}
+          onChange={e => updateFilter('category', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Categories</option>
@@ -193,9 +211,9 @@ const FeatureRequestsPage: React.FC = () => {
           <option value="Enhancement">Enhancement</option>
           <option value="UI/UX Improvement">UI/UX Improvement</option>
         </select>
-        <select 
+        <select
           value={filters.sort_by}
-          onChange={(e) => updateFilter('sort_by', e.target.value)}
+          onChange={e => updateFilter('sort_by', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="votes">Sort by Votes</option>
@@ -207,7 +225,7 @@ const FeatureRequestsPage: React.FC = () => {
       {/* Requests List */}
       <div className="space-y-4">
         {requests && requests.length > 0 ? (
-          requests.map((request) => (
+          requests.map(request => (
             <RequestCard
               key={request.id}
               title={request.title}

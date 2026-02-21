@@ -9,7 +9,7 @@ export const UserProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     display_name: '',
-    username: ''
+    username: '',
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
@@ -20,7 +20,7 @@ export const UserProfile: React.FC = () => {
     if (user) {
       setEditForm({
         display_name: user.display_name ?? '',
-        username: user.username ?? ''
+        username: user.username ?? '',
       });
     }
   }, [user]);
@@ -35,7 +35,7 @@ export const UserProfile: React.FC = () => {
       if (user) {
         setEditForm({
           display_name: user.display_name ?? '',
-          username: user.username ?? ''
+          username: user.username ?? '',
         });
       }
     }
@@ -97,7 +97,9 @@ export const UserProfile: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="text-4xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Access Denied
+          </h2>
           <p className="text-gray-600 mb-6">
             Please log in to access your profile.
           </p>
@@ -119,7 +121,9 @@ export const UserProfile: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-2xl font-bold text-white">
-                  {user.display_name ? user.display_name[0].toUpperCase() : user.username[0].toUpperCase()}
+                  {user.display_name
+                    ? user.display_name[0].toUpperCase()
+                    : user.username[0].toUpperCase()}
                 </span>
               </div>
               <div>
@@ -127,10 +131,13 @@ export const UserProfile: React.FC = () => {
                   {user.display_name ?? user.username}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-2 py-1 text-xs rounded-full ${user.role === 'admin'
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-blue-100 text-blue-800'
-                    }`}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      user.role === 'admin'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
                     {user.role === 'admin' ? '👑 Admin' : '👤 User'}
                   </span>
                   {user.is_verified && (
@@ -162,7 +169,9 @@ export const UserProfile: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Basic Information
+              </h3>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -172,7 +181,12 @@ export const UserProfile: React.FC = () => {
                   <input
                     type="text"
                     value={editForm.display_name}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, display_name: e.target.value }))}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        display_name: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter display name"
                   />
@@ -191,7 +205,12 @@ export const UserProfile: React.FC = () => {
                   <input
                     type="text"
                     value={editForm.username}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, username: e.target.value }))}
+                    onChange={e =>
+                      setEditForm(prev => ({
+                        ...prev,
+                        username: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter username"
                   />
@@ -209,7 +228,9 @@ export const UserProfile: React.FC = () => {
                 <p className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
                   {user.email}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Email cannot be changed
+                </p>
               </div>
 
               {isEditing && (
@@ -225,7 +246,9 @@ export const UserProfile: React.FC = () => {
 
             {/* Account Stats */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Account Stats</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Account Stats
+              </h3>
 
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
                 <div className="flex items-center gap-2 mb-2">
@@ -235,7 +258,9 @@ export const UserProfile: React.FC = () => {
                   </span>
                 </div>
                 {user.can_claim_daily && (
-                  <p className="text-sm text-green-600">Daily eggs available to claim!</p>
+                  <p className="text-sm text-green-600">
+                    Daily eggs available to claim!
+                  </p>
                 )}
               </div>
 
@@ -263,9 +288,12 @@ export const UserProfile: React.FC = () => {
 
         {/* Danger Zone */}
         <div className="px-6 py-4 border-t border-gray-200 bg-red-50">
-          <h3 className="text-lg font-semibold text-red-900 mb-2">Danger Zone</h3>
+          <h3 className="text-lg font-semibold text-red-900 mb-2">
+            Danger Zone
+          </h3>
           <p className="text-sm text-red-700 mb-4">
-            Once you delete your account, there is no going back. Please be certain.
+            Once you delete your account, there is no going back. Please be
+            certain.
           </p>
           <button
             onClick={() => setShowDeleteModal(true)}
@@ -286,9 +314,12 @@ export const UserProfile: React.FC = () => {
           >
             <div className="text-center mb-6">
               <div className="text-4xl mb-4">⚠️</div>
-              <h3 className="text-xl font-bold text-red-900 mb-2">Delete Account</h3>
+              <h3 className="text-xl font-bold text-red-900 mb-2">
+                Delete Account
+              </h3>
               <p className="text-gray-600">
-                This action cannot be undone. This will permanently delete your account and all associated data.
+                This action cannot be undone. This will permanently delete your
+                account and all associated data.
               </p>
             </div>
 
@@ -299,7 +330,7 @@ export const UserProfile: React.FC = () => {
               <input
                 type="text"
                 value={deleteConfirmation}
-                onChange={(e) => {
+                onChange={e => {
                   setDeleteConfirmation(e.target.value);
                   setError(null);
                 }}

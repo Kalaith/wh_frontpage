@@ -6,14 +6,18 @@ import {
   UserDashboard,
   AdminStats,
   EggTransaction,
-  Vote
+  Vote,
 } from '../types/featureRequest';
 import type { ApiResponse } from '../types/common';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 class FeatureRequestApiError extends Error {
-  constructor(public status: number, message: string, public response?: unknown) {
+  constructor(
+    public status: number,
+    message: string,
+    public response?: unknown
+  ) {
     super(message);
     this.name = 'FeatureRequestApiError';
   }
@@ -58,7 +62,11 @@ async function apiRequest<T>(
     const data = await response.json();
 
     if (!response.ok) {
-      throw new FeatureRequestApiError(response.status, data.message ?? 'Request failed', data);
+      throw new FeatureRequestApiError(
+        response.status,
+        data.message ?? 'Request failed',
+        data
+      );
     }
 
     return data;
@@ -90,7 +98,9 @@ export const featureRequestApi = {
       });
     }
 
-    const response = await apiRequest<FeatureRequest[]>(`/features?${queryParams}`);
+    const response = await apiRequest<FeatureRequest[]>(
+      `/features?${queryParams}`
+    );
     return response.data ?? [];
   },
 
@@ -99,7 +109,9 @@ export const featureRequestApi = {
     return response.data as FeatureRequest;
   },
 
-  async createFeature(data: CreateFeatureRequest & { user_id: number }): Promise<FeatureRequest> {
+  async createFeature(
+    data: CreateFeatureRequest & { user_id: number }
+  ): Promise<FeatureRequest> {
     const response = await apiRequest<FeatureRequest>('/features', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -107,16 +119,23 @@ export const featureRequestApi = {
     return response.data as FeatureRequest;
   },
 
-  async voteOnFeature(data: CastVote): Promise<{ success: boolean; message: string }> {
-    const response = await apiRequest<{ success: boolean; message: string }>('/features/vote', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async voteOnFeature(
+    data: CastVote
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await apiRequest<{ success: boolean; message: string }>(
+      '/features/vote',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
     return response.data as { success: boolean; message: string };
   },
 
   async getUserFeatures(userId: number): Promise<FeatureRequest[]> {
-    const response = await apiRequest<FeatureRequest[]>(`/users/${userId}/features`);
+    const response = await apiRequest<FeatureRequest[]>(
+      `/users/${userId}/features`
+    );
     return response.data ?? [];
   },
 
@@ -125,9 +144,24 @@ export const featureRequestApi = {
     return response.data ?? [];
   },
 
-  async getStats(): Promise<{ total: number; approved: number; pending: number; completed: number }> {
-    const response = await apiRequest<{ total: number; approved: number; pending: number; completed: number }>('/features/stats');
-    return response.data as { total: number; approved: number; pending: number; completed: number };
+  async getStats(): Promise<{
+    total: number;
+    approved: number;
+    pending: number;
+    completed: number;
+  }> {
+    const response = await apiRequest<{
+      total: number;
+      approved: number;
+      pending: number;
+      completed: number;
+    }>('/features/stats');
+    return response.data as {
+      total: number;
+      approved: number;
+      pending: number;
+      completed: number;
+    };
   },
 
   // User Management
@@ -148,7 +182,11 @@ export const featureRequestApi = {
     email: string;
     password: string;
   }): Promise<{ user: User; token: string; expires_at: string }> {
-    const response = await apiRequest<{ user: User; token: string; expires_at: string }>('/auth/login', {
+    const response = await apiRequest<{
+      user: User;
+      token: string;
+      expires_at: string;
+    }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -190,10 +228,7 @@ export const featureRequestApi = {
     };
   },
 
-  async getTransactions(params?: {
-    limit?: number;
-    type?: string;
-  }): Promise<{
+  async getTransactions(params?: { limit?: number; type?: string }): Promise<{
     transactions: EggTransaction[];
     stats: {
       total_eggs_earned: number;
@@ -251,35 +286,53 @@ export const featureRequestApi = {
       });
     }
 
-    const response = await apiRequest<FeatureRequest[]>(`/admin/features/pending?${queryParams}`);
+    const response = await apiRequest<FeatureRequest[]>(
+      `/admin/features/pending?${queryParams}`
+    );
     return response.data ?? [];
   },
 
   async approveFeature(id: number, notes?: string): Promise<FeatureRequest> {
-    const response = await apiRequest<FeatureRequest>(`/admin/features/${id}/approve`, {
-      method: 'POST',
-      body: JSON.stringify({ notes }),
-    });
+    const response = await apiRequest<FeatureRequest>(
+      `/admin/features/${id}/approve`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      }
+    );
     return response.data as FeatureRequest;
   },
 
   async rejectFeature(id: number, notes?: string): Promise<FeatureRequest> {
-    const response = await apiRequest<FeatureRequest>(`/admin/features/${id}/reject`, {
-      method: 'POST',
-      body: JSON.stringify({ notes }),
-    });
+    const response = await apiRequest<FeatureRequest>(
+      `/admin/features/${id}/reject`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      }
+    );
     return response.data as FeatureRequest;
   },
 
-  async updateFeatureStatus(id: number, status: string, notes?: string): Promise<FeatureRequest> {
-    const response = await apiRequest<FeatureRequest>(`/admin/features/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status, approval_notes: notes }),
-    });
+  async updateFeatureStatus(
+    id: number,
+    status: string,
+    notes?: string
+  ): Promise<FeatureRequest> {
+    const response = await apiRequest<FeatureRequest>(
+      `/admin/features/${id}/status`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status, approval_notes: notes }),
+      }
+    );
     return response.data as FeatureRequest;
   },
 
-  async bulkApproveFeatures(featureIds: number[], notes?: string): Promise<{
+  async bulkApproveFeatures(
+    featureIds: number[],
+    notes?: string
+  ): Promise<{
     approved_count: number;
     total_requested: number;
     errors: string[];
@@ -299,7 +352,11 @@ export const featureRequestApi = {
     };
   },
 
-  async adjustUserEggs(userId: number, amount: number, reason?: string): Promise<{
+  async adjustUserEggs(
+    userId: number,
+    amount: number,
+    reason?: string
+  ): Promise<{
     user_id: number;
     adjustment_amount: number;
     new_balance: number;
@@ -349,9 +406,12 @@ export const featureRequestApi = {
   },
 
   async deleteAccount(): Promise<{ success: boolean; message: string }> {
-    const response = await apiRequest<{ success: boolean; message: string }>('/user/delete-account', {
-      method: 'DELETE',
-    });
+    const response = await apiRequest<{ success: boolean; message: string }>(
+      '/user/delete-account',
+      {
+        method: 'DELETE',
+      }
+    );
     return response.data as { success: boolean; message: string };
   },
 };

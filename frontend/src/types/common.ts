@@ -10,12 +10,14 @@ export interface AppError {
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
-  error?: {
-    code?: string;
-    message: string;
-    details?: unknown;
-    status?: number;
-  } | string;
+  error?:
+    | {
+        code?: string;
+        message: string;
+        details?: unknown;
+        status?: number;
+      }
+    | string;
   message?: string;
   count?: number;
 }

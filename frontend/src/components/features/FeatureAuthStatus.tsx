@@ -17,7 +17,9 @@ export const FeatureAuthStatus: React.FC = () => {
     try {
       const result = await featureRequestApi.claimDailyEggs();
       if (result.eggs_earned) {
-        toast.success(`🥚 Claimed ${result.eggs_earned} eggs! Your balance is now ${result.new_balance || 0} eggs.`);
+        toast.success(
+          `🥚 Claimed ${result.eggs_earned} eggs! Your balance is now ${result.new_balance || 0} eggs.`
+        );
         // Note: The balance in the user object should be updated.
         // For simplicity, we can reload or manually update the store if needed.
         window.location.reload();
@@ -47,7 +49,9 @@ export const FeatureAuthStatus: React.FC = () => {
         {/* Egg Balance */}
         <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg shadow-sm">
           <span className="text-xl filter drop-shadow">🥚</span>
-          <span className="font-semibold text-cyan-400">{(user.egg_balance || 0).toLocaleString()}</span>
+          <span className="font-semibold text-cyan-400">
+            {(user.egg_balance || 0).toLocaleString()}
+          </span>
         </div>
 
         {/* Daily Reward Button */}
@@ -73,7 +77,10 @@ export const FeatureAuthStatus: React.FC = () => {
 
         {/* User Info */}
         <div className="flex items-center gap-2">
-          <Link to="/profile" className="px-2 py-1 rounded text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+          <Link
+            to="/profile"
+            className="px-2 py-1 rounded text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          >
             Hi {user.display_name ?? user.username}
             {user.role === 'admin' && (
               <span className="ml-1 text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20">

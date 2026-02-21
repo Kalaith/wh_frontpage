@@ -44,7 +44,10 @@ const App: React.FC = () => {
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/quests" element={<QuestBoardPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/adventurers/:username" element={<AdventurerProfilePage />} />
+            <Route
+              path="/adventurers/:username"
+              element={<AdventurerProfilePage />}
+            />
             <Route path="/bosses" element={<BossBattlePage />} />
             <Route path="/hall-of-heroes" element={<HallOfHeroesPage />} />
             <Route path="/quest-chains" element={<QuestChainsPage />} />
@@ -63,4 +66,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

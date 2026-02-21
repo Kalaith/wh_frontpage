@@ -3,7 +3,10 @@
 import type { AppError } from '../types/common';
 
 // Core error extraction utilities
-export const getErrorMessage = (error: unknown, defaultMessage?: string): string => {
+export const getErrorMessage = (
+  error: unknown,
+  defaultMessage?: string
+): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === 'object' && error !== null && 'message' in error) {
     return String((error as { message: unknown }).message);
@@ -29,19 +32,44 @@ export const isAuthError = (error: unknown): boolean => {
 export const isNetworkError = (error: unknown): boolean => {
   const message = getErrorMessage(error).toLowerCase();
   const status = getErrorStatus(error);
-  return message.includes('network') || message.includes('fetch') || status === 0;
+  return (
+    message.includes('network') || message.includes('fetch') || status === 0
+  );
 };
 
 // Simplified error creation with predefined types
-export type ErrorType = 'network' | 'auth' | 'validation' | 'server' | 'not_found' | 'unknown';
+export type ErrorType =
+  | 'network'
+  | 'auth'
+  | 'validation'
+  | 'server'
+  | 'not_found'
+  | 'unknown';
 
 const ERROR_PRESETS: Record<ErrorType, Omit<AppError, 'details'>> = {
-  network: { code: 'NETWORK_ERROR', message: 'Network connection failed. Please check your internet connection.', status: 0 },
-  auth: { code: 'AUTH_ERROR', message: 'Authentication failed. Please log in again.', status: 401 },
-  validation: { code: 'VALIDATION_ERROR', message: 'Invalid input data.', status: 400 },
-  server: { code: 'SERVER_ERROR', message: 'Server error occurred. Please try again later.', status: 500 },
+  network: {
+    code: 'NETWORK_ERROR',
+    message:
+      'Network connection failed. Please check your internet connection.',
+    status: 0,
+  },
+  auth: {
+    code: 'AUTH_ERROR',
+    message: 'Authentication failed. Please log in again.',
+    status: 401,
+  },
+  validation: {
+    code: 'VALIDATION_ERROR',
+    message: 'Invalid input data.',
+    status: 400,
+  },
+  server: {
+    code: 'SERVER_ERROR',
+    message: 'Server error occurred. Please try again later.',
+    status: 500,
+  },
   not_found: { code: 'NOT_FOUND', message: 'Resource not found.', status: 404 },
-  unknown: { code: 'UNKNOWN_ERROR', message: 'An unexpected error occurred.' }
+  unknown: { code: 'UNKNOWN_ERROR', message: 'An unexpected error occurred.' },
 };
 
 export const createError = (
@@ -62,8 +90,10 @@ export const createNetworkError = (message?: string): AppError =>
 export const createAuthError = (message?: string): AppError =>
   createError('auth', message);
 
-export const createValidationError = (message?: string, details?: unknown): AppError =>
-  createError('validation', message, details);
+export const createValidationError = (
+  message?: string,
+  details?: unknown
+): AppError => createError('validation', message, details);
 
 export const createServerError = (message?: string): AppError =>
   createError('server', message);
@@ -74,7 +104,12 @@ export const createNotFoundError = (resource?: string): AppError =>
 // Smart error handler that automatically detects error type
 export const handleApiError = (error: unknown): AppError => {
   // Check if it's already an AppError
-  if (typeof error === 'object' && error !== null && 'code' in error && 'message' in error) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error
+  ) {
     return error as AppError;
   }
 

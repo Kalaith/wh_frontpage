@@ -18,15 +18,15 @@ interface RequestCardProps {
 }
 
 const RequestCard: React.FC<RequestCardProps> = ({
-  title = "Request Title",
-  description = "Request description goes here. This would be a longer description explaining what the feature request is about.",
+  title = 'Request Title',
+  description = 'Request description goes here. This would be a longer description explaining what the feature request is about.',
   votes = 15,
-  status = "Open",
-  priority = "Medium",
-  category = "Enhancement",
-  tags = ["UI"],
-  date = "Jun 20, 2025",
-  project
+  status = 'Open',
+  priority = 'Medium',
+  category = 'Enhancement',
+  tags = ['UI'],
+  date = 'Jun 20, 2025',
+  project,
 }) => (
   <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border-l-4 border-blue-500 overflow-hidden">
     <header className="p-6 pb-4 border-b border-gray-100">
@@ -43,17 +43,15 @@ const RequestCard: React.FC<RequestCardProps> = ({
         </div>
       </div>
     </header>
-    
+
     <div className="p-6 pt-4">
-      <p className="text-gray-600 leading-relaxed mb-4">
-        {description}
-      </p>
-      
+      <p className="text-gray-600 leading-relaxed mb-4">{description}</p>
+
       {project && (
         <div className="flex items-center gap-2 text-sm mb-4">
           <span className="text-gray-500">Project:</span>
-          <Link 
-            to={`/projects`} 
+          <Link
+            to={`/projects`}
             className="text-blue-600 hover:text-teal-500 font-medium transition-colors"
           >
             {project.title}
@@ -65,32 +63,40 @@ const RequestCard: React.FC<RequestCardProps> = ({
           )}
         </div>
       )}
-      
+
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className={`px-2.5 py-1 rounded-full font-medium ${
-          status === 'Open' 
-            ? 'bg-green-100 text-green-700 border border-green-200' 
-            : 'bg-gray-100 text-gray-700 border border-gray-200'
-        }`}>
+        <span
+          className={`px-2.5 py-1 rounded-full font-medium ${
+            status === 'Open'
+              ? 'bg-green-100 text-green-700 border border-green-200'
+              : 'bg-gray-100 text-gray-700 border border-gray-200'
+          }`}
+        >
           {status}
         </span>
-        <span className={`px-2.5 py-1 rounded-full font-medium ${
-          priority === 'High' 
-            ? 'bg-red-100 text-red-700 border border-red-200' 
-            : priority === 'Medium' 
-            ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' 
-            : 'bg-gray-100 text-gray-700 border border-gray-200'
-        }`}>
+        <span
+          className={`px-2.5 py-1 rounded-full font-medium ${
+            priority === 'High'
+              ? 'bg-red-100 text-red-700 border border-red-200'
+              : priority === 'Medium'
+                ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                : 'bg-gray-100 text-gray-700 border border-gray-200'
+          }`}
+        >
           {priority} Priority
         </span>
         <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200 font-medium">
           {category}
         </span>
-        {Array.isArray(tags) && tags.map(tag => (
-          <span key={tag} className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-            {tag}
-          </span>
-        ))}
+        {Array.isArray(tags) &&
+          tags.map(tag => (
+            <span
+              key={tag}
+              className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200"
+            >
+              {tag}
+            </span>
+          ))}
         <span className="ml-auto text-gray-500">{date}</span>
       </div>
     </div>

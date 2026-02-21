@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useFeatureLogin, useFeatureRegister } from '../../stores/featureRequestStore';
+import {
+  useFeatureLogin,
+  useFeatureRegister,
+} from '../../stores/featureRequestStore';
 import { useToastStore } from '../../stores/toastStore';
 
 interface AuthModalProps {
@@ -9,7 +12,11 @@ interface AuthModalProps {
   mode: 'login' | 'register';
 }
 
-export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps) => {
+export const AuthModal = ({
+  isOpen,
+  onClose,
+  mode: initialMode,
+}: AuthModalProps) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
 
   // Sync internal mode with prop changes
@@ -74,7 +81,9 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
       setMode('login');
       setLoginData({ email: registerData.email, password: '' });
       setError(null);
-      toast.success('Registration successful! Please log in with your credentials.');
+      toast.success(
+        'Registration successful! Please log in with your credentials.'
+      );
     } catch (error: unknown) {
       setError((error as Error).message || 'Registration failed');
     } finally {
@@ -117,8 +126,18 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -126,7 +145,8 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
             {mode === 'register' && (
               <div className="mt-3 p-3 bg-green-50 rounded-lg">
                 <p className="text-sm text-green-700">
-                  🎉 New users receive <strong>500 free eggs</strong> + <strong>100 eggs daily</strong>!
+                  🎉 New users receive <strong>500 free eggs</strong> +{' '}
+                  <strong>100 eggs daily</strong>!
                 </p>
               </div>
             )}
@@ -142,7 +162,9 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="email"
                     value={loginData.email}
-                    onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={e =>
+                      setLoginData(prev => ({ ...prev, email: e.target.value }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -155,7 +177,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="password"
                     value={loginData.password}
-                    onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    onChange={e =>
+                      setLoginData(prev => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -201,7 +228,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="text"
                     value={registerData.username}
-                    onChange={(e) => setRegisterData(prev => ({ ...prev, username: e.target.value }))}
+                    onChange={e =>
+                      setRegisterData(prev => ({
+                        ...prev,
+                        username: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -214,7 +246,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="text"
                     value={registerData.display_name}
-                    onChange={(e) => setRegisterData(prev => ({ ...prev, display_name: e.target.value }))}
+                    onChange={e =>
+                      setRegisterData(prev => ({
+                        ...prev,
+                        display_name: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Your full name"
                   />
@@ -227,7 +264,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="email"
                     value={registerData.email}
-                    onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={e =>
+                      setRegisterData(prev => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -240,7 +282,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="password"
                     value={registerData.password}
-                    onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
+                    onChange={e =>
+                      setRegisterData(prev => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -253,7 +300,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   <input
                     type="password"
                     value={registerData.confirmPassword}
-                    onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    onChange={e =>
+                      setRegisterData(prev => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />

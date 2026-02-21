@@ -1,10 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useRecentProjectUpdates, useProjectsNeedingAttention } from '../hooks/useProjectUpdates';
+import {
+  useRecentProjectUpdates,
+  useProjectsNeedingAttention,
+} from '../hooks/useProjectUpdates';
 import type { ProjectUpdate } from '../types/projectUpdates';
 
 const ProjectUpdates: React.FC = () => {
-  const { data: recentUpdates, isLoading: recentLoading, error: recentError } = useRecentProjectUpdates();
+  const {
+    data: recentUpdates,
+    isLoading: recentLoading,
+    error: recentError,
+  } = useRecentProjectUpdates();
   const { data: attentionProjects } = useProjectsNeedingAttention();
 
   if (recentLoading) {
@@ -53,7 +60,7 @@ const ProjectUpdates: React.FC = () => {
             Needs Attention ({needsAttention.length})
           </h4>
           <div className="space-y-2">
-            {needsAttention.slice(0, 3).map((project) => (
+            {needsAttention.slice(0, 3).map(project => (
               <ProjectUpdateCard
                 key={project.name}
                 project={project}
@@ -71,7 +78,7 @@ const ProjectUpdates: React.FC = () => {
             Recent Updates ({recentProjects.length})
           </h4>
           <div className="space-y-2">
-            {recentProjects.slice(0, 5).map((project) => (
+            {recentProjects.slice(0, 5).map(project => (
               <ProjectUpdateCard
                 key={project.name}
                 project={project}
@@ -81,9 +88,7 @@ const ProjectUpdates: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="text-gray-500 text-sm">
-          No recent project updates
-        </div>
+        <div className="text-gray-500 text-sm">No recent project updates</div>
       )}
     </motion.div>
   );
@@ -94,32 +99,48 @@ interface ProjectUpdateCardProps {
   variant: 'recent' | 'attention';
 }
 
-const ProjectUpdateCard: React.FC<ProjectUpdateCardProps> = ({ project, variant }) => {
+const ProjectUpdateCard: React.FC<ProjectUpdateCardProps> = ({
+  project,
+  variant,
+}) => {
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'frontpage': return 'bg-blue-100 text-blue-800';
-      case 'apps': return 'bg-green-100 text-green-800';
-      case 'game_apps': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'frontpage':
+        return 'bg-blue-100 text-blue-800';
+      case 'apps':
+        return 'bg-green-100 text-green-800';
+      case 'game_apps':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
-      case 'today': return 'bg-green-100 text-green-800';
-      case 'recent': return 'bg-blue-100 text-blue-800';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800';
-      case 'stale': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'today':
+        return 'bg-green-100 text-green-800';
+      case 'recent':
+        return 'bg-blue-100 text-blue-800';
+      case 'moderate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'stale':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getDeploymentIcon = (status: string) => {
     switch (status) {
-      case 'production': return '🚀';
-      case 'development_only': return '🔨';
-      case 'not_deployed': return '⚠️';
-      default: return '❓';
+      case 'production':
+        return '🚀';
+      case 'development_only':
+        return '🔨';
+      case 'not_deployed':
+        return '⚠️';
+      default:
+        return '❓';
     }
   };
 
@@ -139,7 +160,8 @@ const ProjectUpdateCard: React.FC<ProjectUpdateCardProps> = ({ project, variant 
     return date.toLocaleDateString();
   };
 
-  const borderColor = variant === 'attention' ? 'border-orange-200' : 'border-gray-200';
+  const borderColor =
+    variant === 'attention' ? 'border-orange-200' : 'border-gray-200';
 
   return (
     <motion.div
@@ -150,7 +172,9 @@ const ProjectUpdateCard: React.FC<ProjectUpdateCardProps> = ({ project, variant 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-medium text-sm truncate">{project.name}</span>
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(project.type)}`}>
+            <span
+              className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(project.type)}`}
+            >
               {project.type.replace('_', ' ')}
             </span>
           </div>
@@ -165,7 +189,9 @@ const ProjectUpdateCard: React.FC<ProjectUpdateCardProps> = ({ project, variant 
             <span>{formatTimeAgo(project.lastUpdated)}</span>
 
             {project.updateUrgency && (
-              <span className={`px-2 py-0.5 rounded ${getUrgencyColor(project.updateUrgency)}`}>
+              <span
+                className={`px-2 py-0.5 rounded ${getUrgencyColor(project.updateUrgency)}`}
+              >
                 {project.updateUrgency}
               </span>
             )}

@@ -17,14 +17,19 @@ export const XPWidget: React.FC = () => {
           const data = await fetchAdventurer(user.username);
           setAdventurer(data);
 
-          const storedLevel = localStorage.getItem(`adv_level_${user.username}`);
+          const storedLevel = localStorage.getItem(
+            `adv_level_${user.username}`
+          );
           if (storedLevel) {
             const oldLevel = parseInt(storedLevel, 10);
             if (data.level > oldLevel) {
               success(`Level up! You reached Level ${data.level}.`);
             }
           }
-          localStorage.setItem(`adv_level_${user.username}`, data.level.toString());
+          localStorage.setItem(
+            `adv_level_${user.username}`,
+            data.level.toString()
+          );
         } catch {
           // Silent fail
         }
@@ -37,7 +42,10 @@ export const XPWidget: React.FC = () => {
   if (!isAuthenticated || !adventurer) return null;
 
   const nextLevelXP = adventurer.level * 100 * 1.5;
-  const progressPercent = Math.min(100, ((adventurer.xp_total % nextLevelXP) / nextLevelXP) * 100);
+  const progressPercent = Math.min(
+    100,
+    ((adventurer.xp_total % nextLevelXP) / nextLevelXP) * 100
+  );
 
   return (
     <Link

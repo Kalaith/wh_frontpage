@@ -21,7 +21,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     <article className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border-l-4 border-blue-500">
       <header className="p-6 pb-4 border-b border-gray-100">
         <h4 className="text-xl font-semibold mb-3 text-blue-600">
-          <a href={projectUrl} className="hover:text-teal-500 transition-colors">{project.title}</a>
+          <a
+            href={projectUrl}
+            className="hover:text-teal-500 transition-colors"
+          >
+            {project.title}
+          </a>
         </h4>
         <div className="flex flex-wrap gap-2 items-center">
           {project.status && (
@@ -43,7 +48,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             <Badge variant="version">v{project.version}</Badge>
           )}
           {project.deployment?.requiresBuild && (
-            <Badge className="bg-orange-50 text-orange-600">Build Required</Badge>
+            <Badge className="bg-orange-50 text-orange-600">
+              Build Required
+            </Badge>
           )}
           {project.repository && (
             <a
@@ -60,7 +67,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         </div>
       </header>
       <div className="p-6 pt-4">
-        <p className="text-gray-600 leading-relaxed mb-4">{project.description}</p>
+        <p className="text-gray-600 leading-relaxed mb-4">
+          {project.description}
+        </p>
 
         {project.deployment && (
           <div className="flex flex-wrap gap-2">
@@ -78,7 +87,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         )}
       </div>
       <footer className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-        <a href={projectUrl} className="inline-block text-blue-600 font-medium hover:text-teal-500 hover:underline transition-colors">
+        <a
+          href={projectUrl}
+          className="inline-block text-blue-600 font-medium hover:text-teal-500 hover:underline transition-colors"
+        >
           Explore Project →
         </a>
       </footer>

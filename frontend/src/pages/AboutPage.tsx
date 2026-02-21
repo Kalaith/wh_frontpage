@@ -6,12 +6,13 @@ const AboutPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-4">About Web Hatchery</h1>
 
       <p className="mb-4">
-        Web Hatchery is a fun AI playground — a space where I share experiments, games, apps, stories, and anything else AI-related that I find interesting. Think of it as a collection of prototypes and ideas, some polished, some rough, but all open to explore.
+        Web Hatchery is a fun AI playground — a space where I share experiments,
+        games, apps, stories, and anything else AI-related that I find
+        interesting. Think of it as a collection of prototypes and ideas, some
+        polished, some rough, but all open to explore.
       </p>
 
-      <p className="mb-4">
-        Everything here is free. You're welcome to:
-      </p>
+      <p className="mb-4">Everything here is free. You're welcome to:</p>
 
       <ul className="list-disc list-inside mb-4">
         <li>Browse and try out projects.</li>
@@ -20,7 +21,8 @@ const AboutPage: React.FC = () => {
       </ul>
 
       <p className="mb-4">
-        The only request is attribution — please credit Web Hatchery if you reuse the work.
+        The only request is attribution — please credit Web Hatchery if you
+        reuse the work.
       </p>
 
       <p className="mb-4">
@@ -30,7 +32,9 @@ const AboutPage: React.FC = () => {
       <h2 className="text-2xl font-semibold mt-6 mb-3">🥚 About Eggs</h2>
 
       <p className="mb-4">
-        **Earn Daily Eggs:** Our playful currency rewards your curiosity. Drop in daily to collect eggs to hatch new ideas or influence the Hatchery's direction!
+        **Earn Daily Eggs:** Our playful currency rewards your curiosity. Drop
+        in daily to collect eggs to hatch new ideas or influence the Hatchery's
+        direction!
       </p>
 
       <ul className="list-disc list-inside mb-4">
@@ -38,9 +42,7 @@ const AboutPage: React.FC = () => {
         <li>Boost your favorite ideas to raise their priority</li>
       </ul>
 
-      <p>
-        The more eggs an idea has, the more likely it is to be built.
-      </p>
+      <p>The more eggs an idea has, the more likely it is to be built.</p>
     </div>
   );
 };

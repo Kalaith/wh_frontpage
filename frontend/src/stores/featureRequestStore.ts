@@ -22,13 +22,22 @@ interface FeatureRequestActions {
   }) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  updateProfile: (data: { display_name?: string; username?: string }) => Promise<void>;
-  claimDailyEggs: () => Promise<{ success: boolean; message: string; eggsEarned?: number }>;
+  updateProfile: (data: {
+    display_name?: string;
+    username?: string;
+  }) => Promise<void>;
+  claimDailyEggs: () => Promise<{
+    success: boolean;
+    message: string;
+    eggsEarned?: number;
+  }>;
   refreshProfile: () => Promise<void>;
   setUser: (user: User) => void;
 }
 
-export const useFeatureRequestStore = create<FeatureRequestState & FeatureRequestActions>()(
+export const useFeatureRequestStore = create<
+  FeatureRequestState & FeatureRequestActions
+>()(
   persist(
     (set, get) => ({
       // State
@@ -41,14 +50,14 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
       // Actions
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const response = await featureRequestApi.login({ email, password });
           const { user, token } = response;
-          
+
           // Store token in localStorage for API requests
           localStorage.setItem('token', token);
-          
+
           set({
             user,
             token,
@@ -68,12 +77,12 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
         }
       },
 
-      register: async (data) => {
+      register: async data => {
         set({ isLoading: true, error: null });
-        
+
         try {
           await featureRequestApi.register(data);
-          
+
           set({
             user: null, // User needs to login after registration
             token: null,
@@ -104,9 +113,9 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
         set({ error: null });
       },
 
-      updateProfile: async (data) => {
+      updateProfile: async data => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const updatedUser = await featureRequestApi.updateProfile(data);
           set({
@@ -131,7 +140,7 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
 
         try {
           const result = await featureRequestApi.claimDailyEggs();
-          
+
           // Update user's egg balance
           set({
             user: {
@@ -140,7 +149,7 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
               can_claim_daily: false,
             },
           });
-          
+
           return {
             success: true,
             message: `Claimed ${result.eggs_earned} eggs!`,
@@ -175,12 +184,12 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
     }),
     {
       name: 'feature-request-auth-storage',
-      partialize: (state) => ({
+      partialize: state => ({
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => state => {
         // Restore token to localStorage on app load
         if (state?.token) {
           localStorage.setItem('token', state.token);
@@ -191,21 +200,33 @@ export const useFeatureRequestStore = create<FeatureRequestState & FeatureReques
 );
 
 // Helper hooks with proper memoization
-export const useFeatureRequestUser = () => useFeatureRequestStore((state) => state.user);
-export const useIsFeatureAuthenticated = () => useFeatureRequestStore((state) => state.isAuthenticated);
-export const useIsFeatureAdmin = () => useFeatureRequestStore((state) => state.user?.role === 'admin');
+export const useFeatureRequestUser = () =>
+  useFeatureRequestStore(state => state.user);
+export const useIsFeatureAuthenticated = () =>
+  useFeatureRequestStore(state => state.isAuthenticated);
+export const useIsFeatureAdmin = () =>
+  useFeatureRequestStore(state => state.user?.role === 'admin');
 
 // Individual action hooks to prevent re-render issues
-export const useFeatureLogin = () => useFeatureRequestStore((state) => state.login);
-export const useFeatureRegister = () => useFeatureRequestStore((state) => state.register);
-export const useFeatureLogout = () => useFeatureRequestStore((state) => state.logout);
-export const useFeatureClaimDailyEggs = () => useFeatureRequestStore((state) => state.claimDailyEggs);
-export const useFeatureClearError = () => useFeatureRequestStore((state) => state.clearError);
-export const useFeatureUpdateProfile = () => useFeatureRequestStore((state) => state.updateProfile);
-export const useFeatureRefreshProfile = () => useFeatureRequestStore((state) => state.refreshProfile);
+export const useFeatureLogin = () =>
+  useFeatureRequestStore(state => state.login);
+export const useFeatureRegister = () =>
+  useFeatureRequestStore(state => state.register);
+export const useFeatureLogout = () =>
+  useFeatureRequestStore(state => state.logout);
+export const useFeatureClaimDailyEggs = () =>
+  useFeatureRequestStore(state => state.claimDailyEggs);
+export const useFeatureClearError = () =>
+  useFeatureRequestStore(state => state.clearError);
+export const useFeatureUpdateProfile = () =>
+  useFeatureRequestStore(state => state.updateProfile);
+export const useFeatureRefreshProfile = () =>
+  useFeatureRequestStore(state => state.refreshProfile);
 
 // For backward compatibility, but using a stable selector
-const actionsSelector = (state: FeatureRequestState & FeatureRequestActions) => ({
+const actionsSelector = (
+  state: FeatureRequestState & FeatureRequestActions
+) => ({
   login: state.login,
   register: state.register,
   logout: state.logout,
@@ -215,4 +236,5 @@ const actionsSelector = (state: FeatureRequestState & FeatureRequestActions) => 
   refreshProfile: state.refreshProfile,
 });
 
-export const useFeatureRequestActions = () => useFeatureRequestStore(actionsSelector);
+export const useFeatureRequestActions = () =>
+  useFeatureRequestStore(actionsSelector);

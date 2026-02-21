@@ -2,23 +2,35 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SuggestionCard from '../components/tracker/SuggestionCard';
 import ProjectSuggestionForm from '../components/tracker/ProjectSuggestionForm';
-import { useProjectSuggestions, useCreateProjectSuggestion } from '../hooks/useTrackerQuery';
+import {
+  useProjectSuggestions,
+  useCreateProjectSuggestion,
+} from '../hooks/useTrackerQuery';
 
 const ProjectSuggestionsPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [filters, setFilters] = useState({
     group: '',
-    sort_by: 'votes'
+    sort_by: 'votes',
   });
 
-  const { data: suggestions, isLoading, error } = useProjectSuggestions({
+  const {
+    data: suggestions,
+    isLoading,
+    error,
+  } = useProjectSuggestions({
     ...filters,
-    sort_direction: 'desc'
+    sort_direction: 'desc',
   });
 
   const createSuggestionMutation = useCreateProjectSuggestion();
 
-  const handleSubmitSuggestion = async (data: { name: string; description: string; group: string; rationale: string }) => {
+  const handleSubmitSuggestion = async (data: {
+    name: string;
+    description: string;
+    group: string;
+    rationale: string;
+  }) => {
     try {
       await createSuggestionMutation.mutateAsync(data);
       setShowForm(false);
@@ -31,7 +43,9 @@ const ProjectSuggestionsPage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div className="text-center py-8">
-          <p className="text-lg text-gray-600">Loading project suggestions...</p>
+          <p className="text-lg text-gray-600">
+            Loading project suggestions...
+          </p>
         </div>
       </div>
     );
@@ -41,7 +55,9 @@ const ProjectSuggestionsPage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div className="text-center py-8">
-          <p className="text-lg text-red-600">Error loading project suggestions: {error.message}</p>
+          <p className="text-lg text-red-600">
+            Error loading project suggestions: {error.message}
+          </p>
         </div>
       </div>
     );
@@ -51,7 +67,9 @@ const ProjectSuggestionsPage: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Navigation */}
       <nav className="mb-6 text-sm text-blue-600">
-        <Link to="/tracker" className="hover:text-blue-800">← Back to Tracker</Link>
+        <Link to="/tracker" className="hover:text-blue-800">
+          ← Back to Tracker
+        </Link>
       </nav>
 
       {/* Header */}
@@ -99,9 +117,11 @@ const ProjectSuggestionsPage: React.FC = () => {
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-2">
-        <select 
+        <select
           value={filters.group}
-          onChange={(e) => setFilters(prev => ({ ...prev, group: e.target.value }))}
+          onChange={e =>
+            setFilters(prev => ({ ...prev, group: e.target.value }))
+          }
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Groups</option>
@@ -111,9 +131,11 @@ const ProjectSuggestionsPage: React.FC = () => {
           <option value="Game Design">Game Design</option>
           <option value="AI & Development Tools">AI & Development Tools</option>
         </select>
-        <select 
+        <select
           value={filters.sort_by}
-          onChange={(e) => setFilters(prev => ({ ...prev, sort_by: e.target.value }))}
+          onChange={e =>
+            setFilters(prev => ({ ...prev, sort_by: e.target.value }))
+          }
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="votes">Sort by Votes</option>
@@ -125,7 +147,7 @@ const ProjectSuggestionsPage: React.FC = () => {
       {/* Suggestions Grid */}
       <div className="grid gap-6 md:grid-cols-2">
         {suggestions && suggestions.length > 0 ? (
-          suggestions.map((suggestion) => (
+          suggestions.map(suggestion => (
             <SuggestionCard
               key={suggestion.id}
               title={suggestion.name}

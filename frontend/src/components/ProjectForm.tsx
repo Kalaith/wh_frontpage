@@ -119,10 +119,14 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
             <input
               type="checkbox"
               checked={p.show_on_homepage !== false}
-              onChange={e => onChange({ ...p, show_on_homepage: e.target.checked })}
+              onChange={e =>
+                onChange({ ...p, show_on_homepage: e.target.checked })
+              }
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm font-medium text-gray-700">Show on Homepage</span>
+            <span className="text-sm font-medium text-gray-700">
+              Show on Homepage
+            </span>
           </label>
         </div>
 

@@ -1,10 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useHealthSummary, useCriticalProjects, useRunHealthCheck } from '../hooks/useProjectHealth';
+import {
+  useHealthSummary,
+  useCriticalProjects,
+  useRunHealthCheck,
+} from '../hooks/useProjectHealth';
 import type { ProjectHealth } from '../types/projectHealth';
 
 const ProjectHealthDashboard: React.FC = () => {
-  const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useHealthSummary();
+  const {
+    data: summaryData,
+    isLoading: summaryLoading,
+    error: summaryError,
+  } = useHealthSummary();
   const { data: criticalData } = useCriticalProjects();
   const runHealthCheck = useRunHealthCheck();
 
@@ -25,9 +33,7 @@ const ProjectHealthDashboard: React.FC = () => {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold mb-4">Ecosystem Health</h3>
-        <div className="text-red-600 text-sm">
-          Unable to load health data
-        </div>
+        <div className="text-red-600 text-sm">Unable to load health data</div>
       </div>
     );
   }
@@ -93,28 +99,37 @@ const ProjectHealthDashboard: React.FC = () => {
           </h4>
           <div className="space-y-2">
             {criticalProjects.slice(0, 3).map((project: ProjectHealth) => (
-              <CriticalProjectCard key={project.project_name} project={project} />
+              <CriticalProjectCard
+                key={project.project_name}
+                project={project}
+              />
             ))}
           </div>
         </div>
       )}
 
       {/* Urgent Recommendations */}
-      {summary.urgent_recommendations && summary.urgent_recommendations.length > 0 && (
-        <div className="mb-4">
-          <h4 className="text-sm font-medium text-orange-600 mb-2">
-            Urgent Recommendations
-          </h4>
-          <div className="space-y-2">
-            {summary.urgent_recommendations.slice(0, 2).map((rec, index) => (
-              <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                <p className="text-sm text-orange-800 font-medium">{rec.action}</p>
-                <p className="text-xs text-orange-600 mt-1">{rec.details}</p>
-              </div>
-            ))}
+      {summary.urgent_recommendations &&
+        summary.urgent_recommendations.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-sm font-medium text-orange-600 mb-2">
+              Urgent Recommendations
+            </h4>
+            <div className="space-y-2">
+              {summary.urgent_recommendations.slice(0, 2).map((rec, index) => (
+                <div
+                  key={index}
+                  className="p-3 bg-orange-50 border border-orange-200 rounded-lg"
+                >
+                  <p className="text-sm text-orange-800 font-medium">
+                    {rec.action}
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">{rec.details}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Top Issues */}
       {summary.top_issues && summary.top_issues.length > 0 && (
@@ -156,17 +171,19 @@ interface CriticalProjectCardProps {
   project: ProjectHealth;
 }
 
-const CriticalProjectCard: React.FC<CriticalProjectCardProps> = ({ project }) => (
+const CriticalProjectCard: React.FC<CriticalProjectCardProps> = ({
+  project,
+}) => (
   <div className="flex items-center justify-between">
     <div>
-      <span className="text-sm font-medium text-red-800">{project.project_name}</span>
+      <span className="text-sm font-medium text-red-800">
+        {project.project_name}
+      </span>
       <span className="text-xs text-red-600 ml-2">
         {project.issues.length} issue{project.issues.length !== 1 ? 's' : ''}
       </span>
     </div>
-    <div className="text-xs text-red-600">
-      Score: {project.score}/100
-    </div>
+    <div className="text-xs text-red-600">Score: {project.score}/100</div>
   </div>
 );
 
@@ -177,7 +194,9 @@ const HealthStatusIcon: React.FC<{ status: string }> = ({ status }) => {
     case 'warning':
       return <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>;
     case 'critical':
-      return <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>;
+      return (
+        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+      );
     default:
       return <span className="w-2 h-2 bg-gray-500 rounded-full"></span>;
   }

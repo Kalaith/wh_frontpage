@@ -37,11 +37,17 @@ export const useActivityStats = () => {
   });
 };
 
-export const useProjectChangelog = (projectName: string, limit: number = 10) => {
+export const useProjectChangelog = (
+  projectName: string,
+  limit: number = 10
+) => {
   return useQuery({
     queryKey: ['newsFeed', 'project', projectName, limit],
     queryFn: async () => {
-      const response = await NewsFeedApi.getProjectChangelog(projectName, limit);
+      const response = await NewsFeedApi.getProjectChangelog(
+        projectName,
+        limit
+      );
       return response.success ? response.data : null;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
