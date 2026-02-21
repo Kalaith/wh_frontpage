@@ -133,4 +133,29 @@ class AdventurerRepository
             return [];
         }
     }
+
+    public function getRank(int $adventurerId): ?string
+    {
+        $stmt = $this->db->prepare("SELECT `rank` FROM adventurers WHERE id = :id");
+        $stmt->execute(['id' => $adventurerId]);
+        $rank = $stmt->fetchColumn();
+        return $rank !== false ? (string)$rank : null;
+    }
+
+    public function getXp(int $adventurerId): int
+    {
+        $stmt = $this->db->prepare("SELECT xp_total FROM adventurers WHERE id = :id");
+        $stmt->execute(['id' => $adventurerId]);
+        $xp = $stmt->fetchColumn();
+        return $xp !== false ? (int)$xp : 0;
+    }
+
+    public function updateRank(int $adventurerId, string $newRank): bool
+    {
+        $stmt = $this->db->prepare("UPDATE adventurers SET `rank` = :rank, updated_at = NOW() WHERE id = :id");
+        return $stmt->execute([
+            'rank' => $newRank,
+            'id' => $adventurerId
+        ]);
+    }
 }
