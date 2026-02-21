@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-interface Achievement {
-    slug: string;
-    name: string;
-    description: string;
-    icon: string;
-    rarity: 'common' | 'rare' | 'epic' | 'legendary';
-    earnedBy: number; // how many adventurers have this
-}
+import achievementsApi, { Achievement } from '../api/achievementsApi';
 
 const RARITY_COLORS: Record<string, string> = {
     common: 'border-gray-300 bg-gray-50',
@@ -24,29 +16,28 @@ const RARITY_TEXT: Record<string, string> = {
     legendary: 'text-yellow-700',
 };
 
-const MOCK_ACHIEVEMENTS: Achievement[] = [
-    { slug: 'first-merge', name: 'First Blood', description: 'Merge your first Pull Request', icon: '⚔️', rarity: 'common', earnedBy: 42 },
-    { slug: 'level-5', name: 'High Five', description: 'Reach Level 5', icon: '🖐️', rarity: 'common', earnedBy: 28 },
-    { slug: 'xp-1k', name: 'Kilo-XP', description: 'Earn 1,000 total XP', icon: '📊', rarity: 'common', earnedBy: 18 },
-    { slug: 'bug-squasher-10', name: 'Exterminator', description: 'Squash 10 bugs', icon: '🐞', rarity: 'rare', earnedBy: 9 },
-    { slug: 'multi-habitat', name: 'Wanderer', description: 'Contribute to 3 different projects', icon: '🗺️', rarity: 'rare', earnedBy: 7 },
-    { slug: 'streak-7', name: 'On Fire', description: 'Maintain a 7-day contribution streak', icon: '🔥', rarity: 'rare', earnedBy: 5 },
-    { slug: 'boss-slayer', name: 'Boss Slayer', description: 'Land the final blow on a Boss', icon: '🐉', rarity: 'epic', earnedBy: 3 },
-    { slug: 'legendary-crate', name: 'Jackpot!', description: 'Open a Legendary Loot Crate', icon: '🌟', rarity: 'epic', earnedBy: 2 },
-    { slug: 'level-20', name: 'Veteran', description: 'Reach Level 20', icon: '🏛️', rarity: 'epic', earnedBy: 1 },
-    { slug: 'full-clear', name: 'Season Champion', description: 'Complete all quests in a season', icon: '👑', rarity: 'legendary', earnedBy: 0 },
-    { slug: 'golden-egg', name: 'Golden Egg', description: 'Found from a Legendary Crate', icon: '🥚', rarity: 'legendary', earnedBy: 0 },
-    { slug: 'founding-member', name: 'Founding Member', description: 'Join during Season 1', icon: '🏗️', rarity: 'legendary', earnedBy: 6 },
-];
-
 const HallOfHeroesPage: React.FC = () => {
     const [achievements, setAchievements] = useState<Achievement[]>([]);
     const [filter, setFilter] = useState<string>('all');
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        // Would fetch from /api/achievements — mock for now
-        setAchievements(MOCK_ACHIEVEMENTS);
+        const loadAchievements = async () => {
+            setIsLoading(true);
+            const data = await achievementsApi.fetchAll();
+            setAchievements(data);
+            setIsLoading(false);
+        };
+        loadAchievements();
     }, []);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+            </div>
+        );
+    }
 
     const filtered = filter === 'all' ? achievements : achievements.filter(a => a.rarity === filter);
     const rarityOrder = ['legendary', 'epic', 'rare', 'common'];
@@ -71,8 +62,8 @@ const HallOfHeroesPage: React.FC = () => {
                         key={tab}
                         onClick={() => setFilter(tab)}
                         className={`px-4 py-2 rounded-full text-sm font-semibold capitalize transition ${filter === tab
-                                ? 'bg-indigo-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         {tab === 'all' ? '✨ All' : tab}
@@ -110,19 +101,19 @@ const HallOfHeroesPage: React.FC = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="mt-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white text-center">
+            <div className="mt-10 bg-white border border-indigo-100 rounded-xl p-6 text-center shadow-sm border-l-4 border-l-indigo-500">
                 <div className="grid grid-cols-3 gap-4">
                     <div>
-                        <div className="text-3xl font-bold">{achievements.length}</div>
-                        <div className="text-sm text-indigo-200">Total Achievements</div>
+                        <div className="text-3xl font-bold text-slate-800">{achievements.length}</div>
+                        <div className="text-sm text-slate-500 font-medium tracking-wide uppercase mt-1">Total Achievements</div>
                     </div>
                     <div>
-                        <div className="text-3xl font-bold">{achievements.filter(a => a.earnedBy > 0).length}</div>
-                        <div className="text-sm text-indigo-200">Unlocked</div>
+                        <div className="text-3xl font-bold text-emerald-600">{achievements.filter(a => a.earnedBy > 0).length}</div>
+                        <div className="text-sm text-emerald-700 font-medium tracking-wide uppercase mt-1">Unlocked</div>
                     </div>
                     <div>
-                        <div className="text-3xl font-bold">{achievements.filter(a => a.earnedBy === 0).length}</div>
-                        <div className="text-sm text-indigo-200">Still Locked</div>
+                        <div className="text-3xl font-bold text-slate-400">{achievements.filter(a => a.earnedBy === 0).length}</div>
+                        <div className="text-sm text-slate-500 font-medium tracking-wide uppercase mt-1">Still Locked</div>
                     </div>
                 </div>
             </div>

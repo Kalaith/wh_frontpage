@@ -19,17 +19,12 @@ export const Header: React.FC<HeaderProps> = ({ data }) => {
       {/* Top navigation bar */}
       <div className="flex justify-between items-center mb-2">
         <nav className="flex gap-2">
-          <Link 
-            to="/tracker" 
-            className="px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition-colors"
-          >
-            Tracker
-          </Link>
+          {/* Tracker link removed to focus on Quest Board */}
         </nav>
         <div className="flex gap-2">
           {isAdmin && (
-            <Link 
-              to="/projects" 
+            <Link
+              to="/projects"
               className="px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition-colors"
             >
               Manage Projects
@@ -41,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ data }) => {
       <p className="text-lg italic text-teal-500 mb-4">Where ideas hatch into websites.</p>
       <p className="text-lg leading-relaxed max-w-2xl mx-auto mb-4 text-gray-700">
         {data.description ||
-          'This is a development landing page for web experiments, game previews, and digital prototypes.'}
+          'Your gateway to experimental web apps, game previews, and digital prototypes. Claim quests, build features, and earn rewards.'}
       </p>
       {data.version && (
         <p className="text-sm text-teal-500 italic mb-0">Platform Version: {data.version}</p>

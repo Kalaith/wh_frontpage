@@ -2,15 +2,15 @@ import '@testing-library/jest-dom';
 
 // Setup global test environment
 beforeAll(() => {
-  // Mock HTMLCanvasElement methods that might be used in tests
+  // Stub HTMLCanvasElement methods that might be used in tests
   HTMLCanvasElement.prototype.getContext = vi.fn();
   HTMLCanvasElement.prototype.toDataURL = vi.fn();
 
-  // Mock URL.createObjectURL and URL.revokeObjectURL
-  global.URL.createObjectURL = vi.fn(() => 'mock-object-url');
+  // Stub URL.createObjectURL and URL.revokeObjectURL
+  global.URL.createObjectURL = vi.fn(() => 'fake-object-url');
   global.URL.revokeObjectURL = vi.fn();
 
-  // Mock window.matchMedia
+  // Stub window.matchMedia
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation(query => ({
@@ -25,7 +25,7 @@ beforeAll(() => {
     })),
   });
 
-  // Mock ResizeObserver
+  // Stub ResizeObserver
   global.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
@@ -34,6 +34,6 @@ beforeAll(() => {
 });
 
 afterEach(() => {
-  // Clean up any mocks after each test
+  // Clean up any test stubs after each test
   vi.clearAllMocks();
 });

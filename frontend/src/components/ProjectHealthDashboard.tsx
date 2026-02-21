@@ -11,7 +11,7 @@ const ProjectHealthDashboard: React.FC = () => {
   if (summaryLoading) {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h3 className="text-lg font-semibold mb-4">System Health</h3>
+        <h3 className="text-lg font-semibold mb-4">Ecosystem Health</h3>
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded mb-2"></div>
           <div className="h-4 bg-gray-200 rounded mb-2"></div>
@@ -24,7 +24,7 @@ const ProjectHealthDashboard: React.FC = () => {
   if (summaryError) {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h3 className="text-lg font-semibold mb-4">System Health</h3>
+        <h3 className="text-lg font-semibold mb-4">Ecosystem Health</h3>
         <div className="text-red-600 text-sm">
           Unable to load health data
         </div>
@@ -48,7 +48,7 @@ const ProjectHealthDashboard: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <HealthStatusIcon status={summary.overall_status} />
-          System Health
+          Ecosystem Health
         </h3>
 
         <button
@@ -89,7 +89,7 @@ const ProjectHealthDashboard: React.FC = () => {
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <h4 className="text-sm font-medium text-red-800 mb-2 flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-            Critical Issues ({criticalProjects.length})
+            Critical Threats ({criticalProjects.length})
           </h4>
           <div className="space-y-2">
             {criticalProjects.slice(0, 3).map((project: ProjectHealth) => (

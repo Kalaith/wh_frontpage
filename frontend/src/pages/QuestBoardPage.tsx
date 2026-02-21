@@ -321,7 +321,7 @@ const QuestBoardPage: React.FC = () => {
                                 : 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700'
                                 }`}
                         >
-                            {submitting ? 'Submitting...' : 'Submit PR'}
+                            {submitting ? 'Submitting...' : '🛡️ Turn In Quest (Submit PR)'}
                         </button>
                     </div>
                 );
@@ -445,8 +445,8 @@ const QuestBoardPage: React.FC = () => {
                 </div>
             ) : visibleQuests.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200 text-gray-500">
-                    <p className="text-xl font-medium mb-2">No unlocked quests right now.</p>
-                    <p>Complete active quests to unlock the next ones.</p>
+                    <p className="text-xl font-medium mb-2">No quests are currently unlocked.</p>
+                    <p>🧭 Explore the active projects or complete your current missions to reveal new bounties.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -504,9 +504,9 @@ const QuestBoardPage: React.FC = () => {
                                 )}
                                 {selectedQuestAcceptance && (
                                     <span className={`text-xs px-2 py-1 rounded font-semibold ${selectedQuestAcceptance.status === 'completed' ? 'bg-emerald-100 text-emerald-700'
-                                            : selectedQuestAcceptance.status === 'submitted' ? 'bg-blue-100 text-blue-700'
-                                                : selectedQuestAcceptance.status === 'accepted' ? 'bg-amber-100 text-amber-700'
-                                                    : 'bg-red-100 text-red-700'
+                                        : selectedQuestAcceptance.status === 'submitted' ? 'bg-blue-100 text-blue-700'
+                                            : selectedQuestAcceptance.status === 'accepted' ? 'bg-amber-100 text-amber-700'
+                                                : 'bg-red-100 text-red-700'
                                         }`}>
                                         Status: {selectedQuestAcceptance.status.charAt(0).toUpperCase() + selectedQuestAcceptance.status.slice(1)}
                                     </span>
@@ -515,7 +515,7 @@ const QuestBoardPage: React.FC = () => {
 
                             {selectedQuestStatus.blocked && (
                                 <div className="border border-rose-200 bg-rose-50 text-rose-800 rounded-lg p-3 text-sm">
-                                    <strong>Locked:</strong> {selectedQuestStatus.reason ?? 'Complete required quests first.'}
+                                    <strong>🔒 Locked:</strong> Prerequisites required. {selectedQuestStatus.reason ? `(${selectedQuestStatus.reason})` : '(Hover/Click to view missing dependencies)'}
                                 </div>
                             )}
 

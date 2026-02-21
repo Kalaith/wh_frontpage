@@ -1,95 +1,86 @@
 import React, { useEffect, useState } from 'react';
-
-interface WeeklyHeistData {
-    goal: string;
-    target: number;
-    current: number;
-    participants: number;
-    reward: string;
-    endsAt: string;
-}
+import { heistApi, WeeklyHeist as WeeklyHeistData } from '../api/heistApi';
 
 const WeeklyHeist: React.FC = () => {
     const [heist, setHeist] = useState<WeeklyHeistData | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        // Mock data for now — would come from /api/heist/current  
-        setHeist({
-            goal: 'Merge 25 Pull Requests',
-            target: 25,
-            current: 14,
-            participants: 8,
-            reward: '500 XP Bonus + Epic Loot Crate for all participants',
-            endsAt: getNextFriday(),
-        });
+        const fetchHeist = async () => {
+            setIsLoading(true);
+            const currentHeist = await heistApi.fetchCurrentHeist();
+            setHeist(currentHeist);
+            setIsLoading(false);
+        };
+        fetchHeist();
     }, []);
+
+    if (isLoading) {
+        return (
+            <div className="bg-white rounded-xl shadow-sm border-l-4 border-emerald-500 p-8 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+            </div>
+        );
+    }
 
     if (!heist) return null;
 
     const progress = Math.min(100, (heist.current / heist.target) * 100);
-    const daysLeft = Math.max(0, Math.ceil((new Date(heist.endsAt).getTime() - Date.now()) / 86400000));
+    const daysLeft = Math.max(0, Math.ceil((new Date(heist.ends_at).getTime() - Date.now()) / 86400000));
 
     return (
-        <div className="bg-gradient-to-br from-emerald-800 to-teal-900 rounded-xl shadow-xl overflow-hidden text-white">
-            <div className="px-6 py-5">
-                <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border-l-4 border-emerald-500">
+            <div className="p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-2xl">🏴‍☠️</span>
-                            <h3 className="text-xl font-bold">Weekly Heist</h3>
+                            <span className="text-xl sm:text-2xl">🏴‍☠️</span>
+                            <h3 className="text-lg sm:text-xl font-bold text-slate-900">Weekly Heist</h3>
                         </div>
-                        <p className="text-emerald-200 text-sm">Team effort — everyone wins together!</p>
+                        <p className="text-emerald-700 font-medium text-xs sm:text-sm">Team effort — everyone wins together!</p>
                     </div>
-                    <div className="text-right">
-                        <div className="text-xs text-emerald-300 uppercase font-semibold">Time Left</div>
-                        <div className="text-2xl font-bold">{daysLeft}d</div>
+                    <div className="text-left sm:text-right">
+                        <div className="text-[10px] sm:text-xs text-slate-500 uppercase font-bold tracking-wide">Time Left</div>
+                        <div className="text-xl sm:text-2xl font-bold text-slate-800">{daysLeft}d</div>
                     </div>
                 </div>
 
                 {/* Goal */}
-                <div className="bg-white/10 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                    <div className="text-sm text-emerald-200 mb-1">Mission Objective</div>
-                    <div className="font-bold text-lg">{heist.goal}</div>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 sm:p-4 mb-4">
+                    <div className="text-[10px] sm:text-xs uppercase font-bold text-emerald-600 mb-1 tracking-wide">Mission Objective</div>
+                    <div className="font-bold text-base sm:text-lg text-slate-900">{heist.goal}</div>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="mb-3">
-                    <div className="flex justify-between text-sm mb-1">
-                        <span className="text-emerald-200">Progress</span>
-                        <span className="font-mono font-bold">{heist.current} / {heist.target}</span>
+                <div className="mb-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end text-xs sm:text-sm mb-2 gap-1">
+                        <span className="font-semibold text-slate-700">Progress</span>
+                        <span className="font-mono font-bold text-emerald-700 break-words">{heist.current} / {heist.target} Quests Completed.</span>
                     </div>
-                    <div className="w-full bg-emerald-950/50 rounded-full h-4 overflow-hidden">
+                    <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden shadow-inner flex">
                         <div
-                            className="bg-gradient-to-r from-yellow-400 to-amber-500 h-4 rounded-full transition-all duration-1000 ease-out relative"
+                            className="bg-gradient-to-r from-emerald-400 to-teal-500 h-4 rounded-full transition-all duration-1000 ease-out relative shadow-sm"
                             style={{ width: `${progress}%` }}
                         >
-                            <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full"></div>
+                            <div className="absolute inset-0 bg-white/30 animate-pulse rounded-full"></div>
                         </div>
                     </div>
                 </div>
 
                 {/* Stats Row */}
-                <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-1 text-emerald-200">
+                <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center text-xs sm:text-sm pt-3 border-t border-gray-100 gap-2">
+                    <div className="flex items-center gap-1.5 font-medium text-slate-600">
                         <span>👥</span>
                         <span>{heist.participants} participants</span>
                     </div>
-                    <div className="flex items-center gap-1 text-yellow-300">
-                        <span>🏆</span>
-                        <span className="text-xs">{heist.reward}</span>
+                    <div className="flex items-start sm:items-center gap-1.5 font-medium text-amber-600 text-left">
+                        <span className="mt-0.5 sm:mt-0">🏆</span>
+                        <span className="text-[10px] sm:text-xs break-words">{heist.reward}</span>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-
-function getNextFriday(): string {
-    const d = new Date();
-    const day = d.getDay();
-    const daysUntilFriday = (5 - day + 7) % 7 || 7;
-    d.setDate(d.getDate() + daysUntilFriday);
-    return d.toISOString();
-}
 
 export default WeeklyHeist;

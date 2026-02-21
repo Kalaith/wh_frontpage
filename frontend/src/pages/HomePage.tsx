@@ -66,31 +66,35 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
-      <SeasonBanner />
-      <div className="mb-8">
-        <WeeklyHeist />
-      </div>
-      <QuickLinks data={projectsData} isLoading={loading} />
+    <div className="w-full mx-auto px-4 md:px-8 lg:px-12 py-8">
+      <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
 
-      {/* Top Content Grid - Status Guide and Updates side by side */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 mb-8">
-        {/* Left Column - Status Guide */}
-        <div className="xl:col-span-2">
-          <ProjectLegend />
+        {/* Main Content Area (Left side on XL screens) */}
+        <div className="flex-1 min-w-0">
+          <QuickLinks data={projectsData} isLoading={loading} />
+
+          {/* Top Content Grid - Status Guide and Updates side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <ProjectLegend />
+            <div className="space-y-8">
+              <ProjectUpdates />
+              <ProjectHealthDashboard />
+            </div>
+          </div>
+
+          {/* Project Portfolio - Full Width within main area */}
+          <ProjectShowcase data={projectsData} isLoading={loading} />
+
+          <Footer data={projectsData} isLoading={loading} />
         </div>
 
-        {/* Right Column - Updates and Health Dashboard */}
-        <div className="xl:col-span-2 space-y-8">
-          <ProjectUpdates />
-          <ProjectHealthDashboard />
+        {/* Sidebar Area (Right side on XL screens) */}
+        <div className="w-full xl:w-[350px] shrink-0 space-y-6">
+          <SeasonBanner />
+          <WeeklyHeist />
         </div>
+
       </div>
-
-      {/* Project Portfolio - Full Width */}
-      <ProjectShowcase data={projectsData} isLoading={loading} />
-
-      <Footer data={projectsData} isLoading={loading} />
     </div>
   );
 };

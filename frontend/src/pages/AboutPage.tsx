@@ -30,16 +30,16 @@ const AboutPage: React.FC = () => {
       <h2 className="text-2xl font-semibold mt-6 mb-3">🥚 About Eggs</h2>
 
       <p className="mb-4">
-        Eggs are Web Hatchery's playful little currency. You'll receive some eggs every day just for visiting. You can spend them to:
+        **Earn Daily Eggs:** Our playful currency rewards your curiosity. Drop in daily to collect eggs to hatch new ideas or influence the Hatchery's direction!
       </p>
 
       <ul className="list-disc list-inside mb-4">
-        <li>Request new features</li>
-        <li>Boost existing feature requests to raise their priority</li>
+        <li>Request new experiments</li>
+        <li>Boost your favorite ideas to raise their priority</li>
       </ul>
 
       <p>
-        The more eggs a feature has, the more likely it is to be built.
+        The more eggs an idea has, the more likely it is to be built.
       </p>
     </div>
   );

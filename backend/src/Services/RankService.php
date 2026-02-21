@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use PDO;
+use App\Repositories\AdventurerRepository;
+use App\Repositories\QuestAcceptanceRepository;
 
 class RankService
 {
-    private PDO $db;
-    private ?bool $hasRankColumn = null;
+    private AdventurerRepository $adventurerRepo;
+    private QuestAcceptanceRepository $questAcceptanceRepo;
 
     /** Rank thresholds: [rank => [min_completed_quests, min_xp]] */
     private const RANK_THRESHOLDS = [
@@ -21,9 +22,10 @@ class RankService
 
     private const RANK_ORDER = ['Iron', 'Silver', 'Gold', 'Jade', 'Diamond'];
 
-    public function __construct(PDO $db)
+    public function __construct(AdventurerRepository $adventurerRepo, QuestAcceptanceRepository $questAcceptanceRepo)
     {
-        $this->db = $db;
+        $this->adventurerRepo = $adventurerRepo;
+        $this->questAcceptanceRepo = $questAcceptanceRepo;
     }
 
     /**
@@ -40,13 +42,7 @@ class RankService
      */
     public function getAdventurerRank(int $adventurerId): string
     {
-        if (!$this->rankColumnExists()) {
-            return 'Iron';
-        }
-
-        $stmt = $this->db->prepare("SELECT `rank` FROM adventurers WHERE id = ?");
-        $stmt->execute([$adventurerId]);
-        $rank = $stmt->fetchColumn();
+        $rank = $this->adventurerRepo->getRank($adventurerId);
         return $rank ?: 'Iron';
     }
 
@@ -59,16 +55,10 @@ class RankService
         $oldRank = $this->getAdventurerRank($adventurerId);
 
         // Count completed quests
-        $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM quest_acceptances WHERE adventurer_id = ? AND status = 'completed'"
-        );
-        $stmt->execute([$adventurerId]);
-        $completedQuests = (int) $stmt->fetchColumn();
+        $completedQuests = $this->questAcceptanceRepo->countCompletedByAdventurer($adventurerId);
 
         // Get total XP
-        $stmt = $this->db->prepare("SELECT xp_total FROM adventurers WHERE id = ?");
-        $stmt->execute([$adventurerId]);
-        $totalXp = (int) $stmt->fetchColumn();
+        $totalXp = $this->adventurerRepo->getXp($adventurerId);
 
         // Determine highest rank met
         $newRank = 'Iron';
@@ -80,12 +70,10 @@ class RankService
 
         // Update if changed
         if (
-            $this->rankColumnExists() &&
             $newRank !== $oldRank &&
             $this->rankIndex($newRank) > $this->rankIndex($oldRank)
         ) {
-            $stmt = $this->db->prepare("UPDATE adventurers SET `rank` = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->execute([$newRank, $adventurerId]);
+            $this->adventurerRepo->updateRank($adventurerId, $newRank);
         }
 
         return [
@@ -104,16 +92,10 @@ class RankService
         $currentIdx = $this->rankIndex($currentRank);
 
         // Count completed quests
-        $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM quest_acceptances WHERE adventurer_id = ? AND status = 'completed'"
-        );
-        $stmt->execute([$adventurerId]);
-        $completedQuests = (int) $stmt->fetchColumn();
+        $completedQuests = $this->questAcceptanceRepo->countCompletedByAdventurer($adventurerId);
 
         // Get total XP
-        $stmt = $this->db->prepare("SELECT xp_total FROM adventurers WHERE id = ?");
-        $stmt->execute([$adventurerId]);
-        $totalXp = (int) $stmt->fetchColumn();
+        $totalXp = $this->adventurerRepo->getXp($adventurerId);
 
         $nextRank = null;
         $questsNeeded = 0;
@@ -147,21 +129,5 @@ class RankService
     {
         $idx = array_search($rank, self::RANK_ORDER, true);
         return $idx !== false ? (int) $idx : 0;
-    }
-
-    private function rankColumnExists(): bool
-    {
-        if ($this->hasRankColumn !== null) {
-            return $this->hasRankColumn;
-        }
-
-        try {
-            $stmt = $this->db->query("SHOW COLUMNS FROM adventurers LIKE 'rank'");
-            $this->hasRankColumn = (bool)$stmt->fetch();
-        } catch (\Throwable) {
-            $this->hasRankColumn = false;
-        }
-
-        return $this->hasRankColumn;
     }
 }

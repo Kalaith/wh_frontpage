@@ -25,10 +25,10 @@ $router->get('/api/health', function (Request $request, Response $response) {
             'message' => 'Frontpage API is running',
             'timestamp' => date('Y-m-d H:i:s'),
             'version' => '1.0.0',
-            'environment' => $_ENV['APP_ENV'] ?? 'unknown',
+            'environment' => $_ENV['APP_ENV'] ?? throw new \RuntimeException('APP_ENV environment variable is not set'),
             'php_version' => PHP_VERSION,
             'memory_usage' => memory_get_usage(true),
-            'base_path' => $_ENV['APP_BASE_PATH'] ?? 'not set'
+            'base_path' => $_ENV['APP_BASE_PATH'] ?? throw new \RuntimeException('APP_BASE_PATH environment variable is not set')
         ]);
     } catch (\Exception $e) {
         $response->error('Health check failed: ' . $e->getMessage(), 500);
@@ -37,14 +37,14 @@ $router->get('/api/health', function (Request $request, Response $response) {
 
 // Debug endpoint (Development only)
 $router->get('/api/debug', function (Request $request, Response $response) {
-    if (($_ENV['APP_ENV'] ?? 'production') !== 'development') {
+    if (($_ENV['APP_ENV'] ?? throw new \RuntimeException('APP_ENV environment variable is not set')) !== 'development') {
         $response->error('Debug endpoint only available in development', 403);
         return;
     }
 
     $response->success([
-        'environment' => $_ENV['APP_ENV'] ?? 'unknown',
-        'base_path' => $_ENV['APP_BASE_PATH'] ?? 'not set',
+        'environment' => $_ENV['APP_ENV'] ?? throw new \RuntimeException('APP_ENV environment variable is not set'),
+        'base_path' => $_ENV['APP_BASE_PATH'] ?? throw new \RuntimeException('APP_BASE_PATH environment variable is not set'),
         'php_version' => PHP_VERSION,
         'memory_usage' => memory_get_usage(true),
         'server_info' => [
@@ -84,12 +84,11 @@ $router->get('/api/leaderboard', [\App\Controllers\LeaderboardController::class,
 $router->get('/api/adventurers/{username}', [\App\Controllers\AdventurerController::class, 'show']);
 
 // Public Boss Routes
-$router->get('/api/bosses/current', [\App\Controllers\BossController::class, 'current']);
+$router->get('/api/bosses', [\App\Controllers\BossController::class, 'index']);
 
-// Public Loot Crate Routes
-$router->get('/api/crates/preview', [\App\Controllers\LootCrateController::class, 'preview']);
-$router->get('/api/adventurers/{username}/crates', [\App\Controllers\LootCrateController::class, 'index']);
-$router->post('/api/crates/{id}/open', [\App\Controllers\LootCrateController::class, 'open']);
+// Public Weekly Heist Routes
+$router->get('/api/heist/current', [\App\Controllers\WeeklyHeistController::class, 'current']);
+
 
 // Public Quest Chain Routes
 $router->get('/api/quest-chains', [\App\Controllers\QuestChainController::class, 'index']);

@@ -3,13 +3,11 @@
  *
  * This directory contains static data files such as:
  * - Constants and configuration data
- * - Mock data for development/testing
  * - Static JSON data files
  * - Type definitions for data structures
  *
  * Example usage:
  * - constants.ts - Application constants
- * - mockData.ts - Mock data for testing
  * - config.ts - Configuration objects
  */
 

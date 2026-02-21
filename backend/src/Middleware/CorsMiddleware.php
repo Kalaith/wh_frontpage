@@ -14,8 +14,8 @@ class CorsMiddleware implements MiddlewareInterface
         $method = strtoupper($request->getMethod());
         $origin = $request->getHeaderLine('Origin');
 
-        // Read allowed origins from environment (comma-separated). Default is localhost dev origin.
-        $allowedOriginsRaw = $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'http://localhost:5173';
+        // Read allowed origins from environment (comma-separated).
+        $allowedOriginsRaw = $_ENV['CORS_ALLOWED_ORIGINS'] ?? throw new \RuntimeException('CORS_ALLOWED_ORIGINS environment variable is not set');
         $allowedOrigins = array_map('trim', explode(',', $allowedOriginsRaw));
 
         // Decide Access-Control-Allow-Origin value
@@ -33,7 +33,7 @@ class CorsMiddleware implements MiddlewareInterface
 
         // Build allowed headers list: prefer explicit env setting, else echo requested headers + common ones
         $requestedHeaders = $request->getHeaderLine('Access-Control-Request-Headers');
-        $envHeaders = $_ENV['CORS_ALLOWED_HEADERS'] ?? '';
+        $envHeaders = $_ENV['CORS_ALLOWED_HEADERS'] ?? throw new \RuntimeException('CORS_ALLOWED_HEADERS environment variable is not set');
         if ($envHeaders) {
             $allowHeaders = $envHeaders;
         } elseif ($requestedHeaders) {

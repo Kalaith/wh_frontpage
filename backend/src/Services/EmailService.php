@@ -20,13 +20,13 @@ class EmailService
     public function __construct()
     {
         // Load email configuration from environment
-        $this->fromEmail = $_ENV['EMAIL_FROM'] ?? 'noreply@webhatchery.au';
-        $this->fromName = $_ENV['EMAIL_FROM_NAME'] ?? 'WebHatchery';
-        $this->smtpHost = $_ENV['SMTP_HOST'] ?? '';
-        $this->smtpPort = $_ENV['SMTP_PORT'] ?? 587;
-        $this->smtpUsername = $_ENV['SMTP_USERNAME'] ?? '';
-        $this->smtpPassword = $_ENV['SMTP_PASSWORD'] ?? '';
-        $this->enabled = filter_var($_ENV['EMAIL_ENABLED'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+        $this->fromEmail = $_ENV['EMAIL_FROM'] ?? throw new \RuntimeException('EMAIL_FROM env is not set');
+        $this->fromName = $_ENV['EMAIL_FROM_NAME'] ?? throw new \RuntimeException('EMAIL_FROM_NAME env is not set');
+        $this->smtpHost = $_ENV['SMTP_HOST'] ?? throw new \RuntimeException('SMTP_HOST env is not set');
+        $this->smtpPort = $_ENV['SMTP_PORT'] ?? throw new \RuntimeException('SMTP_PORT env is not set');
+        $this->smtpUsername = $_ENV['SMTP_USERNAME'] ?? throw new \RuntimeException('SMTP_USERNAME env is not set');
+        $this->smtpPassword = $_ENV['SMTP_PASSWORD'] ?? throw new \RuntimeException('SMTP_PASSWORD env is not set');
+        $this->enabled = filter_var($_ENV['EMAIL_ENABLED'] ?? throw new \RuntimeException('EMAIL_ENABLED env is not set'), FILTER_VALIDATE_BOOLEAN);
     }
 
     public function sendPendingNotifications($limit = 50)
@@ -182,7 +182,7 @@ class EmailService
 
     private function generateNotificationSpecificContent(EmailNotification $notification)
     {
-        $baseUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:3000';
+        $baseUrl = $_ENV['FRONTEND_URL'] ?? throw new \RuntimeException('FRONTEND_URL env is not set');
         
         switch ($notification->type) {
             case 'feature_approved':

@@ -10,7 +10,7 @@ class AuthService
 
     public function __construct()
     {
-        $this->authBaseUrl = rtrim($_ENV['AUTH_SERVICE_URL'] ?? ($_ENV['APP_AUTH_URL'] ?? ($_ENV['AUTH_API_URL'] ?? 'http://localhost:8001/api')), '/');
+        $this->authBaseUrl = rtrim($_ENV['AUTH_SERVICE_URL'] ?? throw new \RuntimeException('AUTH_SERVICE_URL environment variable is not set'), '/');
     }
 
     public function forward(string $path, array $body = [], string $method = 'POST', array $headers = []): array

@@ -57,7 +57,7 @@ const AdventurerProfilePage: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
             {/* Header / Hero */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-700 h-32 relative"></div>
+                <div className="bg-slate-50 border-b border-gray-100 h-32 relative"></div>
                 <div className="px-8 pb-8 flex flex-col md:flex-row items-end -mt-12 gap-6 relative">
                     <div className="w-24 h-24 bg-white rounded-full p-2 shadow-lg flex items-center justify-center text-5xl">
                         {classIcon}
@@ -74,7 +74,7 @@ const AdventurerProfilePage: React.FC = () => {
                         </p>
                     </div>
                     <div className="text-center md:text-right">
-                        <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600">
+                        <div className="text-4xl font-bold text-indigo-600">
                             {adventurer.xp_total.toLocaleString()} XP
                         </div>
                         <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold mt-1">Total Experience</div>

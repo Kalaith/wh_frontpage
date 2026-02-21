@@ -21,7 +21,7 @@ final class MigrationController
     public function runSync(Request $request, Response $response): void
     {
         // IP restriction for security
-        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? null;
+        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? throw new \RuntimeException('ALLOWED_ADMIN_IP environment variable is not set');
         $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
         $clientIp = explode(',', $clientIp)[0];
         

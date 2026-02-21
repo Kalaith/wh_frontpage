@@ -38,35 +38,9 @@ final class ServiceFactory
     /** @var array<string, object> */
     private static array $instances = [];
 
-    private static ?\PDO $db = null;
-
-    private function getDb(): \PDO
-    {
-        if (self::$db !== null) {
-            return self::$db;
-        }
-
-        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $db   = $_ENV['DB_DATABASE'] ?? 'webhatchery';
-        $user = $_ENV['DB_USERNAME'] ?? 'root';
-        $pass = $_ENV['DB_PASSWORD'] ?? '';
-        $port = $_ENV['DB_PORT'] ?? '3306';
-        $charset = 'utf8mb4';
-
-        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
-        $options = [
-            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-            \PDO::ATTR_EMULATE_PREPARES   => false,
-        ];
-
-        self::$db = new \PDO($dsn, $user, $pass, $options);
-        return self::$db;
-    }
-
     public function create(string $class): object
     {
-        $db = $this->getDb();
+        $db = \App\Repositories\DatabaseManager::getConnection();
 
         // Repositories
         $projectRepo = new \App\Repositories\ProjectRepository($db);
@@ -80,9 +54,13 @@ final class ServiceFactory
         $notificationRepo = new \App\Repositories\EmailNotificationRepository($db);
         $adventurerRepo = new \App\Repositories\AdventurerRepository($db);
         $bossRepo = new \App\Repositories\BossRepository($db);
-        $lootCrateRepo = new \App\Repositories\LootCrateRepository($db);
-        $gamificationService = new \App\Services\GamificationService($db, $adventurerRepo);
-        $lootCrateService = new \App\Services\LootCrateService($db, $lootCrateRepo, $adventurerRepo, $gamificationService);
+        $xpLedgerRepo = new \App\Repositories\XpLedgerRepository($db);
+        $badgeRepo = new \App\Repositories\BadgeRepository($db);
+        $questAcceptanceRepo = new \App\Repositories\QuestAcceptanceRepository($db);
+        $questChainRepo = new \App\Repositories\QuestChainRepository($db);
+        
+        $gamificationService = new \App\Services\GamificationService($adventurerRepo, $badgeRepo, $xpLedgerRepo);
+        $rankService = new \App\Services\RankService($adventurerRepo, $questAcceptanceRepo);
 
         // Reusable services
         if (isset(self::$instances[$class])) {
@@ -134,7 +112,9 @@ final class ServiceFactory
             ),
             \App\Controllers\QuestController::class => new \App\Controllers\QuestController(
                 new \App\Services\GitHubService(),
-                $db
+                $projectRepo,
+                $questChainRepo,
+                new \App\Repositories\DatabaseManager()
             ),
             AdminController::class => new AdminController(
                 $userRepo,
@@ -152,13 +132,15 @@ final class ServiceFactory
             ),
             \App\Controllers\LeaderboardController::class => new \App\Controllers\LeaderboardController($adventurerRepo),
             \App\Controllers\AdventurerController::class => new \App\Controllers\AdventurerController($adventurerRepo),
-            \App\Controllers\BossController::class => new \App\Controllers\BossController($bossRepo),
-            \App\Controllers\LootCrateController::class => new \App\Controllers\LootCrateController($lootCrateService, $lootCrateRepo),
-            \App\Controllers\QuestChainController::class => new \App\Controllers\QuestChainController($db),
-            \App\Controllers\WandererController::class => new \App\Controllers\WandererController($db, $adventurerRepo),
+            \App\Controllers\BossController::class => new \App\Controllers\BossController($bossRepo, $projectRepo),
+            \App\Controllers\WeeklyHeistController::class => new \App\Controllers\WeeklyHeistController(
+                new \App\Repositories\WeeklyHeistRepository($db)
+            ),
+            \App\Controllers\QuestChainController::class => new \App\Controllers\QuestChainController($questChainRepo),
+            \App\Controllers\WandererController::class => new \App\Controllers\WandererController($adventurerRepo),
             \App\Controllers\QuestAcceptanceController::class => new \App\Controllers\QuestAcceptanceController(
-                $db,
-                new \App\Services\RankService($db),
+                $questAcceptanceRepo,
+                $rankService,
                 $gamificationService,
                 $adventurerRepo
             ),

@@ -6,6 +6,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Config\Config;
 use App\Repositories\UserRepository;
+use App\Repositories\DatabaseManager;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -34,21 +35,9 @@ class JwtAuthMiddleware
             // Look up user in database using repository
             $userId = (int) $payload['user_id'];
             
-            // Create PDO and repository
-            $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-            $db = $_ENV['DB_DATABASE'] ?? 'frontpage';
-            $dbUser = $_ENV['DB_USERNAME'] ?? 'root';
-            $pass = $_ENV['DB_PASSWORD'] ?? '';
-            $port = $_ENV['DB_PORT'] ?? '3306';
-            
-            $pdo = new \PDO(
-                "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4",
-                $dbUser,
-                $pass,
-                [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]
-            );
-            
-            $userRepo = new UserRepository($pdo);
+            // Create repository using DatabaseManager
+            $db = DatabaseManager::getConnection();
+            $userRepo = new UserRepository($db);
             $user = $userRepo->findById($userId);
             
             if (!$user) {

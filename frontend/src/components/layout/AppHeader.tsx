@@ -18,12 +18,9 @@ export const AppHeader: React.FC = () => {
   const navItems = useMemo<NavItem[]>(() => {
     const items: NavItem[] = [
       { path: '/', label: 'Home' },
-      { path: '/tracker', label: 'Tracker' },
       { path: '/quests', label: 'Quests' },
       { path: '/leaderboard', label: 'Leaderboard' },
       { path: '/bosses', label: 'Bosses' },
-      { path: '/features', label: 'Features' },
-      { path: '/ideas', label: 'Ideas' },
       { path: '/about', label: 'About' },
     ];
 

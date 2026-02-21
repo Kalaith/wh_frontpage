@@ -11,7 +11,7 @@ class GitHubService
 
     public function __construct()
     {
-        $this->token = $_ENV['GITHUB_TOKEN'] ?? null;
+        $this->token = $_ENV['GITHUB_TOKEN'] ?? throw new \RuntimeException('GITHUB_TOKEN environment variable is not set');
     }
 
     /**

@@ -5,18 +5,28 @@ namespace App\Controllers;
 
 use App\Core\Request;
 use App\Core\Response;
+use App\Repositories\ProjectRepository;
+use App\Repositories\QuestChainRepository;
+use App\Repositories\DatabaseManager;
 use App\Services\GitHubService;
-use PDO;
 
 class QuestController
 {
     private GitHubService $github;
-    private ?PDO $db;
+    private ProjectRepository $projectRepo;
+    private QuestChainRepository $questChainRepo;
+    private DatabaseManager $dbManager;
 
-    public function __construct(GitHubService $github, ?PDO $db = null)
-    {
+    public function __construct(
+        GitHubService $github,
+        ProjectRepository $projectRepo,
+        QuestChainRepository $questChainRepo,
+        DatabaseManager $dbManager
+    ) {
         $this->github = $github;
-        $this->db = $db;
+        $this->projectRepo = $projectRepo;
+        $this->questChainRepo = $questChainRepo;
+        $this->dbManager = $dbManager;
     }
 
     public function index(Request $request, Response $response): void
@@ -90,9 +100,7 @@ class QuestController
         }
 
         try {
-            $projectStmt = $this->db->prepare('SELECT id, title, owner_user_id FROM projects WHERE id = ? LIMIT 1');
-            $projectStmt->execute([$projectId]);
-            $project = $projectStmt->fetch(PDO::FETCH_ASSOC);
+            $project = $this->projectRepo->findById($projectId);
 
             if (!$project) {
                 $response->error('Project not found', 404);
@@ -112,12 +120,10 @@ class QuestController
                 return;
             }
 
-            $this->db->beginTransaction();
+            $this->dbManager->beginTransaction();
 
             $chainSlug = "project-{$projectId}-quests";
-            $chainStmt = $this->db->prepare('SELECT id, name, description, steps FROM quest_chains WHERE slug = ? LIMIT 1');
-            $chainStmt->execute([$chainSlug]);
-            $chain = $chainStmt->fetch(PDO::FETCH_ASSOC);
+            $chain = $this->questChainRepo->findBySlug($chainSlug);
 
             if (!$chain) {
                 $chainName = (string)$project['title'] . ': Project Quests';
@@ -128,21 +134,14 @@ class QuestController
                         'project_id' => $projectId,
                     ], JSON_UNESCAPED_SLASHES);
 
-                $insertChain = $this->db->prepare(
-                    'INSERT INTO quest_chains (slug, name, description, steps, total_steps, reward_xp, is_active, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
-                );
-                $insertChain->execute([
+                $chainId = $this->questChainRepo->createChain(
                     $chainSlug,
                     $chainName,
                     $chainDescription,
-                    json_encode([], JSON_UNESCAPED_SLASHES),
-                    0,
-                    0,
-                    1,
-                ]);
+                    [],
+                    0
+                );
 
-                $chainId = (int)$this->db->lastInsertId();
                 $steps = [];
             } else {
                 $chainId = (int)$chain['id'];
@@ -187,24 +186,17 @@ class QuestController
 
             $steps[] = $step;
 
-            $updateChain = $this->db->prepare(
-                'UPDATE quest_chains SET steps = ?, total_steps = ? WHERE id = ?'
-            );
-            $updateChain->execute([
-                json_encode($steps, JSON_UNESCAPED_SLASHES),
-                count($steps),
-                $chainId,
-            ]);
+            $this->questChainRepo->updateSteps($chainId, $steps);
 
-            $this->db->commit();
+            $this->dbManager->commit();
             $response->withStatus(201)->success([
                 'project_id' => $projectId,
                 'chain_slug' => $chainSlug,
                 'quest' => $step,
             ], 'Quest posted successfully');
         } catch (\Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
+            if ($this->dbManager->inTransaction()) {
+                $this->dbManager->rollBack();
             }
             $response->error('Failed to post quest: ' . $e->getMessage(), 500);
         }
@@ -218,13 +210,8 @@ class QuestController
 
     private function getQuestsFromDatabase(?string $class, mixed $difficulty, ?int $projectId = null): array
     {
-        if ($this->db === null) {
-            return [];
-        }
-
         try {
-            $stmt = $this->db->query("SELECT id, slug, name, steps FROM quest_chains WHERE is_active = TRUE ORDER BY created_at ASC");
-            $chains = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $chains = $this->questChainRepo->getAllActive();
         } catch (\Throwable $e) {
             return [];
         }

@@ -8,12 +8,12 @@ interface QuestCardProps {
     acceptance?: QuestAcceptance | null;
 }
 
-const RANK_CARD_STYLES: Record<string, string> = {
-    iron: 'bg-stone-50 border-stone-200',
-    silver: 'bg-slate-50 border-slate-200',
-    gold: 'bg-amber-50 border-amber-200',
-    jade: 'bg-emerald-50 border-emerald-200',
-    diamond: 'bg-cyan-50 border-cyan-200',
+const RANK_BORDER_STYLES: Record<string, string> = {
+    iron: 'border-l-stone-400',
+    silver: 'border-l-slate-400',
+    gold: 'border-l-amber-400',
+    jade: 'border-l-emerald-400',
+    diamond: 'border-l-cyan-400',
 };
 
 const STATUS_BADGES: Record<string, { label: string; classes: string }> = {
@@ -31,7 +31,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onViewDetails, isBl
     const level = quest.quest_level ?? quest.difficulty ?? 1;
     const derivedRank = level <= 1 ? 'Iron' : level === 2 ? 'Silver' : level === 3 ? 'Gold' : level === 4 ? 'Jade' : 'Diamond';
     const normalizedRank = String(quest.rank_required ?? derivedRank).toLowerCase();
-    const cardRankStyle = RANK_CARD_STYLES[normalizedRank] ?? RANK_CARD_STYLES.iron;
+    const rankBorderStyle = RANK_BORDER_STYLES[normalizedRank] ?? RANK_BORDER_STYLES.iron;
 
     const extraLabels = quest.labels
         .filter((l) => !l.name.startsWith('difficulty:') && !l.name.startsWith('xp:') && l.name !== 'quest')
@@ -91,26 +91,26 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onViewDetails, isBl
         return 'Continue Quest';
     };
 
-    const headerGradient = status === 'completed'
-        ? 'from-emerald-500 to-teal-600'
+    const statusBorderStyle = status === 'completed'
+        ? 'border-l-emerald-500'
         : status === 'accepted'
-            ? 'from-amber-500 to-orange-600'
+            ? 'border-l-amber-500'
             : status === 'submitted'
-                ? 'from-blue-500 to-sky-600'
-                : 'from-indigo-600 to-purple-600';
+                ? 'border-l-blue-500'
+                : rankBorderStyle;
 
     return (
-        <div className={`rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border flex flex-col h-full ${cardRankStyle}`}>
-            <div className={`bg-gradient-to-r ${headerGradient} p-3 flex justify-between items-center text-white`}>
-                <div className="flex-1 min-w-0">
-                    <span className="font-bold text-sm tracking-wider truncate block">{quest.title}</span>
+        <div className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100 flex flex-col h-full border-l-4 ${statusBorderStyle}`}>
+            <div className={`p-4 pb-3 border-b border-gray-100 flex justify-between items-start`}>
+                <div className="flex-1 min-w-0 pr-2">
+                    <span className="font-bold text-lg text-slate-800 tracking-tight block leading-tight">{quest.title}</span>
                     {statusBadge && (
-                        <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${statusBadge.classes}`}>
+                        <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${statusBadge.classes}`}>
                             {statusBadge.label}
                         </span>
                     )}
                 </div>
-                <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold ml-2 whitespace-nowrap">{quest.xp} XP</span>
+                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap border border-blue-100">{quest.xp} XP</span>
             </div>
 
             <div className="p-4 flex-1 flex flex-col gap-3">
@@ -176,8 +176,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onViewDetails, isBl
                         type="button"
                         onClick={() => onViewDetails?.(quest)}
                         className={`block w-full text-center font-semibold py-2 px-4 rounded transition-colors text-sm ${status === 'completed'
-                                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'
-                                : 'bg-gray-50 hover:bg-gray-100 text-indigo-600'
+                            ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'
+                            : 'bg-gray-50 hover:bg-gray-100 text-indigo-600'
                             }`}
                     >
                         {getButtonText()}

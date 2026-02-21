@@ -8,22 +8,22 @@ use App\Core\Response;
 use App\Services\GamificationService;
 use App\Services\RankService;
 use App\Repositories\AdventurerRepository;
-use PDO;
+use App\Repositories\QuestAcceptanceRepository;
 
 class QuestAcceptanceController
 {
-    private PDO $db;
+    private QuestAcceptanceRepository $questAcceptanceRepo;
     private RankService $rankService;
     private GamificationService $gamificationService;
     private AdventurerRepository $adventurerRepo;
 
     public function __construct(
-        PDO $db,
+        QuestAcceptanceRepository $questAcceptanceRepo,
         RankService $rankService,
         GamificationService $gamificationService,
         AdventurerRepository $adventurerRepo
     ) {
-        $this->db = $db;
+        $this->questAcceptanceRepo = $questAcceptanceRepo;
         $this->rankService = $rankService;
         $this->gamificationService = $gamificationService;
         $this->adventurerRepo = $adventurerRepo;
@@ -62,11 +62,7 @@ class QuestAcceptanceController
         }
 
         // Check if already accepted
-        $stmt = $this->db->prepare(
-            "SELECT id, status FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
-        );
-        $stmt->execute([$adventurer->id, $questRef]);
-        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+        $existing = $this->questAcceptanceRepo->findByRef($adventurer->id, $questRef);
 
         if ($existing) {
             $response->success(['status' => $existing['status'], 'message' => 'Quest already accepted']);
@@ -74,14 +70,11 @@ class QuestAcceptanceController
         }
 
         // Create acceptance
-        $stmt = $this->db->prepare(
-            "INSERT INTO quest_acceptances (adventurer_id, quest_ref, status, accepted_at)
-             VALUES (?, ?, 'accepted', NOW())"
-        );
-        $stmt->execute([$adventurer->id, $questRef]);
+        $this->questAcceptanceRepo->create($adventurer->id, $questRef);
+        $newAcceptance = $this->questAcceptanceRepo->findByRef($adventurer->id, $questRef);
 
         $response->success([
-            'id' => (int) $this->db->lastInsertId(),
+            'id' => (int) ($newAcceptance['id'] ?? 0),
             'quest_ref' => $questRef,
             'status' => 'accepted',
             'message' => 'Quest accepted! Good luck, adventurer.',
@@ -106,14 +99,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT id, quest_ref, status, accepted_at, submitted_at, completed_at
-             FROM quest_acceptances
-             WHERE adventurer_id = ?
-             ORDER BY accepted_at DESC"
-        );
-        $stmt->execute([$adventurer->id]);
-        $acceptances = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $acceptances = $this->questAcceptanceRepo->findAllByAdventurer($adventurer->id);
 
         // Also include rank progress
         $rankProgress = $this->rankService->getRankProgress($adventurer->id);
@@ -148,11 +134,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT id, status FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
-        );
-        $stmt->execute([$adventurer->id, $questRef]);
-        $acceptance = $stmt->fetch(PDO::FETCH_ASSOC);
+        $acceptance = $this->questAcceptanceRepo->findByRef($adventurer->id, $questRef);
 
         if (!$acceptance) {
             $response->error('You have not accepted this quest', 404);
@@ -176,14 +158,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "UPDATE quest_acceptances
-             SET status = 'submitted',
-                 submitted_at = NOW(),
-                 review_notes = ?
-             WHERE id = ?"
-        );
-        $stmt->execute(["PR: {$prUrl}", $acceptance['id']]);
+        $this->questAcceptanceRepo->updateReviewStatus((int)$acceptance['id'], 'submitted', "PR: {$prUrl}");
 
         $response->success([
             'quest_ref' => $questRef,
@@ -217,11 +192,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT id, status FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
-        );
-        $stmt->execute([$adventurer->id, $questRef]);
-        $acceptance = $stmt->fetch(PDO::FETCH_ASSOC);
+        $acceptance = $this->questAcceptanceRepo->findByRef($adventurer->id, $questRef);
 
         if (!$acceptance) {
             $response->error('Quest acceptance not found', 404);
@@ -233,8 +204,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare("DELETE FROM quest_acceptances WHERE id = ?");
-        $stmt->execute([(int) $acceptance['id']]);
+        $this->questAcceptanceRepo->delete((int) $acceptance['id']);
 
         $response->success([
             'quest_ref' => $questRef,
@@ -266,11 +236,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT id, status, review_notes FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
-        );
-        $stmt->execute([$targetAdventurerId, $questRef]);
-        $acceptance = $stmt->fetch(PDO::FETCH_ASSOC);
+        $acceptance = $this->questAcceptanceRepo->findByRef($targetAdventurerId, $questRef);
 
         if (!$acceptance) {
             $response->error('Quest acceptance not found', 404);
@@ -288,12 +254,7 @@ class QuestAcceptanceController
         $finalReviewNotes = trim($reviewNotes) !== '' ? $reviewNotes : (string)($acceptance['review_notes'] ?? '');
 
         // Mark completed
-        $stmt = $this->db->prepare(
-            "UPDATE quest_acceptances
-             SET status = 'completed', completed_at = NOW(), reviewer_adventurer_id = ?, review_notes = ?
-             WHERE id = ?"
-        );
-        $stmt->execute([$reviewerAdventurerId, $finalReviewNotes, $acceptance['id']]);
+        $this->questAcceptanceRepo->updateReviewStatus((int)$acceptance['id'], 'completed', $finalReviewNotes, $reviewerAdventurerId);
 
         // Award XP to the quest completer
         $xpResult = null;
@@ -359,11 +320,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT id, status FROM quest_acceptances WHERE adventurer_id = ? AND quest_ref = ?"
-        );
-        $stmt->execute([$targetAdventurerId, $questRef]);
-        $acceptance = $stmt->fetch(PDO::FETCH_ASSOC);
+        $acceptance = $this->questAcceptanceRepo->findByRef($targetAdventurerId, $questRef);
 
         if (!$acceptance || $acceptance['status'] !== 'submitted') {
             $response->error('Quest must be in submitted status for review', 400);
@@ -372,12 +329,7 @@ class QuestAcceptanceController
 
         $newStatus = $approved ? 'completed' : 'rejected';
 
-        $stmt = $this->db->prepare(
-            "UPDATE quest_acceptances
-             SET status = ?, completed_at = IF(? = 'completed', NOW(), NULL), reviewer_adventurer_id = ?, review_notes = ?
-             WHERE id = ?"
-        );
-        $stmt->execute([$newStatus, $newStatus, $reviewer->id, $reviewNotes, $acceptance['id']]);
+        $this->questAcceptanceRepo->updateReviewStatus((int)$acceptance['id'], $newStatus, $reviewNotes, $reviewer->id);
 
         // Award XP to completer if approved
         if ($approved && $xpReward > 0) {

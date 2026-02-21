@@ -6,16 +6,13 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Repositories\AdventurerRepository;
-use PDO;
 
 class WandererController
 {
-    private PDO $db;
     private AdventurerRepository $adventurerRepo;
 
-    public function __construct(PDO $db, AdventurerRepository $adventurerRepo)
+    public function __construct(AdventurerRepository $adventurerRepo)
     {
-        $this->db = $db;
         $this->adventurerRepo = $adventurerRepo;
     }
 
@@ -35,15 +32,7 @@ class WandererController
 
         try {
             // Count distinct projects contributed to
-            $stmt = $this->db->prepare("
-                SELECT COUNT(DISTINCT project_id) as project_count,
-                       SUM(contributions) as total_contributions,
-                       SUM(reviews) as total_reviews
-                FROM habitat_mastery 
-                WHERE adventurer_id = ?
-            ");
-            $stmt->execute([$adventurer->id]);
-            $stats = $stmt->fetch();
+            $stats = $this->adventurerRepo->getWandererStats($adventurer->id);
 
             // Get mastery details
             $mastery = $this->adventurerRepo->getMastery($adventurer->id);
@@ -60,13 +49,12 @@ class WandererController
                 'wanderer_title' => $this->getWandererTitle($wandererLevel),
             ]);
         } catch (\Exception $e) {
-            // Mock fallback
             $response->success([
                 'username' => $username,
                 'wanderer_level' => 1,
-                'projects_touched' => 1,
-                'total_contributions' => 5,
-                'total_reviews' => 2,
+                'projects_touched' => 0,
+                'total_contributions' => 0,
+                'total_reviews' => 0,
                 'mastery' => [],
                 'wanderer_title' => 'Local Explorer',
             ]);

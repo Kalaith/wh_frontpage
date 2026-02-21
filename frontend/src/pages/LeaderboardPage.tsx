@@ -36,10 +36,8 @@ const LeaderboardPage: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <header className="mb-8 text-center">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600">
-                        Season 1: The Awakening
-                    </span>
+                <h1 className="text-4xl font-bold text-slate-900 mb-2 tracking-tight">
+                    Season 1: The Awakening
                 </h1>
                 <p className="text-lg text-gray-600">Global Rankings & Habitat Mastery</p>
             </header>

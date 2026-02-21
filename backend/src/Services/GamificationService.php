@@ -4,17 +4,23 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Repositories\AdventurerRepository;
-use PDO;
+use App\Repositories\BadgeRepository;
+use App\Repositories\XpLedgerRepository;
 
 class GamificationService
 {
-    private PDO $db;
     private AdventurerRepository $adventurerRepo;
+    private BadgeRepository $badgeRepo;
+    private XpLedgerRepository $xpLedgerRepo;
 
-    public function __construct(PDO $db, AdventurerRepository $adventurerRepo)
-    {
-        $this->db = $db;
+    public function __construct(
+        AdventurerRepository $adventurerRepo,
+        BadgeRepository $badgeRepo,
+        XpLedgerRepository $xpLedgerRepo
+    ) {
         $this->adventurerRepo = $adventurerRepo;
+        $this->badgeRepo = $badgeRepo;
+        $this->xpLedgerRepo = $xpLedgerRepo;
     }
 
     public function awardXp(int $adventurerId, int $amount, string $sourceType, string $sourceRef = ''): array
@@ -47,12 +53,10 @@ class GamificationService
         }
 
         // Update Adventurer
-        $stmt = $this->db->prepare("UPDATE adventurers SET xp_total = ?, level = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->execute([$newXp, $newLevel, $adventurerId]);
+        $this->adventurerRepo->updateXpAndLevel($adventurerId, $newXp, $newLevel);
 
         // Log Ledger
-        $stmt = $this->db->prepare("INSERT INTO xp_ledger (adventurer_id, amount, source_type, source_ref, created_at) VALUES (?, ?, ?, ?, NOW())");
-        $stmt->execute([$adventurerId, $amount, $sourceType, $sourceRef]);
+        $this->xpLedgerRepo->addXp($adventurerId, $amount, $sourceType, $sourceRef);
 
         // Check for Badges (Basic Logic)
         $newBadges = $this->checkBadges($adventurerId, $newXp, $newLevel);
@@ -71,30 +75,17 @@ class GamificationService
     {
         $earned = [];
         // Example: Level 5 Badge
-        if ($level >= 5 && !$this->hasBadge($adventurerId, 'level-5')) {
-            $this->awardBadge($adventurerId, 'level-5', 'High Five', 'Reached Level 5');
+        if ($level >= 5 && !$this->badgeRepo->hasBadge($adventurerId, 'level-5')) {
+            $this->badgeRepo->awardBadge($adventurerId, 'level-5', 'High Five');
             $earned[] = 'High Five';
         }
         
         // Example: 1000 XP Badge
-        if ($xp >= 1000 && !$this->hasBadge($adventurerId, 'xp-1k')) {
-            $this->awardBadge($adventurerId, 'xp-1k', 'Kilo-XP', 'Earned 1,000 XP');
+        if ($xp >= 1000 && !$this->badgeRepo->hasBadge($adventurerId, 'xp-1k')) {
+            $this->badgeRepo->awardBadge($adventurerId, 'xp-1k', 'Kilo-XP');
             $earned[] = 'Kilo-XP';
         }
 
         return $earned;
-    }
-
-    private function hasBadge(int $adventurerId, string $slug): bool
-    {
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM adventurer_badges WHERE adventurer_id = ? AND badge_slug = ?");
-        $stmt->execute([$adventurerId, $slug]);
-        return (bool)$stmt->fetchColumn();
-    }
-
-    private function awardBadge(int $adventurerId, string $slug, string $name, string $desc): void
-    {
-        $stmt = $this->db->prepare("INSERT INTO adventurer_badges (adventurer_id, badge_slug, badge_name, earned_at) VALUES (?, ?, ?, NOW())");
-        $stmt->execute([$adventurerId, $slug, $name]);
     }
 }

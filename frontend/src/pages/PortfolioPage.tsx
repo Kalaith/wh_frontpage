@@ -42,10 +42,10 @@ const PortfolioPage: React.FC = () => {
             {/* Certificate Card */}
             <div className="bg-gradient-to-br from-slate-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl shadow-xl overflow-hidden">
                 {/* Decorative Header */}
-                <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 px-8 py-6 text-center text-white">
-                    <div className="text-xs uppercase tracking-[0.3em] text-indigo-200 mb-1">Web Hatchery</div>
-                    <h1 className="text-3xl font-extrabold tracking-tight">Contribution Certificate</h1>
-                    <div className="text-sm text-indigo-200 mt-1">Season 1: The Awakening</div>
+                <div className="bg-slate-50 border-b border-gray-200 px-8 py-6 text-center text-slate-900">
+                    <div className="text-xs uppercase tracking-[0.3em] text-slate-500 mb-1 font-semibold">Web Hatchery</div>
+                    <h1 className="text-3xl font-bold tracking-tight">Contribution Certificate</h1>
+                    <div className="text-sm text-indigo-600 mt-1 font-medium">Season 1: The Awakening</div>
                 </div>
 
                 {/* Body */}

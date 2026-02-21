@@ -6,38 +6,36 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Repositories\BossRepository;
+use App\Repositories\ProjectRepository;
 use App\Models\Boss;
 
 class BossController
 {
     private BossRepository $repo;
+    private ProjectRepository $projectRepo;
 
-    public function __construct(BossRepository $repo)
+    public function __construct(BossRepository $repo, ProjectRepository $projectRepo)
     {
         $this->repo = $repo;
+        $this->projectRepo = $projectRepo;
     }
 
-    public function current(Request $request, Response $response): void
+    public function index(Request $request, Response $response): void
     {
-        $boss = $this->repo->getActiveBoss();
-        
-        if (!$boss) {
-            // Mock boss if none exists for demonstration
-            $boss = new Boss([
-                'id' => 1,
-                'name' => 'The Monolith of Legacy Code',
-                'description' => 'A towering structure of tangled logic that threatens to collapse the entire codebase. Its method calls are infinite, its dependencies circular.',
-                'github_issue_url' => 'https://github.com/Kalaith/wh_frontpage/issues/1',
-                'threat_level' => 4,
-                'hp_total' => 5000,
-                'hp_current' => 3250,
-                'status' => 'active',
-                'created_at' => date('Y-m-d H:i:s')
-            ]);
+        $bosses = $this->repo->getAllActive();
+
+        $normalizedBosses = [];
+        foreach ($bosses as $bossData) {
+            if (!empty($bossData['project_id'])) {
+                $project = $this->projectRepo->findById($bossData['project_id']);
+                if ($project) {
+                    $bossData['project_name'] = $project['title'];
+                }
+            }
+            $normalizedBosses[] = $this->normalizeBoss($bossData);
         }
 
-        $bossData = $boss->toArray();
-        $response->success($this->normalizeBoss($bossData));
+        $response->success($normalizedBosses);
     }
 
     private function normalizeBoss(array $boss): array
@@ -62,6 +60,7 @@ class BossController
         $boss['kill_criteria'] = is_array($metadata['kill_criteria'] ?? null) ? $metadata['kill_criteria'] : [];
         $boss['hp_tasks'] = is_array($metadata['hp_tasks'] ?? null) ? $metadata['hp_tasks'] : [];
         $boss['proof_required'] = is_array($metadata['proof_required'] ?? null) ? $metadata['proof_required'] : [];
+        $boss['project_name'] = $boss['project_name'] ?? null;
 
         return $boss;
     }

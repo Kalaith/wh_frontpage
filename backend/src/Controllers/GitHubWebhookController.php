@@ -22,7 +22,7 @@ final class GitHubWebhookController
     public function handlePush(Request $request, Response $response): void
     {
         // Verify signature if secret is configured
-        $secret = $_ENV['GITHUB_WEBHOOK_SECRET'] ?? null;
+        $secret = $_ENV['GITHUB_WEBHOOK_SECRET'] ?? throw new \RuntimeException('GITHUB_WEBHOOK_SECRET environment variable is not set');
         if ($secret) {
             $signature = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
             $payload = file_get_contents('php://input');
@@ -148,7 +148,7 @@ final class GitHubWebhookController
     public function setupWebhooks(Request $request, Response $response): void
     {
         // IP restriction for security
-        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? null;
+        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? throw new \RuntimeException('ALLOWED_ADMIN_IP environment variable is not set');
         $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
         $clientIp = explode(',', $clientIp)[0]; // Handle proxy chains
         
@@ -157,9 +157,9 @@ final class GitHubWebhookController
             return;
         }
 
-        $githubToken = $_ENV['GITHUB_TOKEN'] ?? null;
-        $webhookSecret = $_ENV['GITHUB_WEBHOOK_SECRET'] ?? null;
-        $appUrl = $_ENV['APP_URL'] ?? null;
+        $githubToken = $_ENV['GITHUB_TOKEN'] ?? throw new \RuntimeException('GITHUB_TOKEN environment variable is not set');
+        $webhookSecret = $_ENV['GITHUB_WEBHOOK_SECRET'] ?? throw new \RuntimeException('GITHUB_WEBHOOK_SECRET environment variable is not set');
+        $appUrl = $_ENV['APP_URL'] ?? throw new \RuntimeException('APP_URL environment variable is not set');
 
         if (!$githubToken) {
             $response->error('GITHUB_TOKEN not configured in .env', 500);
@@ -313,7 +313,7 @@ final class GitHubWebhookController
     public function markDeployed(Request $request, Response $response): void
     {
         // IP restriction for security
-        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? null;
+        $allowedIp = $_ENV['ALLOWED_ADMIN_IP'] ?? throw new \RuntimeException('ALLOWED_ADMIN_IP environment variable is not set');
         $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
         $clientIp = explode(',', $clientIp)[0];
         
