@@ -41,7 +41,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $userId = $request->getAttribute('user_id');
+        $userId = (int) $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
             return;
@@ -87,7 +87,7 @@ class QuestAcceptanceController
      */
     public function myQuests(Request $request, Response $response, array $args = []): void
     {
-        $userId = $request->getAttribute('user_id');
+        $userId = (int) $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
             return;
@@ -122,7 +122,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $userId = $request->getAttribute('user_id');
+        $userId = (int) $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
             return;
@@ -180,7 +180,7 @@ class QuestAcceptanceController
             return;
         }
 
-        $userId = $request->getAttribute('user_id');
+        $userId = (int) $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
             return;
@@ -230,7 +230,7 @@ class QuestAcceptanceController
         }
 
         // Verify the reviewer is authenticated
-        $userId = $request->getAttribute('user_id');
+        $userId = (int) $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
             return;
@@ -296,7 +296,7 @@ class QuestAcceptanceController
         $reviewNotes = (string)($body['review_notes'] ?? '');
         $xpReward = (int)($body['xp'] ?? 0);
 
-        $userId = $request->getAttribute('user_id');
+        $userId = (int) $request->getAttribute('user_id');
         if (!$userId) {
             $response->error('Authentication required', 401);
             return;

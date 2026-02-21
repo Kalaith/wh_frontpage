@@ -46,7 +46,7 @@ class JwtAuthMiddleware
             }
 
             // Add user information to request attributes
-            $request->setAttribute('user_id', $user['id']);
+            $request->setAttribute('user_id', (int)$user['id']);
             $request->setAttribute('user_email', $user['email']);
             $request->setAttribute('user_name', $user['display_name'] ?? $user['username']);
             $request->setAttribute('user_role', $user['role']);
