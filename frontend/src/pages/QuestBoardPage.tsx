@@ -1,377 +1,39 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { fetchQuests, fetchMyQuests, acceptQuest, submitQuest, cancelQuest } from '../api/questApi';
-import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
+import React, { useEffect } from 'react';
 import { QuestCard } from '../components/QuestCard';
-import { RuneSagePromptBuilder } from '../components/RuneSagePromptBuilder';
 import { RankProgressBar } from '../components/RankProgressBar';
-import { useAuth } from '../stores/authStore';
-
-interface DependencyStatus {
-    blocked: boolean;
-    unresolved: string[];
-    reason: string | null;
-}
-
-const RANK_ORDER = ['iron', 'silver', 'gold', 'jade', 'diamond'];
+import { QuestDetailModal } from '../components/QuestDetailModal';
+import { useQuestBoard } from '../hooks/useQuestBoard';
+import { useSystemStore } from '../stores/systemStore';
 
 const QuestBoardPage: React.FC = () => {
-    const [quests, setQuests] = useState<Quest[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [selectedClass, setSelectedClass] = useState<string>('');
-    const [selectedDifficulty, setSelectedDifficulty] = useState<number>(0);
-    const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
-
-    // Quest acceptance state
-    const [myAcceptances, setMyAcceptances] = useState<QuestAcceptance[]>([]);
-    const [rankProgress, setRankProgress] = useState<RankProgress | null>(null);
-    const [accepting, setAccepting] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [canceling, setCanceling] = useState(false);
-
-    const { isAuthenticated } = useAuth();
-
-    const loadQuests = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const filters: { class?: string; difficulty?: number } = {};
-            if (selectedClass) filters.class = selectedClass;
-            if (selectedDifficulty > 0) filters.difficulty = selectedDifficulty;
-
-            const data = await fetchQuests(filters);
-            setQuests(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load quests');
-        } finally {
-            setLoading(false);
-        }
-    }, [selectedClass, selectedDifficulty]);
-
-    const loadMyQuests = useCallback(async () => {
-        if (!isAuthenticated) {
-            setMyAcceptances([]);
-            setRankProgress(null);
-            return;
-        }
-        try {
-            const data = await fetchMyQuests();
-            setMyAcceptances(data.acceptances ?? []);
-            setRankProgress(data.rank_progress ?? null);
-        } catch {
-            // Silent fail — user might not have an adventurer profile
-        }
-    }, [isAuthenticated]);
+    const { classes, loadClasses } = useSystemStore();
 
     useEffect(() => {
-        loadQuests();
-    }, [loadQuests]);
-
-    useEffect(() => {
-        loadMyQuests();
-    }, [loadMyQuests]);
-
-    // Build a map of quest_ref -> acceptance status
-    const acceptanceMap = useMemo(() => {
-        const map = new Map<string, QuestAcceptance>();
-        myAcceptances.forEach((a) => map.set(a.quest_ref, a));
-        return map;
-    }, [myAcceptances]);
-
-    // Derive the quest_ref for a quest
-    const getQuestRef = useCallback((quest: Quest): string => {
-        return quest.quest_code ?? `quest-${quest.id}`;
-    }, []);
-
-    const getAcceptanceForQuest = useCallback((quest: Quest): QuestAcceptance | null => {
-        return acceptanceMap.get(getQuestRef(quest)) ?? null;
-    }, [acceptanceMap, getQuestRef]);
-
-    const projectClasses = [
-        { id: 'bug-hunter', label: 'Bug Hunter' },
-        { id: 'patch-crafter', label: 'Patch Crafter' },
-        { id: 'feature-smith', label: 'Feature Smith' },
-        { id: 'doc-sage', label: 'Doc Sage' },
-        { id: 'ux-alchemist', label: 'UX Alchemist' },
-        { id: 'ops-ranger', label: 'Ops Ranger' },
-        { id: 'test-summoner', label: 'Test Summoner' },
-    ];
-
-    const normalizeRef = (value: string): string => value.trim().toLowerCase();
-
-    const questRefMap = useMemo(() => {
-        const map = new Map<string, Quest>();
-        quests.forEach((quest) => {
-            map.set(normalizeRef(String(quest.id)), quest);
-            map.set(normalizeRef(String(quest.number)), quest);
-            if (quest.quest_code) map.set(normalizeRef(quest.quest_code), quest);
-            map.set(normalizeRef(quest.title), quest);
-        });
-        return map;
-    }, [quests]);
-
-    const dependencyStatusByQuestId = useMemo(() => {
-        const statusMap = new Map<number, DependencyStatus>();
-
-        quests.forEach((quest) => {
-            const dependencyType = (quest.dependency_type ?? 'Independent').toLowerCase();
-            const dependsOnRefs = quest.depends_on ?? [];
-            const hasMissingChainedDependencies = dependencyType === 'chained' && dependsOnRefs.length === 0;
-
-            const unresolved = dependsOnRefs
-                .map((ref) => {
-                    const depQuest = questRefMap.get(normalizeRef(ref));
-                    if (!depQuest || depQuest.id === quest.id) {
-                        return ref;
-                    }
-
-                    const depAcceptance = getAcceptanceForQuest(depQuest);
-                    const isCompleted = depAcceptance?.status === 'completed';
-                    return isCompleted ? null : depQuest.title;
-                })
-                .filter((label): label is string => Boolean(label));
-
-            let blocked = false;
-            let reason: string | null = null;
-
-            if (dependencyType === 'blocked') {
-                blocked = true;
-                reason = quest.unlock_condition ?? (unresolved.length > 0 ? `Requires: ${unresolved.join(', ')}` : 'Blocked by dependency rules.');
-            } else if (hasMissingChainedDependencies) {
-                blocked = true;
-                reason = quest.unlock_condition ?? 'Locked: chained quest is missing dependency links.';
-            } else if (dependencyType === 'chained' && unresolved.length > 0) {
-                blocked = true;
-                reason = `Complete first: ${unresolved.join(', ')}`;
-            }
-
-            statusMap.set(quest.id, { blocked, unresolved, reason });
-        });
-
-        return statusMap;
-    }, [questRefMap, quests, getAcceptanceForQuest]);
-
-    const getDependencyStatus = useCallback((quest: Quest): DependencyStatus => (
-        dependencyStatusByQuestId.get(quest.id) ?? { blocked: false, unresolved: [], reason: null }
-    ), [dependencyStatusByQuestId]);
-
-    const getQuestLevel = useCallback((quest: Quest): number => quest.quest_level ?? quest.difficulty ?? 1, []);
-    const getQuestRank = useCallback((quest: Quest): string => {
-        if (quest.rank_required) return String(quest.rank_required).toLowerCase();
-        const level = getQuestLevel(quest);
-        if (level <= 1) return 'iron';
-        if (level === 2) return 'silver';
-        if (level === 3) return 'gold';
-        if (level === 4) return 'jade';
-        return 'diamond';
-    }, [getQuestLevel]);
-    const getRankIndex = (rank: string): number => {
-        const idx = RANK_ORDER.indexOf(rank);
-        return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
-    };
-
-    const sortedQuests = useMemo(() => (
-        [...quests].sort((a, b) => {
-            const levelDiff = getQuestLevel(a) - getQuestLevel(b);
-            if (levelDiff !== 0) return levelDiff;
-
-            const rankDiff = getRankIndex(getQuestRank(a)) - getRankIndex(getQuestRank(b));
-            if (rankDiff !== 0) return rankDiff;
-
-            const numberDiff = a.number - b.number;
-            if (numberDiff !== 0) return numberDiff;
-
-            return a.id - b.id;
-        })
-    ), [quests, getQuestLevel, getQuestRank]);
-
-    const visibleQuests = useMemo(
-        () => sortedQuests.filter((quest) => !getDependencyStatus(quest).blocked),
-        [sortedQuests, getDependencyStatus]
-    );
-
-    const handleAcceptQuest = async (quest: Quest) => {
-        const status = getDependencyStatus(quest);
-        if (status.blocked) return;
-
-        if (!isAuthenticated) {
-            if (quest.url && quest.url !== '#') {
-                window.open(quest.url, '_blank', 'noopener,noreferrer');
-            }
-            return;
-        }
-
-        const questRef = getQuestRef(quest);
-        const existing = getAcceptanceForQuest(quest);
-        if (existing) {
-            // Already accepted — open the quest URL for existing flows
-            if (quest.url && quest.url !== '#') {
-                window.open(quest.url, '_blank', 'noopener,noreferrer');
-            }
-            return;
-        }
-
-        setAccepting(true);
-        try {
-            await acceptQuest(questRef, quest.rank_required);
-            await loadMyQuests();
-        } catch (err) {
-            console.error('Failed to accept quest:', err);
-        } finally {
-            setAccepting(false);
-        }
-    };
-
-    const handleSubmitQuestPR = async (quest: Quest) => {
-        const questRef = getQuestRef(quest);
-        const prUrl = window.prompt('Paste your GitHub PR URL (example: https://github.com/org/repo/pull/123)');
-        if (!prUrl) return;
-
-        const normalized = prUrl.trim();
-        const isValidGitHubPr = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+$/i.test(normalized);
-        if (!isValidGitHubPr) {
-            window.alert('Please enter a valid GitHub PR URL.');
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            await submitQuest(questRef, normalized);
-            await loadMyQuests();
-            window.alert('PR submitted for review.');
-        } catch (err) {
-            window.alert(err instanceof Error ? err.message : 'Failed to submit PR.');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleCancelQuest = async (quest: Quest) => {
-        const questRef = getQuestRef(quest);
-        const confirmCancel = window.confirm('Cancel this quest? You can accept it again later.');
-        if (!confirmCancel) return;
-
-        setCanceling(true);
-        try {
-            await cancelQuest(questRef);
-            await loadMyQuests();
-            window.alert('Quest canceled.');
-        } catch (err) {
-            window.alert(err instanceof Error ? err.message : 'Failed to cancel quest.');
-        } finally {
-            setCanceling(false);
-        }
-    };
-
-    const selectedQuestStatus = selectedQuest ? getDependencyStatus(selectedQuest) : null;
-    const selectedQuestAcceptance = selectedQuest ? getAcceptanceForQuest(selectedQuest) : null;
-
-    const getModalActionButton = () => {
-        if (!selectedQuest || !selectedQuestStatus) return null;
-
-        const acceptance = selectedQuestAcceptance;
-
-        if (selectedQuestStatus.blocked) {
-            return (
-                <button
-                    type="button"
-                    disabled
-                    className="px-4 py-2 rounded font-semibold bg-gray-300 text-gray-600 cursor-not-allowed"
-                >
-                    Locked by Dependencies
-                </button>
-            );
-        }
-
-        if (!acceptance) {
-            return (
-                <button
-                    type="button"
-                    onClick={() => handleAcceptQuest(selectedQuest)}
-                    disabled={accepting}
-                    className={`px-4 py-2 rounded font-semibold ${accepting ? 'bg-gray-400 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        }`}
-                >
-                    {accepting ? 'Accepting...' : '⚔️ Accept Quest'}
-                </button>
-            );
-        }
-
-        switch (acceptance.status) {
-            case 'accepted':
-                return (
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => handleCancelQuest(selectedQuest)}
-                            disabled={canceling || submitting}
-                            className={`px-4 py-2 rounded font-semibold border ${canceling || submitting
-                                ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed'
-                                : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
-                                }`}
-                        >
-                            {canceling ? 'Canceling...' : 'Cancel Quest'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleSubmitQuestPR(selectedQuest)}
-                            disabled={submitting || canceling}
-                            className={`px-4 py-2 rounded font-semibold border ${submitting || canceling
-                                ? 'bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed'
-                                : 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700'
-                                }`}
-                        >
-                            {submitting ? 'Submitting...' : '🛡️ Turn In Quest (Submit PR)'}
-                        </button>
-                    </div>
-                );
-            case 'submitted':
-                return (
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => handleCancelQuest(selectedQuest)}
-                            disabled={canceling}
-                            className={`px-4 py-2 rounded font-semibold border ${canceling
-                                ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed'
-                                : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
-                                }`}
-                        >
-                            {canceling ? 'Canceling...' : 'Cancel Quest'}
-                        </button>
-                        <button
-                            type="button"
-                            disabled
-                            className="px-4 py-2 rounded font-semibold bg-blue-100 text-blue-700 border border-blue-200 cursor-not-allowed"
-                        >
-                            ⏳ Awaiting Review
-                        </button>
-                    </div>
-                );
-            case 'completed':
-                return (
-                    <button
-                        type="button"
-                        disabled
-                        className="px-4 py-2 rounded font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-not-allowed"
-                    >
-                        ✅ Completed
-                    </button>
-                );
-            case 'rejected':
-                return (
-                    <button
-                        type="button"
-                        onClick={() => handleAcceptQuest(selectedQuest)}
-                        className="px-4 py-2 rounded font-semibold bg-rose-600 text-white hover:bg-rose-700"
-                    >
-                        🔄 Re-accept Quest
-                    </button>
-                );
-            default:
-                return null;
-        }
-    };
+        loadClasses();
+    }, [loadClasses]);
+    const {
+        visibleQuests,
+        loading,
+        error,
+        selectedClass,
+        setSelectedClass,
+        selectedDifficulty,
+        setSelectedDifficulty,
+        selectedQuest,
+        setSelectedQuest,
+        rankProgress,
+        accepting,
+        submitting,
+        canceling,
+        getDependencyStatus,
+        getAcceptanceForQuest,
+        handleAcceptQuest,
+        handleSubmitQuestPR,
+        handleCancelQuest,
+        loadQuests,
+        resolveDependencyTitle,
+        isAuthenticated
+    } = useQuestBoard();
 
     return (
         <div className="container mx-auto px-4 py-6">
@@ -405,7 +67,7 @@ const QuestBoardPage: React.FC = () => {
                         className="form-select rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                     >
                         <option value="">All Classes</option>
-                        {projectClasses.map((c) => (
+                        {classes.filter(c => c.id !== 'hatchling').map((c) => (
                             <option key={c.id} value={c.id}>{c.label}</option>
                         ))}
                     </select>
@@ -463,144 +125,20 @@ const QuestBoardPage: React.FC = () => {
             )}
 
             {/* Quest Details Modal */}
-            {selectedQuest && selectedQuestStatus && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">{selectedQuest.title}</h2>
-                                <p className="text-sm text-gray-500">{selectedQuest.quest_code ?? `Quest #${selectedQuest.number}`}</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedQuest(null)}
-                                className="text-gray-500 hover:text-gray-700 text-sm font-medium"
-                            >
-                                Close
-                            </button>
-                        </div>
-
-                        <div className="p-6 space-y-5">
-                            <div className="flex flex-wrap gap-2">
-                                {selectedQuest.rank_required && (
-                                    <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">
-                                        Rank Required: {selectedQuest.rank_required}
-                                    </span>
-                                )}
-                                {(selectedQuest.quest_level || selectedQuest.difficulty) && (
-                                    <span className="text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700">
-                                        Quest Level: {selectedQuest.quest_level ?? selectedQuest.difficulty}
-                                    </span>
-                                )}
-                                {selectedQuest.dependency_type && (
-                                    <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">
-                                        Dependency: {selectedQuest.dependency_type}
-                                    </span>
-                                )}
-                                {selectedQuest.due_date && (
-                                    <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
-                                        Due: {selectedQuest.due_date}
-                                    </span>
-                                )}
-                                {selectedQuestAcceptance && (
-                                    <span className={`text-xs px-2 py-1 rounded font-semibold ${selectedQuestAcceptance.status === 'completed' ? 'bg-emerald-100 text-emerald-700'
-                                        : selectedQuestAcceptance.status === 'submitted' ? 'bg-blue-100 text-blue-700'
-                                            : selectedQuestAcceptance.status === 'accepted' ? 'bg-amber-100 text-amber-700'
-                                                : 'bg-red-100 text-red-700'
-                                        }`}>
-                                        Status: {selectedQuestAcceptance.status.charAt(0).toUpperCase() + selectedQuestAcceptance.status.slice(1)}
-                                    </span>
-                                )}
-                            </div>
-
-                            {selectedQuestStatus.blocked && (
-                                <div className="border border-rose-200 bg-rose-50 text-rose-800 rounded-lg p-3 text-sm">
-                                    <strong>🔒 Locked:</strong> Prerequisites required. {selectedQuestStatus.reason ? `(${selectedQuestStatus.reason})` : '(Hover/Click to view missing dependencies)'}
-                                </div>
-                            )}
-
-                            {(selectedQuest.depends_on?.length ?? 0) > 0 && (
-                                <section>
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Depends On</h3>
-                                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                                        {selectedQuest.depends_on?.map((depRef, index) => {
-                                            const depQuest = questRefMap.get(normalizeRef(depRef));
-                                            const label = depQuest ? depQuest.title : depRef;
-                                            const unresolved = selectedQuestStatus.unresolved.includes(label);
-                                            return (
-                                                <li key={`${selectedQuest.id}-dep-${index}`}>
-                                                    {label}
-                                                    {' '}
-                                                    <span className={`text-xs ${unresolved ? 'text-rose-600' : 'text-emerald-600'}`}>
-                                                        {unresolved ? '(Pending)' : '(Ready/Cleared)'}
-                                                    </span>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                    {selectedQuest.unlock_condition && (
-                                        <p className="text-xs text-gray-600 mt-2">Unlock condition: {selectedQuest.unlock_condition}</p>
-                                    )}
-                                </section>
-                            )}
-
-                            {selectedQuest.body && (
-                                <section>
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Overview</h3>
-                                    <p className="text-sm text-gray-700 leading-relaxed">{selectedQuest.body}</p>
-                                </section>
-                            )}
-
-                            {selectedQuest.goal && (
-                                <section>
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Goal</h3>
-                                    <p className="text-sm text-gray-700">{selectedQuest.goal}</p>
-                                </section>
-                            )}
-
-                            {(selectedQuest.player_steps?.length ?? 0) > 0 && (
-                                <section>
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Steps</h3>
-                                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                                        {selectedQuest.player_steps?.map((step, index) => (
-                                            <li key={`${selectedQuest.id}-step-${index}`}>{step}</li>
-                                        ))}
-                                    </ul>
-                                </section>
-                            )}
-
-                            {(selectedQuest.done_when?.length ?? 0) > 0 && (
-                                <section>
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Done When</h3>
-                                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                                        {selectedQuest.done_when?.map((item, index) => (
-                                            <li key={`${selectedQuest.id}-done-${index}`}>{item}</li>
-                                        ))}
-                                    </ul>
-                                </section>
-                            )}
-
-                            {/* RuneSage Prompt Builder — replaces the old simple RS Brief display */}
-                            {selectedQuest.rs_brief && (
-                                <RuneSagePromptBuilder
-                                    rsBrief={selectedQuest.rs_brief}
-                                    questTitle={selectedQuest.title}
-                                />
-                            )}
-                        </div>
-
-                        <div className="border-t border-gray-100 px-6 py-4 flex items-center justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedQuest(null)}
-                                className="px-4 py-2 rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
-                            >
-                                Back
-                            </button>
-                            {getModalActionButton()}
-                        </div>
-                    </div>
-                </div>
+            {selectedQuest && (
+                <QuestDetailModal
+                    quest={selectedQuest}
+                    status={getDependencyStatus(selectedQuest)}
+                    acceptance={getAcceptanceForQuest(selectedQuest)}
+                    resolveDependencyTitle={resolveDependencyTitle}
+                    onClose={() => setSelectedQuest(null)}
+                    onAccept={handleAcceptQuest}
+                    onSubmitPR={handleSubmitQuestPR}
+                    onCancel={handleCancelQuest}
+                    accepting={accepting}
+                    submitting={submitting}
+                    canceling={canceling}
+                />
             )}
         </div>
     );

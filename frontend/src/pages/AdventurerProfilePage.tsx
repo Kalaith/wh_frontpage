@@ -1,24 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { fetchAdventurer } from '../api/adventurerApi';
-import { Adventurer } from '../types/Adventurer';
-
-const CLASS_ICONS: Record<string, string> = {
-    'bug-hunter': '🐞',
-    'patch-crafter': '🩹',
-    'feature-smith': '⚔️',
-    'doc-sage': '📜',
-    'ux-alchemist': '⚗️',
-    'ops-ranger': '🛡️',
-    'test-summoner': '🧪',
-    'hatchling': '🐣'
-};
+import { useSystemStore } from '../stores/systemStore';
 
 const AdventurerProfilePage: React.FC = () => {
     const { username } = useParams<{ username: string }>();
     const [adventurer, setAdventurer] = useState<Adventurer | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const { getClassIcon, getClassLabel, loadClasses } = useSystemStore();
+
+    useEffect(() => {
+        loadClasses();
+    }, [loadClasses]);
 
     useEffect(() => {
         const load = async () => {
@@ -49,7 +41,7 @@ const AdventurerProfilePage: React.FC = () => {
         );
     }
 
-    const classIcon = CLASS_ICONS[adventurer.class] ?? '❓';
+    const classIcon = getClassIcon(adventurer.class);
     const nextLevelXP = adventurer.level * 100 * 1.5; // Example XP curve
     const progressPercent = Math.min(100, (adventurer.xp_total % nextLevelXP) / nextLevelXP * 100);
 
@@ -65,7 +57,7 @@ const AdventurerProfilePage: React.FC = () => {
                     <div className="flex-1 text-center md:text-left">
                         <h1 className="text-3xl font-bold text-gray-900">{adventurer.github_username}</h1>
                         <p className="text-gray-500 font-medium capitalize flex items-center gap-2 justify-center md:justify-start">
-                            Level {adventurer.level} {adventurer.class.replace(/-/g, ' ')}
+                            Level {adventurer.level} {getClassLabel(adventurer.class)}
                             {adventurer.equipped_title && (
                                 <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full uppercase tracking-wide">
                                     {adventurer.equipped_title}

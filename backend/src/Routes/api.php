@@ -10,6 +10,7 @@ use App\Controllers\UserController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthProxyController;
 use App\Controllers\GitHubWebhookController;
+use App\Controllers\SystemController;
 use App\Middleware\JwtAuthMiddleware;
 use App\Models\Project;
 use App\Core\Request;
@@ -96,6 +97,9 @@ $router->get('/api/quest-chains/{slug}', [\App\Controllers\QuestChainController:
 
 // Public Wanderer Routes
 $router->get('/api/adventurers/{username}/wanderer', [\App\Controllers\WandererController::class, 'stats']);
+
+// Public System/Config Routes
+$router->get('/api/system/classes', [SystemController::class, 'getClasses']);
 
 // Public News Feed Routes
 $router->get('/api/news', [ProjectNewsFeedController::class, 'getNewsFeed']);

@@ -2,22 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchLeaderboard } from '../api/leaderboardApi';
 import { Adventurer } from '../types/Adventurer';
-
-const CLASS_ICONS: Record<string, string> = {
-    'bug-hunter': '🐞',
-    'patch-crafter': '🩹',
-    'feature-smith': '⚔️',
-    'doc-sage': '📜',
-    'ux-alchemist': '⚗️',
-    'ops-ranger': '🛡️',
-    'test-summoner': '🧪',
-    'hatchling': '🐣'
-};
+import { useSystemStore } from '../stores/systemStore';
 
 const LeaderboardPage: React.FC = () => {
     const [adventurers, setAdventurers] = useState<Adventurer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const { getClassIcon, getClassLabel, loadClasses } = useSystemStore();
+
+    useEffect(() => {
+        loadClasses();
+    }, [loadClasses]);
 
     useEffect(() => {
         const load = async () => {
@@ -88,8 +84,8 @@ const LeaderboardPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900 flex items-center gap-2">
-                                            <span>{CLASS_ICONS[adv.class] || '❓'}</span>
-                                            <span className="capitalize">{adv.class.replace(/-/g, ' ')}</span>
+                                            <span>{getClassIcon(adv.class)}</span>
+                                            <span className="capitalize">{getClassLabel(adv.class)}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
