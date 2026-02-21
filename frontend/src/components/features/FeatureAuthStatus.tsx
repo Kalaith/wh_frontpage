@@ -74,7 +74,7 @@ export const FeatureAuthStatus: React.FC = () => {
         {/* User Info */}
         <div className="flex items-center gap-2">
           <Link to="/profile" className="px-2 py-1 rounded text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
-            Hi {user.display_name || user.username}
+            Hi {user.display_name ?? user.username}
             {user.role === 'admin' && (
               <span className="ml-1 text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20">
                 Admin

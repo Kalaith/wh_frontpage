@@ -1,6 +1,6 @@
 import { Adventurer } from '../types/Adventurer';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 
 export const fetchAdventurer = async (username: string): Promise<Adventurer> => {
     const response = await fetch(`${API_BASE_URL}/adventurers/${username}`);

@@ -1,6 +1,6 @@
 import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
 
 function getAuthToken(): string | null {
     const authStorage = localStorage.getItem('auth-storage');
@@ -34,7 +34,7 @@ export const fetchQuests = async (filters: { class?: string; difficulty?: number
     }
 
     const json = await response.json();
-    return json.data || [];
+    return json.data ?? [];
 };
 
 export const acceptQuest = async (questRef: string, rankRequired?: string): Promise<{ status: string; message: string }> => {
@@ -45,7 +45,7 @@ export const acceptQuest = async (questRef: string, rankRequired?: string): Prom
     });
     const json = await response.json();
     if (!response.ok) {
-        throw new Error(json.error || 'Failed to accept quest');
+        throw new Error(json.error ?? 'Failed to accept quest');
     }
     return json.data;
 };
@@ -58,7 +58,7 @@ export const submitQuest = async (questRef: string, prUrl: string): Promise<{ st
     });
     const json = await response.json();
     if (!response.ok) {
-        throw new Error(json.error || 'Failed to submit quest');
+        throw new Error(json.error ?? 'Failed to submit quest');
     }
     return json.data;
 };
@@ -70,7 +70,7 @@ export const cancelQuest = async (questRef: string): Promise<{ message: string }
     });
     const json = await response.json();
     if (!response.ok) {
-        throw new Error(json.error || 'Failed to cancel quest');
+        throw new Error(json.error ?? 'Failed to cancel quest');
     }
     return json.data;
 };

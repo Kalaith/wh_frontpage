@@ -43,13 +43,13 @@ const AdventurerProfilePage: React.FC = () => {
         return (
             <div className="container mx-auto px-4 py-8 text-center text-red-600 bg-red-50 rounded-lg p-6">
                 <p className="font-bold mb-2">Error loading profile</p>
-                <p>{error || 'Adventurer not found'}</p>
+                <p>{error ?? 'Adventurer not found'}</p>
                 <Link to="/leaderboard" className="mt-4 inline-block text-indigo-600 hover:text-indigo-800 underline">Back to Leaderboard</Link>
             </div>
         );
     }
 
-    const classIcon = CLASS_ICONS[adventurer.class] || '❓';
+    const classIcon = CLASS_ICONS[adventurer.class] ?? '❓';
     const nextLevelXP = adventurer.level * 100 * 1.5; // Example XP curve
     const progressPercent = Math.min(100, (adventurer.xp_total % nextLevelXP) / nextLevelXP * 100);
 

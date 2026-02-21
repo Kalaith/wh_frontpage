@@ -19,8 +19,8 @@ export const UserProfile: React.FC = () => {
   useEffect(() => {
     if (user) {
       setEditForm({
-        display_name: user.display_name || '',
-        username: user.username || ''
+        display_name: user.display_name ?? '',
+        username: user.username ?? ''
       });
     }
   }, [user]);
@@ -34,8 +34,8 @@ export const UserProfile: React.FC = () => {
       // Reset form if canceling
       if (user) {
         setEditForm({
-          display_name: user.display_name || '',
-          username: user.username || ''
+          display_name: user.display_name ?? '',
+          username: user.username ?? ''
         });
       }
     }
@@ -124,7 +124,7 @@ export const UserProfile: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {user.display_name || user.username}
+                  {user.display_name ?? user.username}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`px-2 py-1 text-xs rounded-full ${user.role === 'admin'
@@ -178,7 +178,7 @@ export const UserProfile: React.FC = () => {
                   />
                 ) : (
                   <p className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                    {user.display_name || 'Not set'}
+                    {user.display_name ?? 'Not set'}
                   </p>
                 )}
               </div>

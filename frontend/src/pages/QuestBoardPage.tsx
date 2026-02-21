@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { fetchQuests, fetchMyQuests, acceptQuest, submitQuest, cancelQuest } from '../api/questApi';
 import { Quest, QuestAcceptance, RankProgress } from '../types/Quest';
 import { QuestCard } from '../components/QuestCard';
@@ -31,7 +31,7 @@ const QuestBoardPage: React.FC = () => {
 
     const { isAuthenticated } = useAuth();
 
-    const loadQuests = async () => {
+    const loadQuests = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -46,9 +46,9 @@ const QuestBoardPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedClass, selectedDifficulty]);
 
-    const loadMyQuests = async () => {
+    const loadMyQuests = useCallback(async () => {
         if (!isAuthenticated) {
             setMyAcceptances([]);
             setRankProgress(null);
@@ -56,20 +56,20 @@ const QuestBoardPage: React.FC = () => {
         }
         try {
             const data = await fetchMyQuests();
-            setMyAcceptances(data.acceptances || []);
-            setRankProgress(data.rank_progress || null);
+            setMyAcceptances(data.acceptances ?? []);
+            setRankProgress(data.rank_progress ?? null);
         } catch {
             // Silent fail — user might not have an adventurer profile
         }
-    };
+    }, [isAuthenticated]);
 
     useEffect(() => {
         loadQuests();
-    }, [selectedClass, selectedDifficulty]);
+    }, [loadQuests]);
 
     useEffect(() => {
         loadMyQuests();
-    }, [isAuthenticated]);
+    }, [loadMyQuests]);
 
     // Build a map of quest_ref -> acceptance status
     const acceptanceMap = useMemo(() => {
@@ -79,13 +79,13 @@ const QuestBoardPage: React.FC = () => {
     }, [myAcceptances]);
 
     // Derive the quest_ref for a quest
-    const getQuestRef = (quest: Quest): string => {
-        return quest.quest_code || `quest-${quest.id}`;
-    };
+    const getQuestRef = useCallback((quest: Quest): string => {
+        return quest.quest_code ?? `quest-${quest.id}`;
+    }, []);
 
-    const getAcceptanceForQuest = (quest: Quest): QuestAcceptance | null => {
+    const getAcceptanceForQuest = useCallback((quest: Quest): QuestAcceptance | null => {
         return acceptanceMap.get(getQuestRef(quest)) ?? null;
-    };
+    }, [acceptanceMap, getQuestRef]);
 
     const projectClasses = [
         { id: 'bug-hunter', label: 'Bug Hunter' },
@@ -149,14 +149,14 @@ const QuestBoardPage: React.FC = () => {
         });
 
         return statusMap;
-    }, [questRefMap, quests, acceptanceMap]);
+    }, [questRefMap, quests, getAcceptanceForQuest]);
 
-    const getDependencyStatus = (quest: Quest): DependencyStatus => (
+    const getDependencyStatus = useCallback((quest: Quest): DependencyStatus => (
         dependencyStatusByQuestId.get(quest.id) ?? { blocked: false, unresolved: [], reason: null }
-    );
+    ), [dependencyStatusByQuestId]);
 
-    const getQuestLevel = (quest: Quest): number => quest.quest_level ?? quest.difficulty ?? 1;
-    const getQuestRank = (quest: Quest): string => {
+    const getQuestLevel = useCallback((quest: Quest): number => quest.quest_level ?? quest.difficulty ?? 1, []);
+    const getQuestRank = useCallback((quest: Quest): string => {
         if (quest.rank_required) return String(quest.rank_required).toLowerCase();
         const level = getQuestLevel(quest);
         if (level <= 1) return 'iron';
@@ -164,7 +164,7 @@ const QuestBoardPage: React.FC = () => {
         if (level === 3) return 'gold';
         if (level === 4) return 'jade';
         return 'diamond';
-    };
+    }, [getQuestLevel]);
     const getRankIndex = (rank: string): number => {
         const idx = RANK_ORDER.indexOf(rank);
         return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
@@ -183,11 +183,11 @@ const QuestBoardPage: React.FC = () => {
 
             return a.id - b.id;
         })
-    ), [quests]);
+    ), [quests, getQuestLevel, getQuestRank]);
 
     const visibleQuests = useMemo(
         () => sortedQuests.filter((quest) => !getDependencyStatus(quest).blocked),
-        [sortedQuests, dependencyStatusByQuestId]
+        [sortedQuests, getDependencyStatus]
     );
 
     const handleAcceptQuest = async (quest: Quest) => {

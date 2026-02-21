@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: false });
         const message = typeof response.error === 'string'
           ? response.error
-          : response.error?.message || 'Login failed';
+          : response.error?.message ?? 'Login failed';
         throw new Error(message);
       },
 
@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: false });
         const message = typeof response.error === 'string'
           ? response.error
-          : response.error?.message || 'Registration failed';
+          : response.error?.message ?? 'Registration failed';
         throw new Error(message);
       },
 

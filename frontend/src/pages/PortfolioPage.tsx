@@ -55,7 +55,7 @@ const PortfolioPage: React.FC = () => {
                         <div className="text-5xl mb-3">🧙</div>
                         <h2 className="text-2xl font-extrabold text-gray-900">{adventurer.github_username}</h2>
                         <div className="text-lg text-indigo-600 font-semibold capitalize mt-1">
-                            {adventurer.equipped_title || adventurer.class.replace(/-/g, ' ')}
+                            {adventurer.equipped_title ?? adventurer.class.replace(/-/g, ' ')}
                         </div>
                     </div>
 
