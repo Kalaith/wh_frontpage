@@ -28,6 +28,8 @@ async function apiRequest<T>(
   const authStorage = localStorage.getItem('auth-storage');
   if (authStorage) {
     try {
+      const parsed = JSON.parse(authStorage);
+      const state = parsed?.state;
       if (state?.token) {
         token = state.token;
       }

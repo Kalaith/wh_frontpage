@@ -1,3 +1,7 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { fetchAdventurer } from '../api/adventurerApi';
+import { Adventurer } from '../types/Adventurer';
 import { useSystemStore } from '../stores/systemStore';
 
 const AdventurerProfilePage: React.FC = () => {
@@ -101,7 +105,7 @@ const AdventurerProfilePage: React.FC = () => {
                         </h3>
                         {adventurer.mastery && adventurer.mastery.length > 0 ? (
                             <ul className="space-y-4">
-                                {adventurer.mastery.map(m => (
+                                {adventurer.mastery.map((m: any) => (
                                     <li key={m.project_id} className="border-b border-gray-50 pb-2 last:border-0 last:pb-0">
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="font-medium text-gray-800">{m.project_title}</span>
@@ -127,7 +131,7 @@ const AdventurerProfilePage: React.FC = () => {
                         </h3>
                         {adventurer.badges && adventurer.badges.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {adventurer.badges.map(b => (
+                                {adventurer.badges.map((b: any) => (
                                     <div key={b.id} className="text-center p-4 border border-gray-100 rounded-lg bg-gray-50/50">
                                         <div className="text-4xl mb-2">🏆</div>
                                         <h4 className="font-bold text-sm text-gray-900">{b.badge_name}</h4>

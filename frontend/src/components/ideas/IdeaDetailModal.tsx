@@ -28,10 +28,6 @@ export const IdeaDetailModal: React.FC<IdeaDetailModalProps> = ({ idea, onClose 
     // For invalidation
     const queryClient = useQueryClient();
 
-    useEffect(() => {
-        loadComments();
-    }, [loadComments]);
-
     const loadComments = useCallback(async () => {
         try {
             if (!idea.id) return;
@@ -41,6 +37,10 @@ export const IdeaDetailModal: React.FC<IdeaDetailModalProps> = ({ idea, onClose 
             console.error("Failed to load comments", err);
         }
     }, [idea.id]);
+
+    useEffect(() => {
+        loadComments();
+    }, [loadComments]);
 
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();

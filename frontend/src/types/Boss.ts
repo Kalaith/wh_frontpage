@@ -8,6 +8,8 @@ export interface Boss {
     hp_current: number;
     status: 'active' | 'stabilizing' | 'defeated';
     project_id?: number;
+    project_name?: string;
+    phase: number;
     season_id?: number;
     created_at: string;
     defeated_at?: string;
