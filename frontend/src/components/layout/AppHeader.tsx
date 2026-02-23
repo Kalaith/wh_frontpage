@@ -26,6 +26,7 @@ export const AppHeader: React.FC = () => {
 
     if (isAdmin) {
       items.push({ path: '/projects', label: 'Manage' });
+      items.push({ path: '/quests/manage', label: 'Quest Admin' });
     }
 
     return items;

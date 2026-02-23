@@ -77,6 +77,7 @@ $router->post('/api/quests/{questRef}/submit', [\App\Controllers\QuestAcceptance
 $router->post('/api/quests/{questRef}/cancel', [\App\Controllers\QuestAcceptanceController::class, 'cancel'], [JwtAuthMiddleware::class]);
 $router->post('/api/quests/{questRef}/complete', [\App\Controllers\QuestAcceptanceController::class, 'complete'], [JwtAuthMiddleware::class]);
 $router->post('/api/quests/{questRef}/review', [\App\Controllers\QuestAcceptanceController::class, 'review'], [JwtAuthMiddleware::class]);
+$router->get('/api/admin/quests/reviews/pending', [\App\Controllers\QuestAcceptanceController::class, 'pendingReviews'], [JwtAuthMiddleware::class]);
 
 // Public Leaderboard Routes
 $router->get('/api/leaderboard', [\App\Controllers\LeaderboardController::class, 'index']);
@@ -159,6 +160,11 @@ $router->put('/api/projects/{id}', [ProjectController::class, 'updateProject'], 
 $router->delete('/api/projects/{id}', [ProjectController::class, 'deleteProject'], [JwtAuthMiddleware::class]);
 $router->put('/api/projects/{id}/owner', [ProjectController::class, 'assignOwner'], [JwtAuthMiddleware::class]);
 $router->post('/api/projects/{id}/quests', [\App\Controllers\QuestController::class, 'createForProject'], [JwtAuthMiddleware::class]);
+$router->post('/api/admin/quests/import-seed', [\App\Controllers\QuestController::class, 'importSeed'], [JwtAuthMiddleware::class]);
+$router->put('/api/admin/quest-chains/{slug}/steps/{stepId}', [\App\Controllers\QuestController::class, 'updateQuestStep'], [JwtAuthMiddleware::class]);
+$router->get('/api/admin/bosses', [\App\Controllers\BossController::class, 'adminIndex'], [JwtAuthMiddleware::class]);
+$router->post('/api/admin/bosses', [\App\Controllers\BossController::class, 'adminCreate'], [JwtAuthMiddleware::class]);
+$router->put('/api/admin/bosses/{id}', [\App\Controllers\BossController::class, 'adminUpdate'], [JwtAuthMiddleware::class]);
 
 // Protected feature request routes
 $router->post('/api/features', [FeatureRequestController::class, 'createFeature'], [JwtAuthMiddleware::class]);

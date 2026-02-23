@@ -228,6 +228,74 @@ class ApiClient {
     });
   }
 
+  async importQuestSeed(
+    seed: Record<string, unknown>,
+    clearExisting: boolean = false
+  ): Promise<ApiResponse> {
+    return this.request('/admin/quests/import-seed', {
+      method: 'POST',
+      body: JSON.stringify({
+        seed,
+        clear_existing: clearExisting,
+      }),
+    });
+  }
+
+  async updateQuestStep(
+    chainSlug: string,
+    stepId: string,
+    updates: Record<string, unknown>
+  ): Promise<ApiResponse> {
+    return this.request(
+      `/admin/quest-chains/${encodeURIComponent(chainSlug)}/steps/${encodeURIComponent(stepId)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      }
+    );
+  }
+
+  async getAdminBosses(): Promise<ApiResponse> {
+    return this.request('/admin/bosses');
+  }
+
+  async createBoss(payload: Record<string, unknown>): Promise<ApiResponse> {
+    return this.request('/admin/bosses', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateBoss(
+    bossId: number,
+    payload: Record<string, unknown>
+  ): Promise<ApiResponse> {
+    return this.request(`/admin/bosses/${bossId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getPendingQuestReviews(): Promise<ApiResponse> {
+    return this.request('/admin/quests/reviews/pending');
+  }
+
+  async completeQuestReview(payload: {
+    quest_ref: string;
+    adventurer_id: number;
+    xp: number;
+    review_notes?: string;
+  }): Promise<ApiResponse> {
+    return this.request(`/quests/${encodeURIComponent(payload.quest_ref)}/complete`, {
+      method: 'POST',
+      body: JSON.stringify({
+        adventurer_id: payload.adventurer_id,
+        xp: payload.xp,
+        review_notes: payload.review_notes ?? '',
+      }),
+    });
+  }
+
   // Auth via frontpage proxy -> auth app
   async login(
     email: string,

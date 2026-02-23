@@ -235,6 +235,11 @@ class QuestAcceptanceController
             $response->error('Authentication required', 401);
             return;
         }
+        $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
+        if ($userRole !== 'admin' && $userRole !== 'guild_master') {
+            $response->error('Only admin or guild_master can complete quests', 403);
+            return;
+        }
 
         $acceptance = $this->questAcceptanceRepo->findByRef($targetAdventurerId, $questRef);
 
@@ -281,6 +286,48 @@ class QuestAcceptanceController
             'rank' => $rankResult,
             'message' => 'Quest completed! XP awarded.',
         ]);
+    }
+
+    /**
+     * GET /api/admin/quests/reviews/pending
+     * Admin review queue for submitted quests.
+     */
+    public function pendingReviews(Request $request, Response $response, array $args = []): void
+    {
+        $userId = (int)$request->getAttribute('user_id');
+        if (!$userId) {
+            $response->error('Authentication required', 401);
+            return;
+        }
+
+        $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
+        if ($userRole !== 'admin' && $userRole !== 'guild_master') {
+            $response->error('Admin or guild master access required', 403);
+            return;
+        }
+
+        try {
+            $items = $this->questAcceptanceRepo->findSubmittedForReview();
+            $normalized = array_map(static function (array $row): array {
+                return [
+                    'id' => (int)$row['id'],
+                    'adventurer_id' => (int)$row['adventurer_id'],
+                    'quest_ref' => (string)$row['quest_ref'],
+                    'status' => (string)$row['status'],
+                    'accepted_at' => $row['accepted_at'] ?? null,
+                    'submitted_at' => $row['submitted_at'] ?? null,
+                    'review_notes' => $row['review_notes'] ?? null,
+                    'github_username' => $row['github_username'] ?? null,
+                    'rank' => $row['rank'] ?? null,
+                    'level' => isset($row['level']) ? (int)$row['level'] : null,
+                    'username' => $row['user_username'] ?? null,
+                    'display_name' => $row['user_display_name'] ?? null,
+                ];
+            }, $items);
+            $response->success($normalized);
+        } catch (\Throwable $e) {
+            $response->error('Failed to load pending reviews: ' . $e->getMessage(), 500);
+        }
     }
 
     /**

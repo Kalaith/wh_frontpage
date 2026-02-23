@@ -51,4 +51,9 @@ final class DatabaseManager
             self::getConnection()->rollBack();
         }
     }
+
+    public function inTransaction(): bool
+    {
+        return self::getConnection()->inTransaction();
+    }
 }

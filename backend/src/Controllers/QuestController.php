@@ -9,6 +9,7 @@ use App\Repositories\ProjectRepository;
 use App\Repositories\QuestChainRepository;
 use App\Repositories\DatabaseManager;
 use App\Services\GitHubService;
+use PDO;
 
 class QuestController
 {
@@ -76,11 +77,6 @@ class QuestController
      */
     public function createForProject(Request $request, Response $response): void
     {
-        if ($this->db === null) {
-            $response->error('Database unavailable', 500);
-            return;
-        }
-
         $projectId = (int)$request->getParam('id', 0);
         if ($projectId <= 0) {
             $response->error('Invalid project id', 400);
@@ -202,10 +198,216 @@ class QuestController
         }
     }
 
+    /**
+     * POST /api/admin/quests/import-seed
+     * Import quest seed JSON payload without shell/DB access.
+     * Admin only.
+     */
+    public function importSeed(Request $request, Response $response): void
+    {
+        $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
+        if ($userRole !== 'admin') {
+            $response->error('Admin access required', 403);
+            return;
+        }
+
+        try {
+            $body = $request->getBody();
+            $seedInput = $body['seed'] ?? $body;
+            $seed = $this->normalizeSeedPayload($seedInput);
+
+            if (!is_array($seed)) {
+                $response->error('Invalid seed payload. Provide a JSON object or a JSON string.', 400);
+                return;
+            }
+
+            $this->validateSeedPayload($seed);
+
+            $clearExisting = filter_var((string)($body['clear_existing'] ?? 'false'), FILTER_VALIDATE_BOOLEAN);
+
+            $this->dbManager->beginTransaction();
+            $db = DatabaseManager::getConnection();
+
+            $projectId = $this->resolveProjectIdFromSeed($db, $seed['habitat']);
+            if ($projectId === null) {
+                throw new \RuntimeException('Could not resolve project id from habitat.project_path or habitat.project_title');
+            }
+
+            $seasonId = $this->upsertSeasonFromSeed($db, $seed['season']);
+
+            $chains = [];
+            foreach ($seed['quest_chains'] as $chain) {
+                if (is_array($chain)) {
+                    $chain['type'] = 'quest_chain';
+                    $chains[] = $chain;
+                }
+            }
+            foreach ($seed['raids'] as $raid) {
+                if (is_array($raid)) {
+                    $raid['type'] = 'raid';
+                    $chains[] = $raid;
+                }
+            }
+
+            if ($clearExisting) {
+                $this->clearExistingSeedData($db, $chains, $seed['bosses'], $projectId);
+            }
+
+            $chainsUpserted = 0;
+            foreach ($chains as $chain) {
+                $this->upsertQuestChainFromSeed($db, $chain, $seasonId);
+                $chainsUpserted++;
+            }
+
+            $bossesUpserted = 0;
+            foreach ($seed['bosses'] as $boss) {
+                if (!is_array($boss)) {
+                    continue;
+                }
+                $this->upsertBossFromSeed($db, $boss, $projectId, $seasonId);
+                $bossesUpserted++;
+            }
+
+            $this->dbManager->commit();
+            $response->success([
+                'project_id' => $projectId,
+                'season_id' => $seasonId,
+                'chains_upserted' => $chainsUpserted,
+                'bosses_upserted' => $bossesUpserted,
+                'clear_existing' => $clearExisting,
+            ], 'Quest seed imported successfully');
+        } catch (\Throwable $e) {
+            if ($this->dbManager->inTransaction()) {
+                $this->dbManager->rollBack();
+            }
+            $response->error('Failed to import quest seed: ' . $e->getMessage(), 500);
+        }
+    }
+
     public function show(Request $request, Response $response, array $args = []): void
     {
         // TODO: Implement single quest view.
         $response->error('Not implemented yet', 501);
+    }
+
+    /**
+     * PUT /api/admin/quest-chains/{slug}/steps/{stepId}
+     * Update a single quest step in a quest chain.
+     * Admin only.
+     */
+    public function updateQuestStep(Request $request, Response $response): void
+    {
+        $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
+        if ($userRole !== 'admin') {
+            $response->error('Admin access required', 403);
+            return;
+        }
+
+        $slug = trim((string)$request->getParam('slug', ''));
+        $stepId = trim((string)$request->getParam('stepId', ''));
+        if ($slug === '' || $stepId === '') {
+            $response->error('slug and stepId are required', 400);
+            return;
+        }
+
+        try {
+            $chain = $this->questChainRepo->findBySlug($slug);
+            if (!$chain) {
+                $response->error('Quest chain not found', 404);
+                return;
+            }
+
+            $steps = json_decode((string)($chain['steps'] ?? '[]'), true);
+            if (!is_array($steps)) {
+                $steps = [];
+            }
+
+            $index = null;
+            foreach ($steps as $i => $step) {
+                if (!is_array($step)) {
+                    continue;
+                }
+                if ((string)($step['id'] ?? '') === $stepId) {
+                    $index = $i;
+                    break;
+                }
+            }
+
+            if ($index === null && ctype_digit($stepId)) {
+                $numericIndex = (int)$stepId;
+                if (isset($steps[$numericIndex]) && is_array($steps[$numericIndex])) {
+                    $index = $numericIndex;
+                }
+            }
+
+            if ($index === null) {
+                $response->error('Quest step not found in chain', 404);
+                return;
+            }
+
+            $updates = $request->getBody();
+            if (!is_array($updates)) {
+                $response->error('Invalid request body', 400);
+                return;
+            }
+
+            $allowedFields = [
+                'id',
+                'title',
+                'description',
+                'rank_required',
+                'quest_level',
+                'dependency_type',
+                'depends_on',
+                'unlock_condition',
+                'goal',
+                'player_steps',
+                'done_when',
+                'due_date',
+                'proof_required',
+                'rs_brief',
+                'class_fantasy',
+                'class',
+                'difficulty',
+                'xp',
+                'labels',
+            ];
+
+            $updatedStep = $steps[$index];
+            foreach ($allowedFields as $field) {
+                if (!array_key_exists($field, $updates)) {
+                    continue;
+                }
+
+                $value = $updates[$field];
+                if (in_array($field, ['depends_on', 'player_steps', 'done_when', 'proof_required', 'labels'], true)) {
+                    $updatedStep[$field] = is_array($value) ? array_values($value) : [];
+                } elseif ($field === 'rs_brief') {
+                    $updatedStep[$field] = is_array($value) ? $value : null;
+                } elseif (in_array($field, ['quest_level', 'difficulty', 'xp'], true)) {
+                    $updatedStep[$field] = (int)$value;
+                } else {
+                    $updatedStep[$field] = is_string($value) ? trim($value) : $value;
+                }
+            }
+
+            $title = trim((string)($updatedStep['title'] ?? ''));
+            $description = trim((string)($updatedStep['description'] ?? ''));
+            if ($title === '' || $description === '') {
+                $response->error('Step title and description are required', 400);
+                return;
+            }
+
+            $steps[$index] = $updatedStep;
+            $this->questChainRepo->updateSteps((int)$chain['id'], $steps);
+
+            $response->success([
+                'chain_slug' => $slug,
+                'step' => $updatedStep,
+            ], 'Quest step updated');
+        } catch (\Throwable $e) {
+            $response->error('Failed to update quest step: ' . $e->getMessage(), 500);
+        }
     }
 
     private function getQuestsFromDatabase(?string $class, mixed $difficulty, ?int $projectId = null): array
@@ -320,5 +522,302 @@ class QuestController
         if (str_starts_with($label, 'boss:')) return 'b60205';
         if (str_starts_with($label, 'raid:')) return 'b60205';
         return 'ededed';
+    }
+
+    private function normalizeSeedPayload(mixed $seedInput): ?array
+    {
+        if (is_array($seedInput)) {
+            return $seedInput;
+        }
+
+        if (is_string($seedInput) && trim($seedInput) !== '') {
+            $decoded = json_decode($seedInput, true);
+            return is_array($decoded) ? $decoded : null;
+        }
+
+        return null;
+    }
+
+    private function validateSeedPayload(array $seed): void
+    {
+        $requiredTopKeys = ['habitat', 'season', 'quest_chains', 'raids', 'bosses'];
+        foreach ($requiredTopKeys as $key) {
+            if (!array_key_exists($key, $seed)) {
+                throw new \RuntimeException("Missing required seed key: {$key}");
+            }
+        }
+
+        if (!is_array($seed['habitat']) || !is_array($seed['season'])) {
+            throw new \RuntimeException('habitat and season must be objects');
+        }
+
+        if (!is_array($seed['quest_chains']) || !is_array($seed['raids']) || !is_array($seed['bosses'])) {
+            throw new \RuntimeException('quest_chains, raids, and bosses must be arrays');
+        }
+    }
+
+    private function resolveProjectIdFromSeed(PDO $db, array $habitat): ?int
+    {
+        $path = isset($habitat['project_path']) ? trim((string)$habitat['project_path']) : '';
+        if ($path !== '') {
+            $stmt = $db->prepare('SELECT id FROM projects WHERE path = ? LIMIT 1');
+            $stmt->execute([$path]);
+            $row = $stmt->fetch();
+            if ($row) {
+                return (int)$row['id'];
+            }
+        }
+
+        $title = isset($habitat['project_title']) ? trim((string)$habitat['project_title']) : '';
+        if ($title !== '') {
+            $stmt = $db->prepare('SELECT id FROM projects WHERE title = ? LIMIT 1');
+            $stmt->execute([$title]);
+            $row = $stmt->fetch();
+            if ($row) {
+                return (int)$row['id'];
+            }
+        }
+
+        return null;
+    }
+
+    private function upsertSeasonFromSeed(PDO $db, array $season): int
+    {
+        $slug = trim((string)($season['slug'] ?? ''));
+        $name = trim((string)($season['name'] ?? ''));
+        $startsAt = trim((string)($season['starts_at'] ?? ''));
+        $endsAt = trim((string)($season['ends_at'] ?? ''));
+
+        if ($slug === '' || $name === '' || $startsAt === '' || $endsAt === '') {
+            throw new \RuntimeException('season must include slug, name, starts_at, ends_at');
+        }
+
+        $stmt = $db->prepare(
+            'INSERT INTO seasons (name, slug, starts_at, ends_at, is_active, path_chosen)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                starts_at = VALUES(starts_at),
+                ends_at = VALUES(ends_at),
+                is_active = VALUES(is_active),
+                path_chosen = VALUES(path_chosen)'
+        );
+        $stmt->execute([
+            $name,
+            $slug,
+            $startsAt,
+            $endsAt,
+            !empty($season['is_active']) ? 1 : 0,
+            $season['path_chosen'] ?? null,
+        ]);
+
+        $find = $db->prepare('SELECT id FROM seasons WHERE slug = ? LIMIT 1');
+        $find->execute([$slug]);
+        $row = $find->fetch();
+        if (!$row) {
+            throw new \RuntimeException('Failed to resolve season id after upsert');
+        }
+
+        return (int)$row['id'];
+    }
+
+    private function clearExistingSeedData(PDO $db, array $chains, array $bosses, int $projectId): void
+    {
+        $chainSlugs = [];
+        $questRefs = [];
+        foreach ($chains as $chain) {
+            if (!is_array($chain)) {
+                continue;
+            }
+            $slug = trim((string)($chain['slug'] ?? ''));
+            if ($slug !== '') {
+                $chainSlugs[] = $slug;
+            }
+            $steps = $chain['steps'] ?? [];
+            if (is_array($steps)) {
+                foreach ($steps as $step) {
+                    if (!is_array($step)) {
+                        continue;
+                    }
+                    $questRef = trim((string)($step['id'] ?? ''));
+                    if ($questRef !== '') {
+                        $questRefs[] = $questRef;
+                    }
+                }
+            }
+        }
+
+        $bossNames = [];
+        foreach ($bosses as $boss) {
+            if (!is_array($boss)) {
+                continue;
+            }
+            $name = trim((string)($boss['name'] ?? ''));
+            if ($name !== '') {
+                $bossNames[] = $name;
+            }
+        }
+
+        $chainSlugs = array_values(array_unique($chainSlugs));
+        $questRefs = array_values(array_unique($questRefs));
+        $bossNames = array_values(array_unique($bossNames));
+
+        if (!empty($questRefs)) {
+            $placeholders = implode(',', array_fill(0, count($questRefs), '?'));
+            $stmt = $db->prepare("DELETE FROM quest_acceptances WHERE quest_ref IN ({$placeholders})");
+            $stmt->execute($questRefs);
+        }
+
+        if (!empty($chainSlugs)) {
+            $placeholders = implode(',', array_fill(0, count($chainSlugs), '?'));
+            $stmt = $db->prepare("DELETE FROM quest_chain_progress WHERE chain_id IN (SELECT id FROM quest_chains WHERE slug IN ({$placeholders}))");
+            $stmt->execute($chainSlugs);
+
+            $stmt = $db->prepare("DELETE FROM quest_chains WHERE slug IN ({$placeholders})");
+            $stmt->execute($chainSlugs);
+        }
+
+        if (!empty($bossNames)) {
+            $placeholders = implode(',', array_fill(0, count($bossNames), '?'));
+            $params = array_merge([$projectId], $bossNames);
+            $stmt = $db->prepare("DELETE FROM bosses WHERE project_id <=> ? AND name IN ({$placeholders})");
+            $stmt->execute($params);
+        }
+    }
+
+    private function upsertQuestChainFromSeed(PDO $db, array $chain, int $seasonId): void
+    {
+        $slug = trim((string)($chain['slug'] ?? ''));
+        $name = trim((string)($chain['name'] ?? ''));
+        if ($slug === '' || $name === '') {
+            throw new \RuntimeException('Each quest_chain/raid requires slug and name');
+        }
+
+        $steps = $chain['steps'] ?? [];
+        if (!is_array($steps)) {
+            throw new \RuntimeException("Chain {$slug} steps must be an array");
+        }
+
+        $description = trim((string)($chain['description'] ?? ''));
+        $metadata = [
+            'type' => $chain['type'] ?? 'quest_chain',
+            'labels' => is_array($chain['labels'] ?? null) ? array_values($chain['labels']) : [],
+            'entry_criteria' => is_array($chain['entry_criteria'] ?? null) ? array_values($chain['entry_criteria']) : [],
+            'go_no_go_gates' => is_array($chain['go_no_go_gates'] ?? null) ? array_values($chain['go_no_go_gates']) : [],
+        ];
+
+        $descriptionWithMeta = $description;
+        if (!empty($metadata['labels']) || !empty($metadata['entry_criteria']) || !empty($metadata['go_no_go_gates'])) {
+            $descriptionWithMeta .= "\n\nMetadata: " . json_encode($metadata, JSON_UNESCAPED_SLASHES);
+        }
+
+        $stmt = $db->prepare(
+            'INSERT INTO quest_chains
+                (slug, name, description, steps, total_steps, reward_xp, reward_badge_slug, reward_title, season_id, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                description = VALUES(description),
+                steps = VALUES(steps),
+                total_steps = VALUES(total_steps),
+                reward_xp = VALUES(reward_xp),
+                reward_badge_slug = VALUES(reward_badge_slug),
+                reward_title = VALUES(reward_title),
+                season_id = VALUES(season_id),
+                is_active = VALUES(is_active)'
+        );
+
+        $stmt->execute([
+            $slug,
+            $name,
+            $descriptionWithMeta,
+            json_encode($steps, JSON_UNESCAPED_SLASHES),
+            count($steps),
+            (int)($chain['reward_xp'] ?? 0),
+            $chain['reward_badge_slug'] ?? null,
+            $chain['reward_title'] ?? null,
+            $seasonId,
+            !empty($chain['is_active']) ? 1 : 0,
+        ]);
+    }
+
+    private function upsertBossFromSeed(PDO $db, array $boss, int $projectId, int $seasonId): void
+    {
+        $name = trim((string)($boss['name'] ?? ''));
+        if ($name === '') {
+            throw new \RuntimeException('Each boss requires a name');
+        }
+
+        $description = $this->buildBossDescriptionFromSeed($boss);
+        $defeatedAt = (($boss['status'] ?? 'active') === 'defeated') ? date('Y-m-d H:i:s') : null;
+
+        $find = $db->prepare('SELECT id FROM bosses WHERE project_id <=> ? AND name = ? LIMIT 1');
+        $find->execute([$projectId, $name]);
+        $existing = $find->fetch();
+
+        if ($existing) {
+            $update = $db->prepare(
+                'UPDATE bosses
+                 SET github_issue_url = ?,
+                     description = ?,
+                     threat_level = ?,
+                     status = ?,
+                     project_id = ?,
+                     season_id = ?,
+                     hp_total = ?,
+                     hp_current = ?,
+                     defeated_at = ?
+                 WHERE id = ?'
+            );
+            $update->execute([
+                $boss['github_issue_url'] ?? null,
+                $description,
+                (int)($boss['threat_level'] ?? 4),
+                $boss['status'] ?? 'active',
+                $projectId,
+                $seasonId,
+                (int)($boss['hp_total'] ?? 8),
+                (int)($boss['hp_current'] ?? ($boss['hp_total'] ?? 8)),
+                $defeatedAt,
+                (int)$existing['id'],
+            ]);
+            return;
+        }
+
+        $insert = $db->prepare(
+            'INSERT INTO bosses
+                (github_issue_url, name, description, threat_level, status, project_id, season_id, hp_total, hp_current, defeated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $insert->execute([
+            $boss['github_issue_url'] ?? null,
+            $name,
+            $description,
+            (int)($boss['threat_level'] ?? 4),
+            $boss['status'] ?? 'active',
+            $projectId,
+            $seasonId,
+            (int)($boss['hp_total'] ?? 8),
+            (int)($boss['hp_current'] ?? ($boss['hp_total'] ?? 8)),
+            $defeatedAt,
+        ]);
+    }
+
+    private function buildBossDescriptionFromSeed(array $boss): string
+    {
+        $base = trim((string)($boss['description'] ?? ''));
+        $metadata = [
+            'id' => $boss['id'] ?? null,
+            'labels' => is_array($boss['labels'] ?? null) ? array_values($boss['labels']) : [],
+            'threat_type' => $boss['threat_type'] ?? null,
+            'deadline' => $boss['deadline'] ?? null,
+            'risk_level' => $boss['risk_level'] ?? null,
+            'rollback_plan' => $boss['rollback_plan'] ?? null,
+            'kill_criteria' => is_array($boss['kill_criteria'] ?? null) ? array_values($boss['kill_criteria']) : [],
+            'hp_tasks' => is_array($boss['hp_tasks'] ?? null) ? array_values($boss['hp_tasks']) : [],
+            'proof_required' => is_array($boss['proof_required'] ?? null) ? array_values($boss['proof_required']) : [],
+        ];
+
+        return $base . "\n\nMetadata: " . json_encode($metadata, JSON_UNESCAPED_SLASHES);
     }
 }

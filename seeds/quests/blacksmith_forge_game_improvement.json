@@ -1,0 +1,257 @@
+{
+    "metadata":  {
+                     "name":  "blacksmith_forge_game_improvement",
+                     "version":  "1.0.0",
+                     "generated_at":  "2026-02-22",
+                     "framework":  "WebHatchery Quest Board Planning Guide"
+                 },
+    "habitat":  {
+                    "slug":  "blacksmith_forge",
+                    "project_path":  "game_apps/blacksmith_forge/frontend/",
+                    "project_title":  "Blacksmith Forge"
+                },
+    "season":  {
+                   "name":  "Season 1: Steelbound Economy",
+                   "slug":  "season-1",
+                   "starts_at":  "2026-02-24",
+                   "ends_at":  "2026-04-03",
+                   "is_active":  true,
+                   "path_chosen":  "feature-depth"
+               },
+    "outcome_brief":  {
+                          "statement":  "Crafting progression stays rewarding while curbing runaway inflation.",
+                          "deadline":  "2026-04-03"
+                      },
+    "major_update":  {
+                         "slug":  "crafting-economy-rework",
+                         "name":  "Major Update: Crafting Economy Rework",
+                         "description":  "Introduce rarity-aware material sinks, market pricing bands, and forge efficiency bonuses.",
+                         "outcome_statement":  "Crafting progression stays rewarding while curbing runaway inflation.",
+                         "deadline":  "2026-04-03"
+                     },
+    "quest_chains":  [
+                         {
+                             "slug":  "forge-economy-rework-support",
+                             "name":  "Blacksmith Forge: Economy Rework Support",
+                             "description":  "Deliver pricing logic, material sink mechanics, and telemetry for the rework.",
+                             "labels":  [
+                                            "type:quest",
+                                            "chain:feature-depth"
+                                        ],
+                             "reward_xp":  180,
+                             "reward_badge_slug":  "market-temperer",
+                             "reward_title":  "Market Temperer",
+                             "is_active":  true,
+                             "steps":  [
+                                           {
+                                               "id":  "BF-Q1",
+                                               "type":  "Quest",
+                                               "title":  "Implement Dynamic Price Bands",
+                                               "description":  "Build min/max market bands that react to crafting volume and item rarity.",
+                                               "rank_required":  "Iron",
+                                               "quest_level":  4,
+                                               "dependency_type":  "Independent",
+                                               "depends_on":  [
+
+                                                              ],
+                                               "unlock_condition":  "n/a",
+                                               "goal":  "Prevent extreme market spikes and crashes.",
+                                               "player_steps":  [
+                                                                    "Define rarity-based default bands.",
+                                                                    "Add rolling volume inputs to adjust active band position.",
+                                                                    "Write tests for edge volatility scenarios."
+                                                                ],
+                                               "done_when":  [
+                                                                 "Bands apply to all tradable crafted categories.",
+                                                                 "High volatility cases remain within configured bounds.",
+                                                                 "Pricing tests pass in CI."
+                                                             ],
+                                               "due_date":  "2026-03-07",
+                                               "proof_required":  [
+                                                                      "proof:pr",
+                                                                      "proof:test-output",
+                                                                      "proof:metric-delta"
+                                                                  ],
+                                               "class_fantasy":  "Aether Smith",
+                                               "class":  "feature-smith",
+                                               "difficulty":  4,
+                                               "xp":  80,
+                                               "labels":  [
+                                                              "type:quest",
+                                                              "difficulty:4",
+                                                              "class:feature-smith",
+                                                              "xp:80",
+                                                              "chain:feature-depth"
+                                                          ]
+                                           },
+                                           {
+                                               "id":  "BF-Q2",
+                                               "type":  "Quest",
+                                               "title":  "Add Material Sink Events",
+                                               "description":  "Create rotating forge events that consume surplus materials for rewards.",
+                                               "rank_required":  "Iron",
+                                               "quest_level":  3,
+                                               "dependency_type":  "Chained",
+                                               "depends_on":  [
+                                                                  "BF-Q1"
+                                                              ],
+                                               "unlock_condition":  "BF-Q1 complete.",
+                                               "goal":  "Reduce inventory bloat while preserving player agency.",
+                                               "player_steps":  [
+                                                                    "Design three event templates with distinct sink patterns.",
+                                                                    "Implement event scheduler and reward tables.",
+                                                                    "Add anti-exploit limits and cooldown checks."
+                                                                ],
+                                               "done_when":  [
+                                                                 "At least three sink events are available.",
+                                                                 "Material outflow metrics show expected reduction.",
+                                                                 "Exploit checks reject invalid loops."
+                                                             ],
+                                               "due_date":  "2026-03-16",
+                                               "proof_required":  [
+                                                                      "proof:pr",
+                                                                      "proof:test-output",
+                                                                      "proof:metric-delta"
+                                                                  ],
+                                               "class_fantasy":  "Iron Warden",
+                                               "class":  "ops-ranger",
+                                               "difficulty":  3,
+                                               "xp":  60,
+                                               "labels":  [
+                                                              "type:quest",
+                                                              "difficulty:3",
+                                                              "class:ops-ranger",
+                                                              "xp:60",
+                                                              "chain:feature-depth"
+                                                          ]
+                                           },
+                                           {
+                                               "id":  "BF-Q3",
+                                               "type":  "Quest",
+                                               "title":  "Ship Economy Telemetry Dashboard",
+                                               "description":  "Track inflation pressure, sink utilization, and median craft profitability.",
+                                               "rank_required":  "Iron",
+                                               "quest_level":  3,
+                                               "dependency_type":  "Chained",
+                                               "depends_on":  [
+                                                                  "BF-Q1",
+                                                                  "BF-Q2"
+                                                              ],
+                                               "unlock_condition":  "BF-Q1 and BF-Q2 complete.",
+                                               "goal":  "Give the team live visibility into economy health post-release.",
+                                               "player_steps":  [
+                                                                    "Define key health metrics and thresholds.",
+                                                                    "Build dashboard panels with daily trend views.",
+                                                                    "Set alerting for threshold breaches."
+                                                                ],
+                                               "done_when":  [
+                                                                 "Dashboard displays all defined metrics.",
+                                                                 "Alerting is verified in a test incident.",
+                                                                 "Team runbook includes response actions."
+                                                             ],
+                                               "due_date":  "2026-03-27",
+                                               "proof_required":  [
+                                                                      "proof:pr",
+                                                                      "proof:screenshot",
+                                                                      "proof:metric-delta"
+                                                                  ],
+                                               "class_fantasy":  "Rune Scribe",
+                                               "class":  "doc-sage",
+                                               "difficulty":  3,
+                                               "xp":  60,
+                                               "labels":  [
+                                                              "type:quest",
+                                                              "difficulty:3",
+                                                              "class:doc-sage",
+                                                              "xp:60",
+                                                              "chain:feature-depth"
+                                                          ]
+                                           },
+                                           {
+                                               "id":  "BF-Q4",
+                                               "type":  "Quest",
+                                               "title":  "Rework Crafting Profit Preview",
+                                               "description":  "Show expected margin ranges using dynamic price bands before players craft.",
+                                               "rank_required":  "Iron",
+                                               "quest_level":  3,
+                                               "dependency_type":  "Chained",
+                                               "depends_on":  [
+                                                                  "BF-Q1"
+                                                              ],
+                                               "unlock_condition":  "BF-Q1 complete.",
+                                               "goal":  "Players can make informed crafting decisions without guesswork.",
+                                               "player_steps":  [
+                                                                    "Add profit range calculator to crafting UI.",
+                                                                    "Include market fee and material sink effects in preview math.",
+                                                                    "Validate preview output against server-side calculations."
+                                                                ],
+                                               "done_when":  [
+                                                                 "Profit preview appears for all eligible recipes.",
+                                                                 "Preview values align with backend calculations.",
+                                                                 "UI handles missing market data gracefully."
+                                                             ],
+                                               "due_date":  "2026-03-21",
+                                               "proof_required":  [
+                                                                      "proof:pr",
+                                                                      "proof:test-output",
+                                                                      "proof:screenshot"
+                                                                  ],
+                                               "class_fantasy":  "Cogwheel Alchemist",
+                                               "class":  "ux-alchemist",
+                                               "difficulty":  3,
+                                               "xp":  60,
+                                               "labels":  [
+                                                              "type:quest",
+                                                              "difficulty:3",
+                                                              "class:ux-alchemist",
+                                                              "xp:60",
+                                                              "chain:feature-depth"
+                                                          ]
+                                           },
+                                           {
+                                               "id":  "BF-Q5",
+                                               "type":  "Quest",
+                                               "title":  "Run Post-Rework Economy Soak Test",
+                                               "description":  "Simulate high-volume crafting/trading to verify inflation stays within target bounds.",
+                                               "rank_required":  "Iron",
+                                               "quest_level":  4,
+                                               "dependency_type":  "Chained",
+                                               "depends_on":  [
+                                                                  "BF-Q2",
+                                                                  "BF-Q3",
+                                                                  "BF-Q4"
+                                                              ],
+                                               "unlock_condition":  "BF-Q2, BF-Q3, and BF-Q4 complete.",
+                                               "goal":  "Confirm economy remains stable under sustained load.",
+                                               "player_steps":  [
+                                                                    "Execute 7-day accelerated market simulation.",
+                                                                    "Track inflation, sink utilization, and profitability drift.",
+                                                                    "Tune coefficients and rerun until targets hold."
+                                                                ],
+                                               "done_when":  [
+                                                                 "Simulation completes with no critical breaches.",
+                                                                 "Economy metrics remain inside approved thresholds.",
+                                                                 "Final tuning report is published."
+                                                             ],
+                                               "due_date":  "2026-04-01",
+                                               "proof_required":  [
+                                                                      "proof:pr",
+                                                                      "proof:test-output",
+                                                                      "proof:metric-delta"
+                                                                  ],
+                                               "class_fantasy":  "Arcane Examiner",
+                                               "class":  "test-summoner",
+                                               "difficulty":  4,
+                                               "xp":  80,
+                                               "labels":  [
+                                                              "type:quest",
+                                                              "difficulty:4",
+                                                              "class:test-summoner",
+                                                              "xp:80",
+                                                              "chain:feature-depth"
+                                                          ]
+                                           }
+                                       ]
+                         }
+                     ]
+}

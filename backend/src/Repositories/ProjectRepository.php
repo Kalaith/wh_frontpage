@@ -69,13 +69,31 @@ final class ProjectRepository
         ];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, $allowedFields)) {
-                $fields[] = "$key = :$key";
-                if ($key === 'environments' && is_array($value)) {
-                    $params[$key] = json_encode($value);
-                } else {
-                    $params[$key] = $value;
+            if (!in_array($key, $allowedFields, true)) {
+                continue;
+            }
+
+            if ($key === 'show_on_homepage') {
+                $normalized = $this->normalizeHomepageFlag($value);
+                if ($normalized === null) {
+                    continue;
                 }
+                $fields[] = "$key = :$key";
+                $params[$key] = $normalized;
+                continue;
+            }
+
+            if ($key === 'owner_user_id') {
+                $fields[] = "$key = :$key";
+                $params[$key] = $this->normalizeNullableInt($value);
+                continue;
+            }
+
+            $fields[] = "$key = :$key";
+            if ($key === 'environments' && is_array($value)) {
+                $params[$key] = json_encode($value);
+            } else {
+                $params[$key] = $value;
             }
         }
 
@@ -87,6 +105,51 @@ final class ProjectRepository
         $stmt = $this->db->prepare($sql);
         
         return $stmt->execute($params);
+    }
+
+    private function normalizeHomepageFlag(mixed $value): ?int
+    {
+        if (is_bool($value)) {
+            return $value ? 1 : 0;
+        }
+
+        if (is_int($value)) {
+            return $value === 0 ? 0 : 1;
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                return null;
+            }
+
+            if (is_numeric($trimmed)) {
+                return ((int)$trimmed) === 0 ? 0 : 1;
+            }
+
+            $lower = strtolower($trimmed);
+            if ($lower === 'true' || $lower === 'yes' || $lower === 'on') {
+                return 1;
+            }
+            if ($lower === 'false' || $lower === 'no' || $lower === 'off') {
+                return 0;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeNullableInt(mixed $value): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value) && trim($value) === '') {
+            return null;
+        }
+
+        return (int)$value;
     }
 
     public function delete(int $id): bool

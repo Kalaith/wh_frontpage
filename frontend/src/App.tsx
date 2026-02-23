@@ -17,6 +17,7 @@ import HallOfHeroesPage from './pages/HallOfHeroesPage';
 import QuestChainsPage from './pages/QuestChainsPage';
 import PortfolioPage from './pages/PortfolioPage';
 import AboutPage from './pages/AboutPage';
+import QuestManagementPage from './pages/QuestManagementPage';
 import './styles/global.css';
 
 import IdeasPage from './pages/IdeasPage';
@@ -53,6 +54,7 @@ const App: React.FC = () => {
             <Route path="/quest-chains" element={<QuestChainsPage />} />
             <Route path="/portfolio/:username" element={<PortfolioPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/quests/manage" element={<QuestManagementPage />} />
             <Route path="/ideas" element={<IdeasPage />} />
             <Route path="/features" element={<FeatureRequestDashboard />} />
             <Route path="/profile" element={<UserProfile />} />

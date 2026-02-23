@@ -113,4 +113,30 @@ class QuestAcceptanceRepository
         $stmt = $this->db->prepare("DELETE FROM quest_acceptances WHERE id = ?");
         $stmt->execute([$acceptanceId]);
     }
+
+    public function findSubmittedForReview(): array
+    {
+        $stmt = $this->db->query(
+            "SELECT
+                qa.id,
+                qa.adventurer_id,
+                qa.quest_ref,
+                qa.status,
+                qa.accepted_at,
+                qa.submitted_at,
+                qa.review_notes,
+                a.github_username,
+                a.rank,
+                a.level,
+                u.username AS user_username,
+                u.display_name AS user_display_name
+             FROM quest_acceptances qa
+             JOIN adventurers a ON a.id = qa.adventurer_id
+             LEFT JOIN users u ON u.id = a.user_id
+             WHERE qa.status = 'submitted'
+             ORDER BY qa.submitted_at DESC, qa.id DESC"
+        );
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }
