@@ -260,7 +260,7 @@ header {
   border-radius: 12px;
   font-size: 0.7rem;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   margin-left: 0.5rem;
   border: 1.5px solid;
@@ -276,6 +276,12 @@ header {
   background-color: #e3f2fd;
   border-color: #1976d2;
   color: #0d47a1;
+}
+
+.stage-api {
+  background-color: #fff8e1;
+  border-color: #f57c00;
+  color: #e65100;
 }
 
 .stage-backend {
@@ -323,6 +329,12 @@ header {
   background-color: #e8f5e8;
   border-color: #4caf50;
   color: #2e7d32;
+}
+
+.status-planning {
+  background-color: #e8f0ff;
+  border-color: #4f75d9;
+  color: #2f4ea8;
 }
 
 .status-unknown {

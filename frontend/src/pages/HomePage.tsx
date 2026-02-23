@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
-import { QuickLinks } from '../components/QuickLinks';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
-import ProjectUpdates from '../components/ProjectUpdates';
 import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
 import { SeasonBanner } from '../components/SeasonBanner';
@@ -82,15 +80,13 @@ const HomePage: React.FC = () => {
       <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
         {/* Main Content Area (Left side on XL screens) */}
         <div className="flex-1 min-w-0">
-          <QuickLinks data={projectsData} isLoading={loading} />
+          <p className="text-center text-lg text-slate-700 max-w-3xl mx-auto mb-10">
+            Web Hatchery is a collection of vibe-coded prototypes built to
+            quickly explore new ideas, with quests to improve each prototype.
+          </p>
 
-          {/* Top Content Grid - Status Guide and Updates side by side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <ProjectLegend />
-            <div className="space-y-8">
-              <ProjectUpdates />
-              <ProjectHealthDashboard />
-            </div>
+          <div className="mb-8">
+            <ProjectHealthDashboard />
           </div>
 
           {/* Project Portfolio - Full Width within main area */}
@@ -102,6 +98,7 @@ const HomePage: React.FC = () => {
         {/* Sidebar Area (Right side on XL screens) */}
         <div className="w-full xl:w-[350px] shrink-0 space-y-6">
           <SeasonBanner />
+          <ProjectLegend />
           <WeeklyHeist />
         </div>
       </div>

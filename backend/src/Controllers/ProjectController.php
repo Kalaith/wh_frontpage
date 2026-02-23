@@ -12,6 +12,7 @@ use App\Actions\UpdateProjectAction;
 use App\Actions\DeleteProjectAction;
 use App\Actions\GetHomepageProjectsAction;
 use App\Repositories\ProjectRepository;
+use App\Services\GeminiDescriptionService;
 use Exception;
 
 class ProjectController
@@ -23,7 +24,8 @@ class ProjectController
         private readonly UpdateProjectAction $updateProjectAction,
         private readonly DeleteProjectAction $deleteProjectAction,
         private readonly GetHomepageProjectsAction $getHomepageProjectsAction,
-        private readonly ProjectRepository $projectRepository
+        private readonly ProjectRepository $projectRepository,
+        private readonly GeminiDescriptionService $geminiDescriptionService
     ) {}
 
     /**
@@ -254,6 +256,34 @@ class ProjectController
             $response->success($updated, 'Project owner updated');
         } catch (Exception $e) {
             $response->error('Failed to assign project owner: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Suggest a concise AI project description (admin only).
+     */
+    public function suggestDescription(Request $request, Response $response): void
+    {
+        try {
+            $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
+            if ($userRole !== 'admin') {
+                $response->error('Admin access required', 403);
+                return;
+            }
+
+            $body = $request->getBody();
+            $title = trim((string)($body['title'] ?? ''));
+            $description = trim((string)($body['description'] ?? ''));
+
+            if ($title === '') {
+                $response->error('Title is required', 400);
+                return;
+            }
+
+            $suggested = $this->geminiDescriptionService->suggestFourteenWordDescription($title, $description);
+            $response->success(['description' => $suggested]);
+        } catch (Exception $e) {
+            $response->error('Failed to generate AI description: ' . $e->getMessage(), 500);
         }
     }
 }

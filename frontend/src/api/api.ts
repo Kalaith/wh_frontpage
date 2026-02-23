@@ -331,6 +331,16 @@ class ApiClient {
         : {},
     });
   }
+
+  async suggestProjectDescription(payload: {
+    title: string;
+    description?: string;
+  }): Promise<ApiResponse<{ description: string }>> {
+    return this.request<{ description: string }>('/projects/description/suggest', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 // Create and export a singleton instance

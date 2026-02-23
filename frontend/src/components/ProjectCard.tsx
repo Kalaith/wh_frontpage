@@ -44,9 +44,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
               {project.deployment.type}
             </Badge>
           )}
-          {project.version && (
-            <Badge variant="version">v{project.version}</Badge>
-          )}
           {project.deployment?.requiresBuild && (
             <Badge className="bg-orange-50 text-orange-600">
               Build Required

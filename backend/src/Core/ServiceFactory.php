@@ -31,6 +31,7 @@ use App\Services\AuthService;
 use App\Services\ProjectUpdateService;
 use App\Services\ProjectNewsFeedService;
 use App\Services\ProjectHealthService;
+use App\Services\GeminiDescriptionService;
 use RuntimeException;
 
 final class ServiceFactory
@@ -78,7 +79,8 @@ final class ServiceFactory
                 new \App\Actions\UpdateProjectAction($projectRepo),
                 new \App\Actions\DeleteProjectAction($projectRepo),
                 new \App\Actions\GetHomepageProjectsAction($projectRepo, $projectGitRepo),
-                $projectRepo
+                $projectRepo,
+                new GeminiDescriptionService()
             ),
             TrackerController::class => new TrackerController(
                 new \App\Actions\GetTrackerStatsAction($projectRepo, $featureRepo, $suggestionRepo),

@@ -58,14 +58,23 @@ final class ProjectRepository
 
     public function update(int $id, array $data): bool
     {
+        // Normalize nested repository payload from frontend forms.
+        if (isset($data['repository']) && is_array($data['repository'])) {
+            if (array_key_exists('url', $data['repository'])) {
+                $data['repository_url'] = $data['repository']['url'];
+            }
+            if (array_key_exists('type', $data['repository'])) {
+                $data['repository_type'] = $data['repository']['type'];
+            }
+        }
+
         $fields = [];
         $params = ['id' => $id];
 
         $allowedFields = [
             'title', 'path', 'description', 'stage', 'status', 'version', 
             'group_name', 'repository_type', 'repository_url', 'show_on_homepage',
-            'last_updated', 'last_build', 'last_commit_message', 'branch', 
-            'git_commit', 'environments', 'project_type', 'owner_user_id'
+            'owner_user_id'
         ];
 
         foreach ($data as $key => $value) {
@@ -90,11 +99,7 @@ final class ProjectRepository
             }
 
             $fields[] = "$key = :$key";
-            if ($key === 'environments' && is_array($value)) {
-                $params[$key] = json_encode($value);
-            } else {
-                $params[$key] = $value;
-            }
+            $params[$key] = $value;
         }
 
         if (empty($fields)) {

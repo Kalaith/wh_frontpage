@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Project } from '../types/projects';
 
 interface ProjectFormProps {
   project?: Partial<Project>;
   onChange: (updates: Partial<Project>) => void;
+  onSuggestDescription?: (title: string, description?: string) => Promise<string>;
   onSubmit: () => void;
   submitLabel?: string;
 }
@@ -11,10 +12,47 @@ interface ProjectFormProps {
 const ProjectForm: React.FC<ProjectFormProps> = ({
   project = {},
   onChange,
+  onSuggestDescription,
   onSubmit,
   submitLabel = 'Save',
 }) => {
   const p = project ?? {};
+  const stageOptions = ['Static', 'React', 'API', 'Auth'];
+  const statusOptions = ['Planning', 'In Development', 'MVP', 'Published'];
+  const normalizedStage = stageOptions.includes(p.stage ?? '')
+    ? (p.stage as string)
+    : 'Static';
+  const normalizedStatus = statusOptions.includes(p.status ?? '')
+    ? (p.status as string)
+    : 'Planning';
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+
+  const handleSuggest = async () => {
+    if (!onSuggestDescription) return;
+    if (!p.title?.trim()) {
+      setSuggestError('Enter a title before generating a description.');
+      return;
+    }
+
+    setIsSuggesting(true);
+    setSuggestError(null);
+    try {
+      const suggested = await onSuggestDescription(
+        p.title.trim(),
+        p.description ?? ''
+      );
+      onChange({ ...p, description: suggested });
+    } catch (error) {
+      setSuggestError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate description.'
+      );
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
 
   return (
     <form
@@ -55,34 +93,61 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
       </div>
 
       <div className="col-span-1 md:col-span-2">
-        <label className="block text-sm font-medium text-gray-700">
-          Description
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
+          {onSuggestDescription && (
+            <button
+              type="button"
+              onClick={() => void handleSuggest()}
+              disabled={isSuggesting}
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSuggesting ? 'Generating...' : 'AI Suggest (14 words)'}
+            </button>
+          )}
+        </div>
         <textarea
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           value={p.description ?? ''}
           onChange={e => onChange({ ...p, description: e.target.value })}
         />
+        {suggestError && (
+          <p className="mt-1 text-sm text-red-600">{suggestError}</p>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Stage</label>
-        <input
+        <select
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          value={p.stage ?? ''}
+          value={normalizedStage}
           onChange={e => onChange({ ...p, stage: e.target.value })}
-        />
+        >
+          {stageOptions.map(option => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Status
         </label>
-        <input
+        <select
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          value={p.status ?? ''}
+          value={normalizedStatus}
           onChange={e => onChange({ ...p, status: e.target.value })}
-        />
+        >
+          {statusOptions.map(option => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

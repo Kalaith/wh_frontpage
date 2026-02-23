@@ -221,6 +221,13 @@ class QuestController
                 return;
             }
 
+            if (!array_key_exists('raids', $seed) || !is_array($seed['raids'])) {
+                $seed['raids'] = [];
+            }
+            if (!array_key_exists('bosses', $seed) || !is_array($seed['bosses'])) {
+                $seed['bosses'] = [];
+            }
+
             $this->validateSeedPayload($seed);
 
             $clearExisting = filter_var((string)($body['clear_existing'] ?? 'false'), FILTER_VALIDATE_BOOLEAN);
@@ -230,7 +237,12 @@ class QuestController
 
             $projectId = $this->resolveProjectIdFromSeed($db, $seed['habitat']);
             if ($projectId === null) {
-                throw new \RuntimeException('Could not resolve project id from habitat.project_path or habitat.project_title');
+                $path = (string)($seed['habitat']['project_path'] ?? '');
+                $title = (string)($seed['habitat']['project_title'] ?? '');
+                $slug = (string)($seed['habitat']['slug'] ?? '');
+                throw new \RuntimeException(
+                    "Could not resolve project id from habitat fields (project_path='{$path}', project_title='{$title}', slug='{$slug}')"
+                );
             }
 
             $seasonId = $this->upsertSeasonFromSeed($db, $seed['season']);
@@ -540,7 +552,7 @@ class QuestController
 
     private function validateSeedPayload(array $seed): void
     {
-        $requiredTopKeys = ['habitat', 'season', 'quest_chains', 'raids', 'bosses'];
+        $requiredTopKeys = ['habitat', 'season', 'quest_chains'];
         foreach ($requiredTopKeys as $key) {
             if (!array_key_exists($key, $seed)) {
                 throw new \RuntimeException("Missing required seed key: {$key}");
@@ -560,11 +572,29 @@ class QuestController
     {
         $path = isset($habitat['project_path']) ? trim((string)$habitat['project_path']) : '';
         if ($path !== '') {
-            $stmt = $db->prepare('SELECT id FROM projects WHERE path = ? LIMIT 1');
-            $stmt->execute([$path]);
-            $row = $stmt->fetch();
-            if ($row) {
-                return (int)$row['id'];
+            $normalized = ltrim($path, '/');
+            $pathCandidates = [$normalized];
+
+            if (!str_ends_with($normalized, '/')) {
+                $pathCandidates[] = $normalized . '/';
+            } else {
+                $pathCandidates[] = rtrim($normalized, '/');
+            }
+
+            if (str_contains($normalized, '/frontend/')) {
+                $pathCandidates[] = str_replace('/frontend/', '/', $normalized);
+                $pathCandidates[] = rtrim(str_replace('/frontend/', '/', $normalized), '/') . '/';
+            }
+
+            $pathCandidates = array_values(array_unique(array_filter($pathCandidates)));
+            if (!empty($pathCandidates)) {
+                $in = implode(',', array_fill(0, count($pathCandidates), '?'));
+                $stmt = $db->prepare("SELECT id FROM projects WHERE path IN ({$in}) LIMIT 1");
+                $stmt->execute($pathCandidates);
+                $row = $stmt->fetch();
+                if ($row) {
+                    return (int)$row['id'];
+                }
             }
         }
 
@@ -572,6 +602,19 @@ class QuestController
         if ($title !== '') {
             $stmt = $db->prepare('SELECT id FROM projects WHERE title = ? LIMIT 1');
             $stmt->execute([$title]);
+            $row = $stmt->fetch();
+            if ($row) {
+                return (int)$row['id'];
+            }
+        }
+
+        $slug = isset($habitat['slug']) ? trim((string)$habitat['slug']) : '';
+        if ($slug !== '') {
+            $stmt = $db->prepare('SELECT id FROM projects WHERE path LIKE ? OR title LIKE ? LIMIT 1');
+            $stmt->execute([
+                "%/{$slug}/%",
+                str_replace('_', ' ', $slug),
+            ]);
             $row = $stmt->fetch();
             if ($row) {
                 return (int)$row['id'];
@@ -608,7 +651,7 @@ class QuestController
             $startsAt,
             $endsAt,
             !empty($season['is_active']) ? 1 : 0,
-            $season['path_chosen'] ?? null,
+            $this->normalizeSeasonPathChosen($season['path_chosen'] ?? null),
         ]);
 
         $find = $db->prepare('SELECT id FROM seasons WHERE slug = ? LIMIT 1');
@@ -619,6 +662,28 @@ class QuestController
         }
 
         return (int)$row['id'];
+    }
+
+    private function normalizeSeasonPathChosen(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $raw = strtolower(trim((string)$value));
+        if ($raw === '') {
+            return null;
+        }
+
+        if ($raw === 'feature' || str_contains($raw, 'feature')) {
+            return 'feature';
+        }
+
+        if ($raw === 'stability' || str_contains($raw, 'stability')) {
+            return 'stability';
+        }
+
+        return null;
     }
 
     private function clearExistingSeedData(PDO $db, array $chains, array $bosses, int $projectId): void

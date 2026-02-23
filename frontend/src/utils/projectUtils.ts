@@ -100,6 +100,7 @@ export function getStageBadgeClass(project: Project): string {
   const stageMap: Record<string, string> = {
     Static: 'stage-static',
     React: 'stage-react',
+    API: 'stage-api',
     Backend: 'stage-backend',
     Auth: 'stage-auth',
   };
@@ -112,9 +113,13 @@ export function getStatusBadgeClass(project: Project): string {
 
   const status = project.status ?? '';
   const statusMap: Record<string, string> = {
+    Planning: 'status-planning',
+    'In Development': 'status-non-working',
+    Published: 'status-fully-working',
     'non-working': 'status-non-working',
     MVP: 'status-mvp',
     'fully-working': 'status-fully-working',
+    planning: 'status-planning',
   };
 
   return status && statusMap[status] ? statusMap[status] : 'status-unknown';
@@ -125,9 +130,13 @@ export function getStatusBadgeText(project: Project): string {
 
   const status = project.status ?? '';
   const statusTextMap: Record<string, string> = {
-    'non-working': '🚧 Non-Working',
-    MVP: '⚡ MVP',
-    'fully-working': '✅ Fully Working',
+    Planning: 'Planning',
+    'In Development': 'In Development',
+    Published: 'Published',
+    'non-working': 'Non-Working',
+    MVP: 'MVP',
+    'fully-working': 'Fully Working',
+    planning: 'Planning',
   };
 
   return status && statusTextMap[status]

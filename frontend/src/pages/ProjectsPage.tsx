@@ -7,18 +7,33 @@ import {
   useCreateProject,
   useUpdateProject,
   useDeleteProject,
+  useSuggestProjectDescription,
 } from '../hooks/useProjectsQuery';
 import { useFeatureRequests } from '../hooks/useTrackerQuery';
 import { getProjectCount, getGroupedProjects } from '../utils/projectUtils';
 import { useAuth } from '../stores/authStore';
 
 const ProjectsPage: React.FC = () => {
+  const validStages = ['Static', 'React', 'API', 'Auth'];
+  const validStatuses = ['Planning', 'In Development', 'MVP', 'Published'];
+  const normalizeProjectFields = (data: Partial<Project>): Partial<Project> => {
+    const next = { ...data };
+    next.stage = validStages.includes((next.stage ?? '').toString())
+      ? next.stage
+      : 'Static';
+    next.status = validStatuses.includes((next.status ?? '').toString())
+      ? next.status
+      : 'Planning';
+    return next;
+  };
+
   const { isAuthenticated, isAdmin, isLoading, loginWithRedirect } = useAuth();
   const { data: projectsData, isLoading: loading, error } = useProjects();
   const { data: allFeatureRequests } = useFeatureRequests({});
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
+  const suggestDescriptionMutation = useSuggestProjectDescription();
 
   const projectCount = getProjectCount(projectsData);
   const grouped = getGroupedProjects(projectsData);
@@ -56,13 +71,20 @@ const ProjectsPage: React.FC = () => {
   const [createData, setCreateData] = useState<Partial<Project>>({
     title: '',
     group_name: 'other',
+    stage: 'Static',
+    status: 'Planning',
   });
   const [editingId, setEditingId] = useState<null | number>(null);
   const [editingData, setEditingData] = useState<Partial<Project> | null>(null);
 
   const handleCreate = async (data: Partial<Project>) => {
-    await createProjectMutation.mutateAsync(data);
-    setCreateData({ title: '', group_name: 'other' });
+    await createProjectMutation.mutateAsync(normalizeProjectFields(data));
+    setCreateData({
+      title: '',
+      group_name: 'other',
+      stage: 'Static',
+      status: 'Planning',
+    });
   };
 
   const handleEdit = (project: Project) => {
@@ -72,7 +94,10 @@ const ProjectsPage: React.FC = () => {
 
   const handleUpdate = async (updates: Partial<Project>) => {
     if (!editingId) return;
-    await updateProjectMutation.mutateAsync({ id: editingId, data: updates });
+    await updateProjectMutation.mutateAsync({
+      id: editingId,
+      data: normalizeProjectFields(updates),
+    });
     setEditingId(null);
     setEditingData(null);
   };
@@ -80,6 +105,13 @@ const ProjectsPage: React.FC = () => {
   const handleDelete = async (projectId?: number) => {
     if (!projectId) return;
     await deleteProjectMutation.mutateAsync(projectId);
+  };
+
+  const handleSuggestDescription = async (
+    title: string,
+    description?: string
+  ): Promise<string> => {
+    return suggestDescriptionMutation.mutateAsync({ title, description });
   };
 
   // Authentication checks - this page requires admin access
@@ -160,6 +192,7 @@ const ProjectsPage: React.FC = () => {
           onChange={(d: Partial<Project>) =>
             setCreateData(prev => ({ ...(prev || {}), ...(d || {}) }))
           }
+          onSuggestDescription={handleSuggestDescription}
           onSubmit={() => void handleCreate(createData)}
           submitLabel="Create"
         />
@@ -261,6 +294,7 @@ const ProjectsPage: React.FC = () => {
                               ...(d || {}),
                             }))
                           }
+                          onSuggestDescription={handleSuggestDescription}
                           onSubmit={() =>
                             void handleUpdate(
                               (editingData as Partial<Project>) || {}

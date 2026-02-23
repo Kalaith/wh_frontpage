@@ -159,6 +159,7 @@ $router->post('/api/projects', [ProjectController::class, 'createProject'], [Jwt
 $router->put('/api/projects/{id}', [ProjectController::class, 'updateProject'], [JwtAuthMiddleware::class]);
 $router->delete('/api/projects/{id}', [ProjectController::class, 'deleteProject'], [JwtAuthMiddleware::class]);
 $router->put('/api/projects/{id}/owner', [ProjectController::class, 'assignOwner'], [JwtAuthMiddleware::class]);
+$router->post('/api/projects/description/suggest', [ProjectController::class, 'suggestDescription'], [JwtAuthMiddleware::class]);
 $router->post('/api/projects/{id}/quests', [\App\Controllers\QuestController::class, 'createForProject'], [JwtAuthMiddleware::class]);
 $router->post('/api/admin/quests/import-seed', [\App\Controllers\QuestController::class, 'importSeed'], [JwtAuthMiddleware::class]);
 $router->put('/api/admin/quest-chains/{slug}/steps/{stepId}', [\App\Controllers\QuestController::class, 'updateQuestStep'], [JwtAuthMiddleware::class]);

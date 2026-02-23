@@ -126,3 +126,17 @@ export const useDeleteProject = () => {
     },
   });
 };
+
+export const useSuggestProjectDescription = () => {
+  return useMutation({
+    mutationFn: async (payload: { title: string; description?: string }) => {
+      const response = await api.suggestProjectDescription(payload);
+      if (!response.success || !response.data?.description) {
+        throw new Error(
+          getErrorMessage(response.error, 'Failed to generate project description')
+        );
+      }
+      return response.data.description;
+    },
+  });
+};
