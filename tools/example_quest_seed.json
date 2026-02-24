@@ -1,0 +1,35 @@
+{
+    "project_title": "WebHatchery Framework Update",
+    "quests": [
+        {
+            "title": "📝 Expand the API Documentation",
+            "body": "**Objective:** Update the REST API documentation to include the new gamification webhook endpoints.\n\n**Details:**\n- We recently added `/api/webhooks/github/gamification`.\n- It expects a standard GitHub Pull Request payload.\n- Please document this in `docs/api.md` so external developers know how the system awards XP.\n\n**Reward:** Base XP + Title Chance",
+            "labels": [
+                "quest",
+                "difficulty:2",
+                "xp:100",
+                "class:scribe"
+            ]
+        },
+        {
+            "title": "🐞 Fix Quest Filter State Issue",
+            "body": "**Objective:** The `useQuestBoard.ts` hook sometimes fails to reset `selectedDifficulty`.\n\n**Details:**\n- When changing the `selectedClass` dropdown, the `selectedDifficulty` should reset to `0` (All). Currently, it remains stuck, causing zero quests to visually load if the combination is invalid.\n- Add a `useEffect` or update the class setter to enforce this reset.\n\n**Reward:** High XP + Loot Crate",
+            "labels": [
+                "quest",
+                "difficulty:3",
+                "xp:200",
+                "class:bug-hunter"
+            ]
+        },
+        {
+            "title": "🎨 Implement Quest Card Hover Micro-animations",
+            "body": "**Objective:** Make the Quest Cards feel more responsive and premium.\n\n**Details:**\n- In `QuestCard.tsx`, add a subtle CSS transform scale and box-shadow glow on hover.\n- The transition should be smooth (approx `0.2s ease`).\n- Maintain current dark theme contrast constraints.\n\n**Reward:** Base XP",
+            "labels": [
+                "quest",
+                "difficulty:1",
+                "xp:50",
+                "class:stylist"
+            ]
+        }
+    ]
+}

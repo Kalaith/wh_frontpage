@@ -114,4 +114,44 @@ class GitHubService
 
         return json_decode($response, true) ?? [];
     }
+
+    /**
+     * Post a comment on a specific repository issue.
+     */
+    public function postIssueComment(string $owner, string $repo, int $issueNumber, string $commentBody): bool
+    {
+        $url = "/repos/{$owner}/{$repo}/issues/{$issueNumber}/comments";
+        $payload = ['body' => $commentBody];
+        $response = $this->postRequest($url, $payload);
+        return $response !== null;
+    }
+
+    private function postRequest(string $endpoint, array $data): ?array
+    {
+        $ch = curl_init($this->baseUrl . $endpoint);
+        $headers = [
+            'User-Agent: WebHatchery-Frontpage',
+            'Accept: application/vnd.github.v3+json',
+            'Content-Type: application/json',
+        ];
+
+        if ($this->token) {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode === 201) {
+            return json_decode($response, true) ?? [];
+        }
+        
+        return null;
+    }
 }

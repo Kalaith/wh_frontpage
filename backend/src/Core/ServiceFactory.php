@@ -12,6 +12,7 @@ use App\Controllers\FeatureRequestController;
 use App\Controllers\ProjectHealthController;
 use App\Controllers\ProjectNewsFeedController;
 use App\Controllers\ProjectUpdateController;
+use App\Controllers\GamificationWebhookController;
 use App\Actions\CreateProjectAction;
 use App\Actions\UpdateProjectAction;
 use App\Actions\DeleteProjectAction;
@@ -124,6 +125,11 @@ final class ServiceFactory
                 $voteRepo,
                 $eggRepo,
                 $notificationRepo
+            ),
+            \App\Controllers\GamificationWebhookController::class => new \App\Controllers\GamificationWebhookController(
+                $gamificationService,
+                $adventurerRepo,
+                $db
             ),
             \App\Controllers\GitHubWebhookController::class => new \App\Controllers\GitHubWebhookController(
                 $projectRepo,

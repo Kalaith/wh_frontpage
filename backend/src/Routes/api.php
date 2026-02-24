@@ -10,6 +10,7 @@ use App\Controllers\UserController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthProxyController;
 use App\Controllers\GitHubWebhookController;
+use App\Controllers\GamificationWebhookController;
 use App\Controllers\SystemController;
 use App\Middleware\JwtAuthMiddleware;
 use App\Models\Project;
@@ -194,6 +195,7 @@ $router->get('/api/admin/users', [AdminController::class, 'getUserManagement'], 
 
 // Webhook Routes (no auth - verified by signature)
 $router->post('/api/webhooks/github', [GitHubWebhookController::class, 'handlePush']);
+$router->post('/api/webhooks/github/gamification', [GamificationWebhookController::class, 'handleEvent']);
 
 // Admin webhook setup (IP restricted via ALLOWED_ADMIN_IP in .env)
 $router->get('/api/admin/setup-webhooks', [GitHubWebhookController::class, 'setupWebhooks']);
