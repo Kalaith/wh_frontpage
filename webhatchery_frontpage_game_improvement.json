@@ -1,0 +1,347 @@
+{
+  "metadata": {
+    "name": "webhatchery_frontpage_game_improvement",
+    "version": "1.1.0",
+    "generated_at": "2026-02-24",
+    "framework": "WebHatchery Quest Board Planning Guide"
+  },
+  "habitat": {
+    "slug": "frontpage",
+    "project_path": "frontpage/",
+    "project_title": "WebHatchery Frontpage"
+  },
+  "season": {
+    "name": "Season 1: Hatchery Hardening",
+    "slug": "season-1",
+    "starts_at": "2026-02-24",
+    "ends_at": "2026-03-31",
+    "is_active": true,
+    "path_chosen": "stability-to-ship"
+  },
+  "outcome_brief": {
+    "statement": "Frontpage quests are easy to understand, pages load reliably, and release steps are clear.",
+    "deadline": "2026-03-31"
+  },
+  "major_update": {
+    "slug": "frontpage-quest-board-stability-and-release",
+    "name": "Major Update: Frontpage Quest Board Stability and Release",
+    "description": "Ship simple, clear quests with stable data loading and a documented release path.",
+    "outcome_statement": "Frontpage quests are easy to understand, pages load reliably, and release steps are clear.",
+    "deadline": "2026-03-31"
+  },
+  "quest_chains": [
+    {
+      "slug": "frontpage-stabilize-core",
+      "name": "Frontpage: Stabilize Core",
+      "description": "Make quest data stable and easy to use.",
+      "labels": [
+        "quest",
+        "chain:stabilize"
+      ],
+      "reward_xp": 240,
+      "reward_badge_slug": "hatchery-stabilizer",
+      "reward_title": "Hatchery Stabilizer",
+      "is_active": true,
+      "steps": [
+        {
+          "id": "FP-Q1",
+          "type": "Quest",
+          "title": "Document Quest and Boss API examples",
+          "description": "Add one clear docs page with example request and response payloads.",
+          "rank_required": "Iron",
+          "quest_level": 1,
+          "dependency_type": "Independent",
+          "depends_on": [],
+          "unlock_condition": "n/a",
+          "goal": "Anyone can read one doc page and understand how Quest and Boss data looks.",
+          "player_steps": [
+            "Create or update one docs file for Quest and Boss API examples.",
+            "Add example request and response for list and detail endpoints.",
+            "Add one short section called Common Errors with expected error response examples."
+          ],
+          "done_when": [
+            "Docs page includes examples for quest list/detail and boss list/detail.",
+            "Examples are valid JSON and easy to copy.",
+            "PR includes link to the updated docs page."
+          ],
+          "due_date": "2026-03-03",
+          "proof_required": [
+            "PR link",
+            "Screenshot of updated docs page"
+          ],
+          "class_fantasy": "Rune Scribe",
+          "class": "doc-sage",
+          "difficulty": 2,
+          "xp": 40,
+          "labels": [
+            "quest",
+            "difficulty:2",
+            "class:doc-sage",
+            "xp:40",
+            "chain:stabilize"
+          ]
+        },
+        {
+          "id": "FP-Q2",
+          "type": "Quest",
+          "title": "Speed up Quest and Boss list loading",
+          "description": "Add caching for list endpoints so pages load faster and fail less often.",
+          "rank_required": "Silver",
+          "quest_level": 2,
+          "dependency_type": "Chained",
+          "depends_on": [
+            "FP-Q1"
+          ],
+          "unlock_condition": "FP-Q1 complete.",
+          "goal": "Quest and Boss list pages load quickly and show stable results.",
+          "player_steps": [
+            "Add caching for quest list and boss list API handlers.",
+            "Show a clear fallback message when upstream data is unavailable.",
+            "Add tests for cache hit, cache miss, and fallback response behavior."
+          ],
+          "done_when": [
+            "List endpoints return data successfully with cache enabled.",
+            "Fallback response is user-friendly and consistent.",
+            "Test output in PR shows cache and fallback tests passing."
+          ],
+          "due_date": "2026-03-07",
+          "proof_required": [
+            "PR link",
+            "Test output snippet",
+            "Before and after load-time screenshot"
+          ],
+          "class_fantasy": "Iron Warden",
+          "class": "ops-ranger",
+          "difficulty": 3,
+          "xp": 60,
+          "labels": [
+            "quest",
+            "difficulty:3",
+            "class:ops-ranger",
+            "xp:60",
+            "chain:stabilize"
+          ]
+        },
+        {
+          "id": "FP-Q3",
+          "type": "Quest",
+          "title": "Fix Quest Board filter reset bug",
+          "description": "When class changes, difficulty filter should reset to avoid empty broken states.",
+          "rank_required": "Silver",
+          "quest_level": 2,
+          "dependency_type": "Independent",
+          "depends_on": [],
+          "unlock_condition": "n/a",
+          "goal": "Users can change filters without losing valid results.",
+          "player_steps": [
+            "Update filter state logic so difficulty resets when class changes.",
+            "Add regression tests for class and difficulty combinations.",
+            "Improve empty-state text so users know what to do next."
+          ],
+          "done_when": [
+            "Changing class does not leave stale difficulty state.",
+            "Regression tests pass for filter reset behavior.",
+            "Quest list remains usable during filter changes."
+          ],
+          "due_date": "2026-03-09",
+          "proof_required": [
+            "PR link",
+            "Test output snippet",
+            "Short screen recording of filter behavior"
+          ],
+          "class_fantasy": "Arcane Examiner",
+          "class": "test-summoner",
+          "difficulty": 2,
+          "xp": 40,
+          "labels": [
+            "quest",
+            "difficulty:2",
+            "class:test-summoner",
+            "xp:40",
+            "chain:stabilize"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "frontpage-ship-release",
+      "name": "Frontpage: Ship Release",
+      "description": "Polish quest pages and make release steps repeatable.",
+      "labels": [
+        "quest",
+        "chain:ship"
+      ],
+      "reward_xp": 300,
+      "reward_badge_slug": "hatchery-launcher",
+      "reward_title": "Hatchery Launcher",
+      "is_active": true,
+      "steps": [
+        {
+          "id": "FP-Q4",
+          "type": "Quest",
+          "title": "Improve Quest and Boss card readability",
+          "description": "Make cards easier to scan on desktop and mobile.",
+          "rank_required": "Gold",
+          "quest_level": 3,
+          "dependency_type": "Chained",
+          "depends_on": [
+            "FP-Q2",
+            "FP-Q3"
+          ],
+          "unlock_condition": "FP-Q2 and FP-Q3 complete.",
+          "goal": "Players can read goal, due date, rank, and proof quickly.",
+          "player_steps": [
+            "Update card layout to show key fields near the top.",
+            "Add clear lock text for rank-gated quests.",
+            "Fix spacing and text wrapping for small screens."
+          ],
+          "done_when": [
+            "Card layout is readable at common mobile and desktop widths.",
+            "Locked quests show clear Requires <Rank> text.",
+            "PR includes before/after screenshots."
+          ],
+          "due_date": "2026-03-14",
+          "proof_required": [
+            "PR link",
+            "Before and after screenshots"
+          ],
+          "class_fantasy": "Cogwheel Alchemist",
+          "class": "ux-alchemist",
+          "difficulty": 3,
+          "xp": 60,
+          "labels": [
+            "quest",
+            "difficulty:3",
+            "class:ux-alchemist",
+            "xp:60",
+            "chain:ship"
+          ]
+        },
+        {
+          "id": "FP-Q5",
+          "type": "Quest",
+          "title": "Generate release notes from completed quests",
+          "description": "Add automation that drafts release notes from closed quest issues.",
+          "rank_required": "Gold",
+          "quest_level": 3,
+          "dependency_type": "Chained",
+          "depends_on": [
+            "FP-Q1",
+            "FP-Q2"
+          ],
+          "unlock_condition": "FP-Q1 and FP-Q2 complete.",
+          "goal": "Release notes can be generated automatically with less manual work.",
+          "player_steps": [
+            "Add or update a workflow/script to collect closed quest issues.",
+            "Group notes by chain and difficulty.",
+            "Write output to a markdown file artifact or release draft body."
+          ],
+          "done_when": [
+            "Running the workflow/script produces release note content.",
+            "Output includes issue links and grouped sections.",
+            "PR includes one sample generated output."
+          ],
+          "due_date": "2026-03-19",
+          "proof_required": [
+            "PR link",
+            "Workflow run link or terminal output",
+            "Screenshot of generated release notes"
+          ],
+          "class_fantasy": "Rune Scribe",
+          "class": "doc-sage",
+          "difficulty": 3,
+          "xp": 60,
+          "labels": [
+            "quest",
+            "difficulty:3",
+            "class:doc-sage",
+            "xp:60",
+            "chain:ship"
+          ]
+        },
+        {
+          "id": "FP-Q6",
+          "type": "Quest",
+          "title": "Add rollback runbook and helper command",
+          "description": "Create a rollback guide and one repeatable command script.",
+          "rank_required": "Jade",
+          "quest_level": 4,
+          "dependency_type": "Chained",
+          "depends_on": [
+            "FP-Q4",
+            "FP-Q5"
+          ],
+          "unlock_condition": "FP-Q4 and FP-Q5 complete.",
+          "goal": "Team can follow written rollback steps without guessing.",
+          "player_steps": [
+            "Add a rollback runbook document with clear step-by-step instructions.",
+            "Add a helper script or command block for the most common rollback path.",
+            "Include a short verification checklist after rollback."
+          ],
+          "done_when": [
+            "Rollback runbook exists and is linked from release docs.",
+            "Helper command executes locally in a safe dry-run mode.",
+            "PR includes command output and docs screenshot."
+          ],
+          "due_date": "2026-03-24",
+          "proof_required": [
+            "PR link",
+            "Command output screenshot",
+            "Screenshot of rollback runbook"
+          ],
+          "class_fantasy": "Iron Warden",
+          "class": "ops-ranger",
+          "difficulty": 4,
+          "xp": 80,
+          "labels": [
+            "quest",
+            "difficulty:4",
+            "class:ops-ranger",
+            "xp:80",
+            "chain:ship"
+          ]
+        }
+      ]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "FP-B1",
+      "name": "The Drift Hydra",
+      "description": "Quest and Boss pages break trust when data is inconsistent or hard to read.",
+      "threat_type": "consistency failure",
+      "threat_level": 4,
+      "status": "active",
+      "deadline": "2026-03-28",
+      "risk_level": "high",
+      "rollback_plan": "Temporarily disable advanced quest features and show stable fallback content until fixes are live.",
+      "labels": [
+        "boss",
+        "difficulty:4",
+        "class:ops-ranger",
+        "xp:80",
+        "boss:active",
+        "chain:ship"
+      ],
+      "kill_criteria": [
+        "Quest and Boss pages load without critical errors for 48 hours",
+        "No P1 or P2 regressions are open at release go/no-go"
+      ],
+      "hp_total": 6,
+      "hp_current": 6,
+      "hp_tasks": [
+        "HP1: Quest and Boss API examples documented",
+        "HP2: List endpoints use stable caching",
+        "HP3: Filter reset bug fixed and tested",
+        "HP4: Card readability pass completed",
+        "HP5: Release notes automation produces output",
+        "HP6: Rollback runbook and helper command published"
+      ],
+      "proof_required": [
+        "PR links for all HP tasks",
+        "Test output snippets",
+        "Release go/no-go note link"
+      ]
+    }
+  ]
+}

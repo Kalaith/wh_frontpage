@@ -1,8 +1,8 @@
 # WebHatchery Quest Board Planning Guide
 
-Purpose: plan quests that everyday users can complete, while still keeping optional technical notes for each user's AI helper (`RuneSage` / `RS`).
+Purpose: plan quests that everyday users can complete, while still keeping technical notes for each user's AI helper (`RuneSage` / `RS`).
 
-Last updated: February 18, 2026
+Last updated: February 24, 2026
 
 ---
 
@@ -54,10 +54,32 @@ Every quest must include:
 - Done When: simple pass/fail result
 - Due Date: exact date (`YYYY-MM-DD`)
 - Rank Required: Iron/Silver/Gold/Jade/Diamond
-- Proof: what the user submits (screenshot, link, short note, etc.)
-- RS Brief (Optional): technical hints for RuneSage
+- Proof: what the user submits (visual proof first)
+- RS Brief: technical hints for RuneSage (required for code quests)
+- Why this matters: one plain line of user value
+- Where to look: page/feature area in plain language
+- Safe boundaries: what not to change
+- Quick verify steps: manual checks in user language
 
 Hard rule: no proof, no completion.
+
+Player-facing text rules (KISS):
+- Use plain language that a non-coder can understand in under 30 seconds.
+- Keep title short and action-based (target: 12 words or fewer).
+- Avoid jargon in player text (examples: schema, contract, observability, artifact, regression).
+- If technical detail is needed, put it in `RS Brief`, not in Goal/Steps/Done When.
+
+PR scope rules (required):
+- A normal quest must be completable with one PR that changes code/docs/config.
+- The quest must name at least one concrete deliverable (file, page, workflow, script, or test).
+- If work is only coordination, sign-off, or a live operation with no code/docs diff, it is not a normal quest.
+- Non-PR operational work should be modeled as Boss checkpoints (HP), not regular quests.
+
+Proof priority rules:
+- Visual proof is primary: screenshot or short screen recording.
+- PR link is required for normal quests.
+- Include a short note: what changed and what was tested (1-3 sentences).
+- Test output is optional unless the quest explicitly requires it.
 
 ---
 
@@ -114,20 +136,33 @@ Dependency Decision Tree (quick check):
 - Dependency Type: `<Independent|Chained|Blocked>`
 - Depends On: `<quest id(s) or none>`
 - Unlock Condition: `<required completion/sign-off or n/a>`
-- Goal: `<one plain sentence>`
-- Steps:
-  - `<step 1>`
-  - `<step 2>`
-  - `<step 3 optional>`
-- Done When:
-  - `<clear completion check>`
+- Player Layer:
+  - Goal: `<one plain sentence>`
+  - Why this matters: `<one plain sentence>`
+  - Where to look: `<page/feature area in plain words>`
+  - Steps:
+    - `<step 1>`
+    - `<step 2>`
+    - `<step 3 optional>`
+  - Quick verify steps (manual):
+    - `<open page>`
+    - `<do action>`
+    - `<check visible result>`
+  - Safe boundaries:
+    - `<do not rename unrelated files>`
+    - `<do not change unrelated behavior>`
+  - Done When:
+    - `<clear completion check>`
 - Due Date: `<YYYY-MM-DD>`
 - Proof Required:
-  - `<screenshot|link|text note>`
+  - `<screenshot or short recording>`
+  - `<PR link>`
+  - `<1-3 sentence note: what changed + what I tested>`
+  - `<optional test output>`
 - Reward:
   - `XP: <number>`
   - `<optional badge/loot>`
-- RS Brief (Optional):
+- RS Brief (required for code quests):
   - Context: `<system/page/tool name>`
   - Constraints: `<must avoid / must include>`
   - Suggested prompt: `"<prompt user can give RS>"`
@@ -213,15 +248,38 @@ Reject quests that:
 - should be chained but are marked independent
 - are blocked but still shown as claimable
 - have vague completion text like "improve things"
+- cannot be completed with one PR
+- require only meetings/manual ops and no code/docs/config change
+- hide technical complexity in Player Layer instead of RS Brief
+- use proof tokens in player text (use plain proof instructions instead)
 
 ---
 
-## 11) Quick Start Checklist
+## 11) Player/RS Language Lint
+
+Player Layer must NOT contain:
+- `api`, `schema`, `endpoint`, `payload`, `contract`, `artifact`, `regression`, `observability`, `handler`, `upstream`
+- deep implementation wording that only makes sense to engineers
+
+Player Layer SHOULD contain:
+- page names, button names, and visible behavior
+- before/after outcomes users can see
+- click/check style manual verify steps
+- clear proof instructions in plain language
+
+RS Layer CAN contain:
+- technical terms, architecture details, test strategy, and implementation constraints
+
+---
+
+## 12) Quick Start Checklist
 
 - [ ] Define this cycle's main outcome in plain language
 - [ ] Draft quests users can understand without coding knowledge
+- [ ] Add `Why this matters` and `Where to look` to every quest
 - [ ] Add rank requirement to every quest
 - [ ] Mark each quest as `Independent`, `Chained`, or `Blocked`
 - [ ] Add dependency links for chained/blocked quests
-- [ ] Add optional `RS Brief` to quests that need technical help
-- [ ] Publish only quests with clear proof requirements
+- [ ] Add `RS Brief` to every code quest with a copy/paste starter prompt
+- [ ] Add Safe boundaries and Quick verify steps to every quest
+- [ ] Publish only quests with visual-first proof requirements
