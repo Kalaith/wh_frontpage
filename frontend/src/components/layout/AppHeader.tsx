@@ -18,15 +18,11 @@ export const AppHeader: React.FC = () => {
   const navItems = useMemo<NavItem[]>(() => {
     const items: NavItem[] = [
       { path: '/', label: 'Home' },
-      { path: '/quests', label: 'Quests' },
-      { path: '/leaderboard', label: 'Leaderboard' },
-      { path: '/bosses', label: 'Bosses' },
       { path: '/about', label: 'About' },
     ];
 
     if (isAdmin) {
       items.push({ path: '/projects', label: 'Manage' });
-      items.push({ path: '/quests/manage', label: 'Quest Admin' });
     }
 
     return items;

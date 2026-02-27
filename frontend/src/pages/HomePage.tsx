@@ -4,8 +4,6 @@ import { ProjectShowcase } from '../components/ProjectShowcase';
 import { Footer } from '../components/Footer';
 import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
-import { SeasonBanner } from '../components/SeasonBanner';
-import WeeklyHeist from '../components/WeeklyHeist';
 
 const HomePage: React.FC = () => {
   const {
@@ -82,7 +80,7 @@ const HomePage: React.FC = () => {
         <div className="flex-1 min-w-0">
           <p className="text-center text-lg text-slate-700 max-w-3xl mx-auto mb-10">
             Web Hatchery is a collection of vibe-coded prototypes built to
-            quickly explore new ideas, with quests to improve each prototype.
+            quickly explore new ideas and iterate on each prototype.
           </p>
 
           <div className="mb-8">
@@ -97,9 +95,7 @@ const HomePage: React.FC = () => {
 
         {/* Sidebar Area (Right side on XL screens) */}
         <div className="w-full xl:w-[350px] shrink-0 space-y-6">
-          <SeasonBanner />
           <ProjectLegend />
-          <WeeklyHeist />
         </div>
       </div>
     </div>

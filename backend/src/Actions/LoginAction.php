@@ -26,14 +26,17 @@ class LoginAction
         // Generate JWT token
         $secret = Config::get('jwt.secret');
         $expiration = Config::get('jwt.expiration');
+        $disableExpiration = (bool)Config::get('jwt.disable_expiration', false);
         
         $payload = [
             'user_id' => $user['id'],
             'email' => $user['email'],
             'role' => $user['role'],
             'iat' => time(),
-            'exp' => time() + $expiration
         ];
+        if (!$disableExpiration) {
+            $payload['exp'] = time() + (int)$expiration;
+        }
 
         $token = JWT::encode($payload, $secret, 'HS256');
 
@@ -47,7 +50,9 @@ class LoginAction
                 'egg_balance' => (int)($user['egg_balance'] ?? 0)
             ],
             'token' => $token,
-            'expires_at' => date('Y-m-d H:i:s', $payload['exp'])
+            'expires_at' => $disableExpiration
+                ? 'never'
+                : date('Y-m-d H:i:s', (int)$payload['exp'])
         ];
     }
 }

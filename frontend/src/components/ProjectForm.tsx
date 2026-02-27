@@ -3,6 +3,7 @@ import type { Project } from '../types/projects';
 
 interface ProjectFormProps {
   project?: Partial<Project>;
+  groupOptions?: string[];
   onChange: (updates: Partial<Project>) => void;
   onSuggestDescription?: (title: string, description?: string) => Promise<string>;
   onSubmit: () => void;
@@ -11,6 +12,7 @@ interface ProjectFormProps {
 
 const ProjectForm: React.FC<ProjectFormProps> = ({
   project = {},
+  groupOptions = ['other'],
   onChange,
   onSuggestDescription,
   onSubmit,
@@ -25,6 +27,19 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   const normalizedStatus = statusOptions.includes(p.status ?? '')
     ? (p.status as string)
     : 'Planning';
+  const normalizeGroup = (value: string): string =>
+    value.trim().toLowerCase().replace(/\s+/g, '_');
+  const availableGroupOptions = Array.from(
+    new Set(
+      [...groupOptions, p.group_name ?? '', 'other']
+        .map(normalizeGroup)
+        .filter(option => option.length > 0)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+  const currentGroup = normalizeGroup(p.group_name ?? '');
+  const normalizedGroup = availableGroupOptions.includes(currentGroup)
+    ? currentGroup
+    : 'other';
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
 
@@ -85,11 +100,17 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Group Name
         </label>
-        <input
+        <select
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          value={p.group_name ?? ''}
+          value={normalizedGroup}
           onChange={e => onChange({ ...p, group_name: e.target.value })}
-        />
+        >
+          {availableGroupOptions.map(option => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="col-span-1 md:col-span-2">

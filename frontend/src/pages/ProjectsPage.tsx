@@ -37,6 +37,25 @@ const ProjectsPage: React.FC = () => {
 
   const projectCount = getProjectCount(projectsData);
   const grouped = getGroupedProjects(projectsData);
+  const groupOptions = React.useMemo(() => {
+    const normalizeGroup = (value: string): string =>
+      value.trim().toLowerCase().replace(/\s+/g, '_');
+
+    const fromGrouped = Object.keys(grouped);
+    const fromConfig = Object.values(projectsData?.groups ?? {})
+      .map(group => group?.name ?? '')
+      .filter(name => name.length > 0);
+    const defaults = ['apps', 'games', 'game_design', 'other'];
+    return Array.from(
+      new Set(
+        [...defaults, ...fromGrouped, ...fromConfig]
+          .map(normalizeGroup)
+          .filter(option => option.length > 0)
+      )
+    )
+      .filter(option => option.length > 0)
+      .sort((a, b) => a.localeCompare(b));
+  }, [grouped, projectsData]);
 
   // Create a map of project ID to feature request counts
   const featureRequestCounts = React.useMemo(() => {
@@ -189,6 +208,7 @@ const ProjectsPage: React.FC = () => {
         <h3 className="text-lg font-medium mb-2">Create Project</h3>
         <ProjectForm
           project={createData}
+          groupOptions={groupOptions}
           onChange={(d: Partial<Project>) =>
             setCreateData(prev => ({ ...(prev || {}), ...(d || {}) }))
           }
@@ -288,6 +308,7 @@ const ProjectsPage: React.FC = () => {
                       <div className="border-t px-3 pb-3">
                         <ProjectForm
                           project={(editingData as Project) ?? p}
+                          groupOptions={groupOptions}
                           onChange={(d: Partial<Project>) =>
                             setEditingData(prev => ({
                               ...(prev ?? {}),
