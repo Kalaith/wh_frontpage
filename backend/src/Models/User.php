@@ -20,7 +20,7 @@ final class User
     public bool $is_verified = false;
     public ?string $verification_token = null;
     public ?string $email_verified_at = null;
-    public ?string $auth0_id = null;
+    public ?string $webhatch_id = null;
     public string $provider = 'local';
     public bool $email_verified = false;
     public string $created_at;
@@ -40,7 +40,7 @@ final class User
             $this->is_verified = (bool)($data['is_verified'] ?? false);
             $this->verification_token = $data['verification_token'] ?? null;
             $this->email_verified_at = $data['email_verified_at'] ?? null;
-            $this->auth0_id = $data['auth0_id'] ?? null;
+            $this->webhatch_id = $data['webhatch_id'] ?? null;
             $this->provider = (string)($data['provider'] ?? 'local');
             $this->email_verified = (bool)($data['email_verified'] ?? false);
             $this->created_at = (string)($data['created_at'] ?? date('Y-m-d H:i:s'));
@@ -63,7 +63,7 @@ final class User
             'role' => $this->role,
             'egg_balance' => $this->egg_balance,
             'is_verified' => $this->is_verified,
-            'auth0_id' => $this->auth0_id,
+            'webhatch_id' => $this->webhatch_id,
             'provider' => $this->provider,
             'email_verified' => $this->email_verified,
             'created_at' => $this->created_at,
