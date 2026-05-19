@@ -1,5 +1,10 @@
 import type { Project, ProjectsData } from '../types/projects';
 
+export function getProjectDisplayName(project: Project): string {
+  const displayName = project.display_name?.trim();
+  return displayName && displayName.length > 0 ? displayName : project.title;
+}
+
 export function getProjectUrl(project: Project): string {
   if (project.deployment?.deployAs) {
     return `${project.deployment.deployAs}/`;

@@ -41,6 +41,7 @@ class GetProjectsByGroupAction
                 'id' => $project['id'],
                 'group_name' => $normalizedGroupName,
                 'title' => $project['title'],
+                'display_name' => $this->catalogNormalizer->publicDisplayName($project['display_name'] ?? null, (string)$project['title']),
                 'description' => $project['description'],
                 'stage' => $this->catalogNormalizer->publicStage((string)$project['stage'], $normalizedGroupName),
                 'status' => $this->catalogNormalizer->publicStatus((string)$project['status']),

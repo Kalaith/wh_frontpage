@@ -2,6 +2,7 @@ import React from 'react';
 import type { ProjectsData } from '../types/projects';
 import { GitHubIcon } from './GitHubIcon';
 import {
+  getProjectDisplayName,
   getProjectUrl,
   getStageBadgeClass,
   getStatusBadgeClass,
@@ -63,73 +64,78 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
               {group.projects.map((project, index) => {
                 const repoUrl = getRepoUrl(project);
                 const projectUrl = getProjectUrl(project);
+                const displayName = getProjectDisplayName(project);
                 return (
-                <article
-                  key={`${groupId}-${index}`}
-                  className="self-start bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer"
-                  role="link"
-                  tabIndex={0}
-                  onClick={() => {
-                    window.location.href = projectUrl;
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
+                  <article
+                    key={`${groupId}-${index}`}
+                    className="self-start bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => {
                       window.location.href = projectUrl;
-                    }
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <h4
-                      className="text-base font-semibold text-blue-700 truncate"
-                      title={project.title}
-                    >
-                      {project.title}
-                    </h4>
-                    <div className="flex items-center justify-end gap-2 text-xs shrink-0">
-                      {project.status && (
-                        <span
-                          className={`px-2 py-1 rounded font-medium ${getStatusBadgeClass(project)}`}
-                        >
-                          {getStatusBadgeText(project)}
-                        </span>
-                      )}
-                      {project.stage && (
-                        <span
-                          className={`px-2 py-1 rounded font-medium ${getStageBadgeClass(project)}`}
-                        >
-                          {project.stage}
-                        </span>
-                      )}
-                      {repoUrl && (
-                        <a
-                          href={repoUrl}
-                          className="inline-flex items-center justify-center p-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={repoUrl}
-                          aria-label="Open GitHub repository"
-                          onClick={e => e.stopPropagation()}
-                          onKeyDown={e => e.stopPropagation()}
-                        >
-                          <GitHubIcon width={14} height={14} className="text-current" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <p
-                    className="mt-1 text-sm text-slate-600 leading-5 overflow-hidden break-words"
-                    style={{
-                      marginBottom: 0,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
                     }}
-                    title={project.description}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        window.location.href = projectUrl;
+                      }
+                    }}
                   >
-                    {project.description}
-                  </p>
-                </article>
+                    <div className="flex items-start justify-between gap-3">
+                      <h4
+                        className="text-base font-semibold text-blue-700 truncate"
+                        title={displayName}
+                      >
+                        {displayName}
+                      </h4>
+                      <div className="flex items-center justify-end gap-2 text-xs shrink-0">
+                        {project.status && (
+                          <span
+                            className={`px-2 py-1 rounded font-medium ${getStatusBadgeClass(project)}`}
+                          >
+                            {getStatusBadgeText(project)}
+                          </span>
+                        )}
+                        {project.stage && (
+                          <span
+                            className={`px-2 py-1 rounded font-medium ${getStageBadgeClass(project)}`}
+                          >
+                            {project.stage}
+                          </span>
+                        )}
+                        {repoUrl && (
+                          <a
+                            href={repoUrl}
+                            className="inline-flex items-center justify-center p-1.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={repoUrl}
+                            aria-label="Open GitHub repository"
+                            onClick={e => e.stopPropagation()}
+                            onKeyDown={e => e.stopPropagation()}
+                          >
+                            <GitHubIcon
+                              width={14}
+                              height={14}
+                              className="text-current"
+                            />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <p
+                      className="mt-1 text-sm text-slate-600 leading-5 overflow-hidden break-words"
+                      style={{
+                        marginBottom: 0,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                      title={project.description}
+                    >
+                      {project.description}
+                    </p>
+                  </article>
                 );
               })}
             </div>

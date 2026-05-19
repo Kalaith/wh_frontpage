@@ -37,10 +37,19 @@ final class ProjectCatalogNormalizer
                 return $groupCompare;
             }
 
-            return strcasecmp((string)($a['title'] ?? ''), (string)($b['title'] ?? ''));
+            return strcasecmp(
+                $this->publicDisplayName($a['display_name'] ?? null, (string)($a['title'] ?? '')),
+                $this->publicDisplayName($b['display_name'] ?? null, (string)($b['title'] ?? ''))
+            );
         });
 
         return $result;
+    }
+
+    public function publicDisplayName(mixed $displayName, string $title): string
+    {
+        $displayName = trim((string)$displayName);
+        return $displayName !== '' ? $displayName : $title;
     }
 
     public function normalizeGroupName(string $groupName): string

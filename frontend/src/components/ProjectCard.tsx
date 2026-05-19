@@ -3,6 +3,7 @@ import type { Project } from '../types/projects';
 import { Badge } from './Badge';
 import { GitHubIcon } from './GitHubIcon';
 import {
+  getProjectDisplayName,
   getProjectUrl,
   getDeploymentBadgeClass,
   getStageBadgeClass,
@@ -16,6 +17,7 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   const projectUrl = getProjectUrl(project);
+  const displayName = getProjectDisplayName(project);
 
   return (
     <article className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden border-l-4 border-blue-500">
@@ -25,7 +27,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             href={projectUrl}
             className="hover:text-teal-500 transition-colors"
           >
-            {project.title}
+            {displayName}
           </a>
         </h4>
         <div className="flex flex-wrap gap-2 items-center">

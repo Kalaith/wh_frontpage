@@ -18,6 +18,7 @@ export interface Project {
   id?: number;
   owner_user_id?: number | null;
   title: string;
+  display_name?: string | null;
   path?: string;
   description: string;
   stage: string;

@@ -8,19 +8,21 @@ use PDO;
 
 final class ProjectRepository
 {
+    private ?bool $projectRoostProfilesAvailable = null;
+
     public function __construct(
         private readonly PDO $db
     ) {}
 
     public function all(): array
     {
-        $stmt = $this->db->query('SELECT * FROM projects ORDER BY group_name, title');
+        $stmt = $this->db->query($this->selectProjectsSql(orderBy: 'ORDER BY p.group_name, p.title'));
         return $stmt->fetchAll();
     }
 
     public function findById(int $id): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM projects WHERE id = :id LIMIT 1');
+        $stmt = $this->db->prepare($this->selectProjectsSql('WHERE p.id = :id LIMIT 1'));
         $stmt->execute(['id' => $id]);
         $project = $stmt->fetch();
         
@@ -29,7 +31,7 @@ final class ProjectRepository
 
     public function getHomepageProjects(): array
     {
-        $stmt = $this->db->query('SELECT * FROM projects WHERE show_on_homepage = 1 ORDER BY group_name, title');
+        $stmt = $this->db->query($this->selectProjectsSql('WHERE p.show_on_homepage = 1', 'ORDER BY p.group_name, p.title'));
         return $stmt->fetchAll();
     }
 
@@ -165,7 +167,7 @@ final class ProjectRepository
 
     public function findByTitle(string $title): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM projects WHERE title = :title LIMIT 1');
+        $stmt = $this->db->prepare($this->selectProjectsSql('WHERE p.title = :title LIMIT 1'));
         $stmt->execute(['title' => $title]);
         $project = $stmt->fetch();
         
@@ -175,7 +177,7 @@ final class ProjectRepository
     public function findByPathLike(string $projectName): ?array
     {
         // Try exact path match first, then suffix match
-        $stmt = $this->db->prepare('SELECT * FROM projects WHERE path = :exactPath OR path LIKE :suffixPath LIMIT 1');
+        $stmt = $this->db->prepare($this->selectProjectsSql('WHERE p.path = :exactPath OR p.path LIKE :suffixPath LIMIT 1'));
         $stmt->execute([
             'exactPath' => $projectName,
             'suffixPath' => "%/$projectName"
@@ -212,5 +214,34 @@ final class ProjectRepository
             'owner_user_id' => $userId,
         ]);
         return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function selectProjectsSql(string $where = '', string $orderBy = ''): string
+    {
+        $displayNameSelect = 'NULL AS display_name';
+        $join = '';
+
+        if ($this->hasProjectRoostProfilesTable()) {
+            $displayNameSelect = 'pr.display_name AS display_name';
+            $join = ' LEFT JOIN project_roost_profiles pr ON pr.project_id = p.id';
+        }
+
+        return trim("SELECT p.*, {$displayNameSelect} FROM projects p{$join} {$where} {$orderBy}");
+    }
+
+    private function hasProjectRoostProfilesTable(): bool
+    {
+        if ($this->projectRoostProfilesAvailable !== null) {
+            return $this->projectRoostProfilesAvailable;
+        }
+
+        try {
+            $stmt = $this->db->query("SHOW TABLES LIKE 'project_roost_profiles'");
+            $this->projectRoostProfilesAvailable = $stmt !== false && $stmt->fetchColumn() !== false;
+        } catch (\Throwable) {
+            $this->projectRoostProfilesAvailable = false;
+        }
+
+        return $this->projectRoostProfilesAvailable;
     }
 }
