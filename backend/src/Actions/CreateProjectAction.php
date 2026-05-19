@@ -19,7 +19,7 @@ class CreateProjectAction
             'path' => $data['path'] ?? null,
             'description' => (string)($data['description'] ?? ''),
             'stage' => (string)($data['stage'] ?? 'prototype'),
-            'status' => (string)($data['status'] ?? 'prototype'),
+            'status' => (string)($data['status'] ?? 'Concept'),
             'version' => (string)($data['version'] ?? '0.1.0'),
             'group_name' => (string)($data['group_name'] ?? 'other'),
             'repository_type' => $data['repository']['type'] ?? null,

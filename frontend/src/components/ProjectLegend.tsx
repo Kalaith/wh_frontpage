@@ -3,16 +3,16 @@ import { Badge } from './Badge';
 
 export const ProjectLegend: React.FC = () => {
   const statusItems: Array<[string, string, string]> = [
-    ['status-planning', 'Planning', 'Design doc only'],
-    ['status-non-working', 'In Development', 'In development'],
-    ['status-mvp', 'MVP', 'Core features ready'],
-    ['status-fully-working', 'Published', 'Production ready'],
+    ['status-concept', 'Concept', 'Idea or early build'],
+    ['status-mvp', 'MVP', 'Playable core ready'],
+    ['status-complete', 'Complete', 'Production ready'],
   ];
   const stageItems: Array<[string, string, string]> = [
     ['stage-static', 'Static', 'HTML/CSS/JS'],
     ['stage-react', 'React', 'Frontend app'],
     ['stage-api', 'API', 'API layer'],
     ['stage-auth', 'Auth', 'Login system'],
+    ['stage-rust', 'Rust', 'Rust/WebGL game'],
   ];
 
   return (

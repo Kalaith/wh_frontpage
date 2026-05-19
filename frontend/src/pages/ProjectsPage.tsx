@@ -15,7 +15,7 @@ import { useAuth } from '../stores/authStore';
 
 const ProjectsPage: React.FC = () => {
   const validStages = ['Static', 'React', 'API', 'Auth'];
-  const validStatuses = ['Planning', 'In Development', 'MVP', 'Published'];
+  const validStatuses = ['Concept', 'MVP', 'Complete'];
   const normalizeProjectFields = (data: Partial<Project>): Partial<Project> => {
     const next = { ...data };
     next.stage = validStages.includes((next.stage ?? '').toString())
@@ -23,7 +23,7 @@ const ProjectsPage: React.FC = () => {
       : 'Static';
     next.status = validStatuses.includes((next.status ?? '').toString())
       ? next.status
-      : 'Planning';
+      : 'Concept';
     return next;
   };
 
@@ -91,7 +91,7 @@ const ProjectsPage: React.FC = () => {
     title: '',
     group_name: 'other',
     stage: 'Static',
-    status: 'Planning',
+    status: 'Concept',
   });
   const [editingId, setEditingId] = useState<null | number>(null);
   const [editingData, setEditingData] = useState<Partial<Project> | null>(null);
@@ -102,7 +102,7 @@ const ProjectsPage: React.FC = () => {
       title: '',
       group_name: 'other',
       stage: 'Static',
-      status: 'Planning',
+      status: 'Concept',
     });
   };
 

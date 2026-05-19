@@ -103,6 +103,7 @@ export function getStageBadgeClass(project: Project): string {
     API: 'stage-api',
     Backend: 'stage-backend',
     Auth: 'stage-auth',
+    Rust: 'stage-rust',
   };
 
   return stage && stageMap[stage] ? stageMap[stage] : 'stage-other';
@@ -111,15 +112,23 @@ export function getStageBadgeClass(project: Project): string {
 export function getStatusBadgeClass(project: Project): string {
   if (!project.status) return 'status-unknown';
 
-  const status = project.status ?? '';
+  const status = (project.status ?? '').toLowerCase();
   const statusMap: Record<string, string> = {
-    Planning: 'status-planning',
-    'In Development': 'status-non-working',
-    Published: 'status-fully-working',
-    'non-working': 'status-non-working',
-    MVP: 'status-mvp',
-    'fully-working': 'status-fully-working',
-    planning: 'status-planning',
+    concept: 'status-concept',
+    prototype: 'status-concept',
+    planning: 'status-concept',
+    watch: 'status-concept',
+    risk: 'status-concept',
+    'in development': 'status-concept',
+    'non-working': 'status-concept',
+    mvp: 'status-mvp',
+    strong: 'status-mvp',
+    complete: 'status-complete',
+    completed: 'status-complete',
+    published: 'status-complete',
+    production: 'status-complete',
+    'fully-working': 'status-complete',
+    'fully working': 'status-complete',
   };
 
   return status && statusMap[status] ? statusMap[status] : 'status-unknown';
@@ -128,15 +137,23 @@ export function getStatusBadgeClass(project: Project): string {
 export function getStatusBadgeText(project: Project): string {
   if (!project.status) return 'Unknown';
 
-  const status = project.status ?? '';
+  const status = (project.status ?? '').toLowerCase();
   const statusTextMap: Record<string, string> = {
-    Planning: 'Planning',
-    'In Development': 'In Development',
-    Published: 'Published',
-    'non-working': 'Non-Working',
-    MVP: 'MVP',
-    'fully-working': 'Fully Working',
-    planning: 'Planning',
+    concept: 'Concept',
+    prototype: 'Concept',
+    planning: 'Concept',
+    watch: 'Concept',
+    risk: 'Concept',
+    'in development': 'Concept',
+    'non-working': 'Concept',
+    mvp: 'MVP',
+    strong: 'MVP',
+    complete: 'Complete',
+    completed: 'Complete',
+    published: 'Complete',
+    production: 'Complete',
+    'fully-working': 'Complete',
+    'fully working': 'Complete',
   };
 
   return status && statusTextMap[status]

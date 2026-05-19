@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import type { ProjectsData } from '../types/projects';
 import { GitHubIcon } from './GitHubIcon';
 import {
@@ -26,12 +25,12 @@ export const Header: React.FC<HeaderProps> = ({ data }) => {
         </nav>
         <div className="flex gap-2">
           {isAdmin && (
-            <Link
-              to="/projects"
+            <a
+              href="/project_roost/"
               className="px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition-colors"
             >
-              Manage Projects
-            </Link>
+              Project Roost
+            </a>
           )}
         </div>
       </div>

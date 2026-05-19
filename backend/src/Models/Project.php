@@ -14,7 +14,7 @@ final class Project
     public ?string $path = null;
     public ?string $description = null;
     public string $stage = 'prototype';
-    public string $status = 'prototype';
+    public string $status = 'Concept';
     public string $version = '0.1.0';
     public string $group_name = 'other';
     public ?string $repository_type = null;
@@ -38,7 +38,7 @@ final class Project
             $this->path = $data['path'] ?? null;
             $this->description = $data['description'] ?? null;
             $this->stage = (string)($data['stage'] ?? 'prototype');
-            $this->status = (string)($data['status'] ?? 'prototype');
+            $this->status = (string)($data['status'] ?? 'Concept');
             $this->version = (string)($data['version'] ?? '0.1.0');
             $this->group_name = (string)($data['group_name'] ?? 'other');
             $this->repository_type = $data['repository_type'] ?? null;

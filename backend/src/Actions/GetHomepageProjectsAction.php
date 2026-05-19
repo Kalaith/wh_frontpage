@@ -5,20 +5,28 @@ namespace App\Actions;
 
 use App\Repositories\ProjectRepository;
 use App\Repositories\ProjectGitRepository;
+use App\Services\ProjectCatalogNormalizer;
 
 class GetHomepageProjectsAction
 {
+    private ProjectCatalogNormalizer $catalogNormalizer;
+
     public function __construct(
         private readonly ProjectRepository $projectRepository,
-        private readonly ProjectGitRepository $projectGitRepository
-    ) {}
+        private readonly ProjectGitRepository $projectGitRepository,
+        ?ProjectCatalogNormalizer $catalogNormalizer = null
+    ) {
+        $this->catalogNormalizer = $catalogNormalizer ?? new ProjectCatalogNormalizer();
+    }
 
     /**
      * @param bool $includePrivate Whether to include projects in the 'private' group
      */
     public function execute(bool $includePrivate = false): array
     {
-        $projects = $this->projectRepository->getHomepageProjects();
+        $projects = $this->catalogNormalizer->deduplicateRows(
+            $this->projectRepository->getHomepageProjects()
+        );
         
         // Collect project IDs and fetch all git metadata in one query
         $projectIds = array_column($projects, 'id');
@@ -26,7 +34,7 @@ class GetHomepageProjectsAction
         
         $grouped = [];
         foreach ($projects as $project) {
-            $groupName = $project['group_name'];
+            $groupName = $this->catalogNormalizer->normalizeGroupName((string)$project['group_name']);
 
             // Skip private group when caller did not request private projects
             if (!$includePrivate && strtolower($groupName) === 'private') {
@@ -35,7 +43,7 @@ class GetHomepageProjectsAction
             
             if (!isset($grouped[$groupName])) {
                 $grouped[$groupName] = [
-                    'name' => ucwords(str_replace('_', ' ', $groupName)),
+                    'name' => $this->catalogNormalizer->groupLabel($groupName),
                     'projects' => []
                 ];
             }
@@ -46,11 +54,11 @@ class GetHomepageProjectsAction
                 'group_name' => $groupName,
                 'title' => $project['title'],
                 'description' => $project['description'],
-                'stage' => $project['stage'],
-                'status' => $project['status'],
+                'stage' => $this->catalogNormalizer->publicStage((string)$project['stage'], $groupName),
+                'status' => $this->catalogNormalizer->publicStatus((string)$project['status']),
                 'version' => $project['version'],
                 'show_on_homepage' => (bool)$project['show_on_homepage'],
-                'path' => $project['path'],
+                'path' => $this->catalogNormalizer->publicPath($project['path'] ?? null),
             ];
             
             if ($project['repository_url'] ?? null) {

@@ -4,7 +4,6 @@ import { AppHeader } from './components/layout/AppHeader';
 import { ToastContainer } from './components/ui/Toast';
 import { useToastStore } from './stores/toastStore';
 import HomePage from './pages/HomePage';
-import ProjectsPage from './pages/ProjectsPage';
 import { FeatureRequestDashboard } from './pages/FeatureRequestDashboard';
 import { UserProfile } from './pages/UserProfile';
 import LoginPage from './pages/LoginPage';
@@ -22,6 +21,18 @@ import './styles/global.css';
 
 import IdeasPage from './pages/IdeasPage';
 import { useAuth } from './stores/authStore';
+
+const ProjectRoostRedirect: React.FC = () => {
+  useEffect(() => {
+    window.location.assign('/project_roost/');
+  }, []);
+
+  return (
+    <div className="mx-auto max-w-3xl p-8 text-center text-slate-700">
+      Redirecting to Project Roost...
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const basename = '/';
@@ -42,7 +53,7 @@ const App: React.FC = () => {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects" element={<ProjectRoostRedirect />} />
             <Route path="/quests" element={<QuestBoardPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route

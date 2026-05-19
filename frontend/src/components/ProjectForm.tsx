@@ -20,13 +20,13 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
 }) => {
   const p = project ?? {};
   const stageOptions = ['Static', 'React', 'API', 'Auth'];
-  const statusOptions = ['Planning', 'In Development', 'MVP', 'Published'];
+  const statusOptions = ['Concept', 'MVP', 'Complete'];
   const normalizedStage = stageOptions.includes(p.stage ?? '')
     ? (p.stage as string)
     : 'Static';
   const normalizedStatus = statusOptions.includes(p.status ?? '')
     ? (p.status as string)
-    : 'Planning';
+    : 'Concept';
   const normalizeGroup = (value: string): string =>
     value.trim().toLowerCase().replace(/\s+/g, '_');
   const availableGroupOptions = Array.from(

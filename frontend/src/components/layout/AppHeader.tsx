@@ -7,26 +7,23 @@ import { XPWidget } from '../XPWidget';
 type NavItem = {
   path: string;
   label: string;
+  external?: boolean;
 };
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, user, logout } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = useMemo<NavItem[]>(() => {
     const items: NavItem[] = [
       { path: '/', label: 'Home' },
       { path: '/about', label: 'About' },
+      { path: '/project_roost/', label: 'Project Roost', external: true },
     ];
 
-    if (isAdmin) {
-      items.push({ path: '/projects', label: 'Manage' });
-    }
-
     return items;
-  }, [isAdmin]);
+  }, []);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -60,14 +57,24 @@ export const AppHeader: React.FC = () => {
 
           <nav className="hidden lg:flex items-center gap-2 overflow-x-auto whitespace-nowrap">
             {navItems.map(item => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={navClass(item.path)}
-                aria-current={isActive(item.path) ? 'page' : undefined}
-              >
-                {item.label}
-              </Link>
+              item.external ? (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  className={navClass(item.path)}
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={navClass(item.path)}
+                  aria-current={isActive(item.path) ? 'page' : undefined}
+                >
+                  {item.label}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -96,14 +103,24 @@ export const AppHeader: React.FC = () => {
           <div className="border-t border-slate-800 py-3 md:hidden">
             <nav className="grid grid-cols-2 gap-2">
               {navItems.map(item => (
-                <Link
-                  key={`mobile-${item.path}`}
-                  to={item.path}
-                  className={navClass(item.path)}
-                  aria-current={isActive(item.path) ? 'page' : undefined}
-                >
-                  {item.label}
-                </Link>
+                item.external ? (
+                  <a
+                    key={`mobile-${item.path}`}
+                    href={item.path}
+                    className={navClass(item.path)}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={`mobile-${item.path}`}
+                    to={item.path}
+                    className={navClass(item.path)}
+                    aria-current={isActive(item.path) ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </Link>
+                )
               ))}
             </nav>
 

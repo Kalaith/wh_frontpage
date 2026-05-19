@@ -11,7 +11,8 @@ final class ProjectUpdateService
 {
     public function __construct(
         private readonly ProjectRepository $projectRepository,
-        private readonly ProjectGitRepository $projectGitRepository
+        private readonly ProjectGitRepository $projectGitRepository,
+        private readonly ProjectCatalogNormalizer $catalogNormalizer = new ProjectCatalogNormalizer()
     ) {}
 
     /**
@@ -19,7 +20,7 @@ final class ProjectUpdateService
      */
     public function getAllProjectUpdates(): array
     {
-        $rows = $this->projectRepository->all();
+        $rows = $this->catalogNormalizer->deduplicateRows($this->projectRepository->all(), true);
         
         // Batch fetch all git metadata
         $projectIds = array_column($rows, 'id');
@@ -29,15 +30,18 @@ final class ProjectUpdateService
 
         foreach ($rows as $project) {
             $git = $gitData[$project['id']] ?? null;
+            $groupName = $this->catalogNormalizer->normalizeGroupName(
+                (string)($project['group_name'] ?? ($project['project_type'] ?? 'apps'))
+            );
             
             $manifest = [
                 'name' => $project['title'],
                 'title' => $project['title'],
                 'description' => $project['description'],
-                'stage' => $project['stage'],
-                'status' => $project['status'],
+                'stage' => $this->catalogNormalizer->publicStage((string)$project['stage'], $groupName),
+                'status' => $this->catalogNormalizer->publicStatus((string)$project['status']),
                 'version' => $project['version'],
-                'type' => $project['project_type'] ?? 'apps',
+                'type' => $groupName,
                 'path' => $project['path'],
                 'lastUpdated' => $git['last_updated'] ?? null,
                 'lastBuild' => $git['last_build'] ?? null,
