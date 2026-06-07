@@ -1,5 +1,5 @@
 # Robust delegation script
-$rootScript = "H:\WebHatchery\publish.ps1"
+$rootScript = "D:\WebHatchery\publish.ps1"
 if (-not (Test-Path $rootScript)) {
     Write-Error "Root publish script not found at $rootScript"
     exit 1

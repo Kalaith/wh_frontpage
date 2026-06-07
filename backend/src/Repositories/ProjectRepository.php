@@ -31,7 +31,7 @@ final class ProjectRepository
 
     public function getHomepageProjects(): array
     {
-        $stmt = $this->db->query($this->selectProjectsSql('WHERE p.show_on_homepage = 1', 'ORDER BY p.group_name, p.title'));
+        $stmt = $this->db->query($this->selectProjectsSql('WHERE p.show_on_homepage = 1 AND COALESCE(p.hidden, 0) = 0', 'ORDER BY p.group_name, p.title'));
         return $stmt->fetchAll();
     }
 

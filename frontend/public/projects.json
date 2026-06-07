@@ -78,9 +78,9 @@
           "version": "1.0.0"
         },
         {
-          "title": "LitRPG Studio",
-          "path": "apps/litrpg_studio/frontend/",
-          "description": "A specialized writing tool designed for LitRPG authors to create and manage game mechanics in their stories.",
+          "title": "Writers Studio",
+          "path": "apps/writers_studio/",
+          "description": "Creative writing studio for drafting, organizing, and refining long-form stories.",
           "stage": "Tool",
           "status": "MVP",
           "version": "1.0.0"
