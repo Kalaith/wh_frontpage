@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Project } from '../types/projects';
+import { ClampedDescription } from './ClampedDescription';
 import { GitHubIcon } from './GitHubIcon';
 import {
   getProjectDisplayName,
@@ -103,18 +104,10 @@ export const ArchiveSection: React.FC<ArchiveSectionProps> = ({
                     )}
                   </div>
                 </div>
-                <p
-                  className="mt-1 text-sm text-slate-500 leading-5 overflow-hidden break-words"
-                  style={{
-                    marginBottom: 0,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                  }}
-                  title={project.description}
-                >
-                  {project.description}
-                </p>
+                <ClampedDescription
+                  text={project.description}
+                  className="text-slate-500"
+                />
               </article>
             );
           })}

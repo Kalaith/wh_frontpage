@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ProjectsData } from '../types/projects';
+import { ClampedDescription } from './ClampedDescription';
 import { GitHubIcon } from './GitHubIcon';
 import {
   getProjectDisplayName,
@@ -123,18 +124,7 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                         )}
                       </div>
                     </div>
-                    <p
-                      className="mt-1 text-sm text-slate-600 leading-5 overflow-hidden break-words"
-                      style={{
-                        marginBottom: 0,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                      title={project.description}
-                    >
-                      {project.description}
-                    </p>
+                    <ClampedDescription text={project.description} />
                   </article>
                 );
               })}
