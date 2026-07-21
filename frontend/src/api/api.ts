@@ -166,40 +166,8 @@ class ApiClient {
     return this.request<Project[]>(`/projects/${group}`);
   }
 
-  async createProject(
-    projectData: Partial<Project>
-  ): Promise<ApiResponse<Project>> {
-    return this.request<Project>('/projects', {
-      method: 'POST',
-      body: JSON.stringify(projectData),
-    });
-  }
-
-  async updateProject(
-    projectId: number,
-    projectData: Partial<Project>
-  ): Promise<ApiResponse<Project>> {
-    return this.request<Project>(`/projects/${projectId}`, {
-      method: 'PUT',
-      body: JSON.stringify(projectData),
-    });
-  }
-
-  async deleteProject(projectId: number): Promise<ApiResponse> {
-    return this.request(`/projects/${projectId}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async assignProjectOwner(
-    projectId: number,
-    ownerUserId: number | null
-  ): Promise<ApiResponse<Project>> {
-    return this.request<Project>(`/projects/${projectId}/owner`, {
-      method: 'PUT',
-      body: JSON.stringify({ owner_user_id: ownerUserId }),
-    });
-  }
+  // Project create/update/delete/owner management lives in project_roost.
+  // The frontpage is a read-only consumer of the project catalog.
 
   async createProjectQuest(
     projectId: number,
@@ -332,15 +300,6 @@ class ApiClient {
     });
   }
 
-  async suggestProjectDescription(payload: {
-    title: string;
-    description?: string;
-  }): Promise<ApiResponse<{ description: string }>> {
-    return this.request<{ description: string }>('/projects/description/suggest', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  }
 }
 
 // Create and export a singleton instance

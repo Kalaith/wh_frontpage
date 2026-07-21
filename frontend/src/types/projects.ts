@@ -26,7 +26,10 @@ export interface Project {
   version: string;
   group_name?: string;
   show_on_homepage?: boolean;
+  archived?: boolean;
+  type?: string;
   repository?: ProjectRepository;
+  repository_url?: string;
   deployment?: ProjectDeployment;
 }
 
@@ -41,6 +44,7 @@ export interface ProjectsData {
   groups: Record<string, ProjectGroup>;
   projects: Project[];
   grouped: Record<string, Project[]>;
+  archived?: Project[];
   global?: {
     repository?: {
       name?: string;

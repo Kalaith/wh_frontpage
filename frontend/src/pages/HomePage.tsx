@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { ProjectLegend } from '../components/ProjectLegend';
 import { ProjectShowcase } from '../components/ProjectShowcase';
+import { ArchiveSection } from '../components/ArchiveSection';
 import { Footer } from '../components/Footer';
 import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
@@ -89,6 +90,12 @@ const HomePage: React.FC = () => {
 
           {/* Project Portfolio - Full Width within main area */}
           <ProjectShowcase data={projectsData} isLoading={loading} />
+
+          {/* Archived / retired projects (project_roost archived = true) */}
+          <ArchiveSection
+            projects={projectsData?.archived}
+            isLoading={loading}
+          />
 
           <Footer data={projectsData} isLoading={loading} />
         </div>

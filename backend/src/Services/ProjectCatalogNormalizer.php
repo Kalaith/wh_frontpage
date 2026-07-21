@@ -78,6 +78,38 @@ final class ProjectCatalogNormalizer
         };
     }
 
+    /**
+     * Resolve the public link for a catalog row, preferring the project_roost
+     * profile slug (the authoritative deployed path, e.g. "/anime_prompt_gen/")
+     * and falling back to deriving one from the filesystem path.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function publicPathForRow(array $row): ?string
+    {
+        $slug = trim((string) ($row['profile_slug'] ?? ''));
+        if ($slug !== '') {
+            return '/' . $slug . '/';
+        }
+
+        return $this->publicPath($row['path'] ?? null);
+    }
+
+    /**
+     * Prefer the project_roost profile summary as the public description.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function publicDescription(array $row): string
+    {
+        $summary = trim((string) ($row['profile_summary'] ?? ''));
+        if ($summary !== '') {
+            return $summary;
+        }
+
+        return (string) ($row['description'] ?? '');
+    }
+
     public function publicPath(?string $path): ?string
     {
         $path = trim((string)$path);

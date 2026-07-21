@@ -13,9 +13,6 @@ use App\Controllers\ProjectHealthController;
 use App\Controllers\ProjectNewsFeedController;
 use App\Controllers\ProjectUpdateController;
 use App\Controllers\GamificationWebhookController;
-use App\Actions\CreateProjectAction;
-use App\Actions\UpdateProjectAction;
-use App\Actions\DeleteProjectAction;
 use App\Actions\GetGroupedProjectsAction;
 use App\Actions\GetProjectsByGroupAction;
 use App\Actions\GetTrackerStatsAction;
@@ -32,7 +29,6 @@ use App\Services\AuthService;
 use App\Services\ProjectUpdateService;
 use App\Services\ProjectNewsFeedService;
 use App\Services\ProjectHealthService;
-use App\Services\GeminiDescriptionService;
 use RuntimeException;
 
 final class ServiceFactory
@@ -76,12 +72,7 @@ final class ServiceFactory
             ProjectController::class => new ProjectController(
                 new \App\Actions\GetGroupedProjectsAction($projectRepo, $projectGitRepo),
                 new \App\Actions\GetProjectsByGroupAction($projectRepo),
-                new \App\Actions\CreateProjectAction($projectRepo),
-                new \App\Actions\UpdateProjectAction($projectRepo),
-                new \App\Actions\DeleteProjectAction($projectRepo),
-                new \App\Actions\GetHomepageProjectsAction($projectRepo, $projectGitRepo),
-                $projectRepo,
-                new GeminiDescriptionService()
+                new \App\Actions\GetHomepageProjectsAction($projectRepo, $projectGitRepo)
             ),
             TrackerController::class => new TrackerController(
                 new \App\Actions\GetTrackerStatsAction($projectRepo, $featureRepo, $suggestionRepo),

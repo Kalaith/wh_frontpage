@@ -40,26 +40,32 @@ class GetGroupedProjectsAction
             if (!$includePrivate && strtolower($groupName) === 'private') {
                 continue;
             }
-            
+
+            // Archived projects are excluded from the active grouped catalog.
+            if (!empty($project['archived'])) {
+                continue;
+            }
+
             if (!isset($grouped[$groupName])) {
                 $grouped[$groupName] = [
                     'name' => $this->catalogNormalizer->groupLabel($groupName),
                     'projects' => []
                 ];
             }
-            
+
             // Map flat database array to the structured format expected by components
             $projectData = [
                 'id' => $project['id'],
                 'group_name' => $groupName,
                 'title' => $project['title'],
                 'display_name' => $this->catalogNormalizer->publicDisplayName($project['display_name'] ?? null, (string)$project['title']),
-                'description' => $project['description'],
+                'description' => $this->catalogNormalizer->publicDescription($project),
                 'stage' => $this->catalogNormalizer->publicStage((string)$project['stage'], $groupName),
                 'status' => $this->catalogNormalizer->publicStatus((string)$project['status']),
                 'version' => $project['version'],
                 'show_on_homepage' => (bool)$project['show_on_homepage'],
-                'path' => $this->catalogNormalizer->publicPath($project['path'] ?? null),
+                'archived' => (bool)($project['archived'] ?? false),
+                'path' => $this->catalogNormalizer->publicPathForRow($project),
             ];
             
             if ($project['repository_url']) {

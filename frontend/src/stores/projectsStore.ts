@@ -19,17 +19,9 @@ interface ProjectsState {
 
 // Projects actions interface
 interface ProjectsActions {
-  // Data fetching
+  // Data fetching (read-only: the catalog is owned by project_roost)
   fetchProjects: () => Promise<ProjectsData>;
   getProjectsData: () => Promise<ProjectsData>;
-
-  // CRUD operations
-  createProject: (projectData: Partial<ProjectsData>) => Promise<Project>;
-  updateProject: (
-    projectId: number,
-    projectData: Partial<ProjectsData>
-  ) => Promise<Project>;
-  deleteProject: (projectId: number) => Promise<void>;
 
   // Cache management
   clearCache: () => void;
@@ -109,94 +101,6 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   // Alias for fetchProjects to maintain compatibility
   getProjectsData: async () => {
     return await get().fetchProjects();
-  },
-
-  // CRUD operations
-  createProject: async (projectData: Partial<ProjectsData>) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const response = await api.createProject(projectData);
-      if (response.success && response.data) {
-        // Clear cache to force refresh
-        set({
-          projectsData: null,
-          lastFetched: null,
-          isLoading: false,
-        });
-        return response.data;
-      }
-      throw new Error(
-        getErrorMessage(response.error, 'Failed to create project')
-      );
-    } catch (error) {
-      const projectsError: StoreError = {
-        code: 'CREATE_FAILED',
-        message:
-          error instanceof Error ? error.message : 'Failed to create project',
-      };
-      set({ error: projectsError, isLoading: false });
-      throw error;
-    }
-  },
-
-  updateProject: async (
-    projectId: number,
-    projectData: Partial<ProjectsData>
-  ) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const response = await api.updateProject(projectId, projectData);
-      if (response.success && response.data) {
-        // Clear cache to force refresh
-        set({
-          projectsData: null,
-          lastFetched: null,
-          isLoading: false,
-        });
-        return response.data;
-      }
-      throw new Error(
-        getErrorMessage(response.error, 'Failed to update project')
-      );
-    } catch (error) {
-      const projectsError: StoreError = {
-        code: 'UPDATE_FAILED',
-        message:
-          error instanceof Error ? error.message : 'Failed to update project',
-      };
-      set({ error: projectsError, isLoading: false });
-      throw error;
-    }
-  },
-
-  deleteProject: async (projectId: number) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const response = await api.deleteProject(projectId);
-      if (response.success) {
-        // Clear cache to force refresh
-        set({
-          projectsData: null,
-          lastFetched: null,
-          isLoading: false,
-        });
-        return;
-      }
-      throw new Error(
-        getErrorMessage(response.error, 'Failed to delete project')
-      );
-    } catch (error) {
-      const projectsError: StoreError = {
-        code: 'DELETE_FAILED',
-        message:
-          error instanceof Error ? error.message : 'Failed to delete project',
-      };
-      set({ error: projectsError, isLoading: false });
-      throw error;
-    }
   },
 
   // Cache management

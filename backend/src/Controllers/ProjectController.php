@@ -7,25 +7,19 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Actions\GetGroupedProjectsAction;
 use App\Actions\GetProjectsByGroupAction;
-use App\Actions\CreateProjectAction;
-use App\Actions\UpdateProjectAction;
-use App\Actions\DeleteProjectAction;
 use App\Actions\GetHomepageProjectsAction;
-use App\Repositories\ProjectRepository;
-use App\Services\GeminiDescriptionService;
 use Exception;
 
+/**
+ * Read-only projects catalog for the frontpage. The catalog is owned by
+ * project_roost (the single source of truth); create/edit/delete happen there.
+ */
 class ProjectController
 {
     public function __construct(
         private readonly GetGroupedProjectsAction $getGroupedProjectsAction,
         private readonly GetProjectsByGroupAction $getProjectsByGroupAction,
-        private readonly CreateProjectAction $createProjectAction,
-        private readonly UpdateProjectAction $updateProjectAction,
-        private readonly DeleteProjectAction $deleteProjectAction,
-        private readonly GetHomepageProjectsAction $getHomepageProjectsAction,
-        private readonly ProjectRepository $projectRepository,
-        private readonly GeminiDescriptionService $geminiDescriptionService
+        private readonly GetHomepageProjectsAction $getHomepageProjectsAction
     ) {}
 
     /**
@@ -79,18 +73,20 @@ class ProjectController
             $userRole = $request->getAttribute('user_role', 'user');
             $isAdmin = strtolower((string)$userRole) === 'admin';
 
-            $groupedProjects = $this->getHomepageProjectsAction->execute($isAdmin);
+            $result = $this->getHomepageProjectsAction->execute($isAdmin);
+            $groupedProjects = $result['groups'];
+            $archived = $result['archived'];
 
             // Create flat arrays for frontend compatibility
             $allProjects = [];
             $groupedArray = [];
-            
+
             foreach ($groupedProjects as $groupName => $group) {
                 // Add projects to flat array
                 foreach ($group['projects'] as $project) {
                     $allProjects[] = $project;
                 }
-                
+
                 // Create grouped array (just projects, not the group wrapper)
                 $groupedArray[$groupName] = $group['projects'];
             }
@@ -100,7 +96,8 @@ class ProjectController
                 'description' => 'WebHatchery Homepage Projects',
                 'groups' => $groupedProjects,
                 'projects' => $allProjects,
-                'grouped' => $groupedArray
+                'grouped' => $groupedArray,
+                'archived' => $archived
             ];
 
             $response->success($data);
@@ -133,157 +130,6 @@ class ProjectController
 
         } catch (Exception $e) {
             $response->error('Failed to fetch projects for group: ' . $e->getMessage(), 500);
-        }
-    }
-    
-    /**
-     * Create a new project
-     */
-    public function createProject(Request $request, Response $response): void
-    {
-        try {
-            // Require admin access
-            $userRole = $request->getAttribute('user_role', 'user');
-            if (strtolower((string)$userRole) !== 'admin') {
-                $response->error('Admin access required', 403);
-                return;
-            }
-
-            $data = $request->getBody();
-            $created = $this->createProjectAction->execute($data);
-
-            $response->withStatus(201)->success($created, 'Project created successfully');
-
-        } catch (Exception $e) {
-            $response->error('Failed to create project: ' . $e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Update a project
-     */
-    public function updateProject(Request $request, Response $response): void
-    {
-        try {
-            // Require admin access
-            $userRole = $request->getAttribute('user_role', 'user');
-            if (strtolower((string)$userRole) !== 'admin') {
-                $response->error('Admin access required', 403);
-                return;
-            }
-
-            $id = (int)$request->getParam('id', 0);
-            $data = $request->getBody();
-            $updated = $this->updateProjectAction->execute($id, $data);
-
-            if ($updated === null) {
-                $response->error('Project not found', 404);
-                return;
-            }
-
-            $response->success($updated, 'Project updated');
-
-        } catch (Exception $e) {
-            $response->error('Failed to update project: ' . $e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Delete a project
-     */
-    public function deleteProject(Request $request, Response $response): void
-    {
-        try {
-            // Require admin access
-            $userRole = $request->getAttribute('user_role', 'user');
-            if (strtolower((string)$userRole) !== 'admin') {
-                $response->error('Admin access required', 403);
-                return;
-            }
-
-            $id = (int)$request->getParam('id', 0);
-            $ok = $this->deleteProjectAction->execute($id);
-
-            if (!$ok) {
-                $response->error('Project not found', 404);
-                return;
-            }
-
-            $response->success(null, 'Project deleted');
-
-        } catch (Exception $e) {
-            $response->error('Failed to delete project: ' . $e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Assign or clear a project owner.
-     * Admin only.
-     */
-    public function assignOwner(Request $request, Response $response): void
-    {
-        try {
-            $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
-            if ($userRole !== 'admin') {
-                $response->error('Admin access required', 403);
-                return;
-            }
-
-            $projectId = (int)$request->getParam('id', 0);
-            if ($projectId <= 0) {
-                $response->error('Invalid project id', 400);
-                return;
-            }
-
-            $project = $this->projectRepository->findById($projectId);
-            if (!$project) {
-                $response->error('Project not found', 404);
-                return;
-            }
-
-            $data = $request->getBody();
-            $ownerUserId = null;
-            if (array_key_exists('owner_user_id', $data) && $data['owner_user_id'] !== null && $data['owner_user_id'] !== '') {
-                $ownerUserId = (int)$data['owner_user_id'];
-                if ($ownerUserId <= 0) {
-                    $response->error('owner_user_id must be a positive integer or null', 400);
-                    return;
-                }
-            }
-
-            $this->projectRepository->assignOwner($projectId, $ownerUserId);
-            $updated = $this->projectRepository->findById($projectId);
-            $response->success($updated, 'Project owner updated');
-        } catch (Exception $e) {
-            $response->error('Failed to assign project owner: ' . $e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Suggest a concise AI project description (admin only).
-     */
-    public function suggestDescription(Request $request, Response $response): void
-    {
-        try {
-            $userRole = strtolower((string)$request->getAttribute('user_role', 'user'));
-            if ($userRole !== 'admin') {
-                $response->error('Admin access required', 403);
-                return;
-            }
-
-            $body = $request->getBody();
-            $title = trim((string)($body['title'] ?? ''));
-            $description = trim((string)($body['description'] ?? ''));
-
-            if ($title === '') {
-                $response->error('Title is required', 400);
-                return;
-            }
-
-            $suggested = $this->geminiDescriptionService->suggestFourteenWordDescription($title, $description);
-            $response->success(['description' => $suggested]);
-        } catch (Exception $e) {
-            $response->error('Failed to generate AI description: ' . $e->getMessage(), 500);
         }
     }
 }

@@ -9,14 +9,22 @@ use PDO;
 final class ProjectRepository
 {
     private ?bool $projectRoostProfilesAvailable = null;
+    private ?bool $projectRoostArchivedAvailable = null;
 
     public function __construct(
         private readonly PDO $db
     ) {}
 
+    /**
+     * All projects that project_roost knows about (has a profile for).
+     * project_roost is the single source of truth, so this requires a profile.
+     */
     public function all(): array
     {
-        $stmt = $this->db->query($this->selectProjectsSql(orderBy: 'ORDER BY p.group_name, p.title'));
+        $stmt = $this->db->query($this->selectProjectsSql(
+            orderBy: 'ORDER BY p.group_name, p.title',
+            requireProfile: true
+        ));
         return $stmt->fetchAll();
     }
 
@@ -29,9 +37,19 @@ final class ProjectRepository
         return $project ?: null;
     }
 
+    /**
+     * Projects for the public homepage: project_roost catalog entries that are
+     * not hidden. Includes archived projects (the caller separates them into the
+     * archive section) plus anything flagged show_on_homepage.
+     */
     public function getHomepageProjects(): array
     {
-        $stmt = $this->db->query($this->selectProjectsSql('WHERE p.show_on_homepage = 1 AND COALESCE(p.hidden, 0) = 0', 'ORDER BY p.group_name, p.title'));
+        $archivedExpr = $this->archivedExpr();
+        $stmt = $this->db->query($this->selectProjectsSql(
+            "WHERE COALESCE(p.hidden, 0) = 0 AND ({$archivedExpr} = 1 OR p.show_on_homepage = 1)",
+            'ORDER BY p.group_name, p.title',
+            requireProfile: true
+        ));
         return $stmt->fetchAll();
     }
 
@@ -216,17 +234,57 @@ final class ProjectRepository
         return (int)$stmt->fetchColumn() > 0;
     }
 
-    private function selectProjectsSql(string $where = '', string $orderBy = ''): string
+    /**
+     * Build a SELECT over the shared projects table joined to the project_roost
+     * profile catalog. When $requireProfile is true an INNER JOIN is used so only
+     * project_roost-known projects are returned (single source of truth); legacy
+     * projects rows without a profile are excluded.
+     */
+    private function selectProjectsSql(string $where = '', string $orderBy = '', bool $requireProfile = false): string
     {
-        $displayNameSelect = 'NULL AS display_name';
+        $profileSelect = 'NULL AS display_name, NULL AS profile_slug, NULL AS profile_category, '
+            . 'NULL AS profile_summary, NULL AS profile_preview_url, NULL AS profile_production_url, 0 AS archived';
         $join = '';
 
         if ($this->hasProjectRoostProfilesTable()) {
-            $displayNameSelect = 'pr.display_name AS display_name';
-            $join = ' LEFT JOIN project_roost_profiles pr ON pr.project_id = p.id';
+            $archivedExpr = $this->archivedExpr();
+            $profileSelect = 'pr.display_name AS display_name, pr.slug AS profile_slug, pr.category AS profile_category, '
+                . 'pr.summary AS profile_summary, pr.preview_url AS profile_preview_url, '
+                . "pr.production_url AS profile_production_url, {$archivedExpr} AS archived";
+            $joinType = $requireProfile ? 'INNER JOIN' : 'LEFT JOIN';
+            $join = " {$joinType} project_roost_profiles pr ON pr.project_id = p.id";
         }
 
-        return trim("SELECT p.*, {$displayNameSelect} FROM projects p{$join} {$where} {$orderBy}");
+        return trim("SELECT p.*, {$profileSelect} FROM projects p{$join} {$where} {$orderBy}");
+    }
+
+    /**
+     * SQL expression for the archived flag that degrades gracefully when the
+     * project_roost_profiles.archived column has not been migrated in yet.
+     */
+    private function archivedExpr(): string
+    {
+        return $this->hasProjectRoostArchivedColumn() ? 'COALESCE(pr.archived, 0)' : '0';
+    }
+
+    private function hasProjectRoostArchivedColumn(): bool
+    {
+        if ($this->projectRoostArchivedAvailable !== null) {
+            return $this->projectRoostArchivedAvailable;
+        }
+
+        if (!$this->hasProjectRoostProfilesTable()) {
+            return $this->projectRoostArchivedAvailable = false;
+        }
+
+        try {
+            $stmt = $this->db->query("SHOW COLUMNS FROM project_roost_profiles LIKE 'archived'");
+            $this->projectRoostArchivedAvailable = $stmt !== false && $stmt->fetchColumn() !== false;
+        } catch (\Throwable) {
+            $this->projectRoostArchivedAvailable = false;
+        }
+
+        return $this->projectRoostArchivedAvailable;
     }
 
     private function hasProjectRoostProfilesTable(): bool
