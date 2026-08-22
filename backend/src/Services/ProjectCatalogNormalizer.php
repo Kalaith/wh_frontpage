@@ -83,12 +83,23 @@ final class ProjectCatalogNormalizer
      * profile slug (the authoritative deployed path, e.g. "/anime_prompt_gen/")
      * and falling back to deriving one from the filesystem path.
      *
+     * Rust games are a special case: their profile slug carries a "rust_"
+     * prefix (e.g. "rust_alchemy_tower") to disambiguate the project_roost
+     * catalog entry, but the actual deployed path drops that prefix and
+     * nests under "/games/" (e.g. "/games/alchemy_tower/").
+     *
      * @param array<string, mixed> $row
      */
     public function publicPathForRow(array $row): ?string
     {
         $slug = trim((string) ($row['profile_slug'] ?? ''));
         if ($slug !== '') {
+            $category = strtolower(trim((string) ($row['profile_category'] ?? '')));
+            if ($category === 'rust-game' || str_starts_with($slug, 'rust_')) {
+                $gameSlug = str_starts_with($slug, 'rust_') ? substr($slug, 5) : $slug;
+                return '/games/' . $gameSlug . '/';
+            }
+
             return '/' . $slug . '/';
         }
 
@@ -147,6 +158,10 @@ final class ProjectCatalogNormalizer
         $parts = $this->meaningfulPathParts($lower);
         if ($parts === []) {
             return null;
+        }
+
+        if (str_starts_with($parts[0], 'rust_')) {
+            return '/games/' . substr($parts[0], 5) . '/';
         }
 
         if ($parts[0] === 'frontpage') {
