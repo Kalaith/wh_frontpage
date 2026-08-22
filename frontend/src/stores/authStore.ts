@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AuthUser, RegisterRequest } from '../entities/Auth';
 import api from '../api/api';
+import { buildRootAuthUrl } from '../utils/authRedirect';
 
 interface AuthState {
   user: AuthUser | null;
@@ -137,7 +138,7 @@ export const useAuth = () => {
     ...store,
     isAdmin: store.user?.role === 'admin',
     loginWithRedirect: () => {
-      window.location.href = '/login';
+      window.location.href = buildRootAuthUrl('/login');
     },
     isLoading: store.isLoading,
     error: null, // Legacy field

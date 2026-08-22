@@ -28,7 +28,7 @@ final class Config
 
         $config = [
             'jwt' => [
-                'secret' => $_ENV['JWT_SECRET'] ?? 'your_jwt_secret_key_here',
+                'secret' => self::required('JWT_SECRET'),
                 'expiration' => $jwtExpiration,
                 'disable_expiration' => $jwtDisableExpiration,
             ],
@@ -45,6 +45,16 @@ final class Config
                 return $default;
             }
             $value = $value[$part];
+        }
+
+        return $value;
+    }
+
+    private static function required(string $key): string
+    {
+        $value = trim((string) ($_ENV[$key] ?? ''));
+        if ($value === '') {
+            throw new \RuntimeException($key . ' environment variable is not set');
         }
 
         return $value;

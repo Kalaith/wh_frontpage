@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Middleware;
 
 use App\Core\Request;
@@ -10,14 +12,14 @@ use App\Repositories\DatabaseManager;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class JwtAuthMiddleware
+final class JwtAuthMiddleware
 {
     public function handle(Request $request, Response $response): bool
     {
         $token = $request->getHeader('authorization');
         
         if (!$token || !preg_match('/Bearer\s+(.*)$/i', $token, $matches)) {
-            $response->error('Authorization header missing or invalid', 401);
+            $this->unauthorized($response, 'Authorization header missing or invalid');
             return false;
         }
 
@@ -41,7 +43,7 @@ class JwtAuthMiddleware
             $user = $userRepo->findById($userId);
             
             if (!$user) {
-                $response->error('User not found', 401);
+                $this->unauthorized($response, 'User not found');
                 return false;
             }
 
@@ -56,8 +58,28 @@ class JwtAuthMiddleware
             
         } catch (\Exception $e) {
             error_log('JWT Auth Middleware Error: ' . $e->getMessage());
-            $response->error('Invalid or expired token: ' . $e->getMessage(), 401);
+            $this->unauthorized($response, 'Invalid or expired token');
             return false;
         }
+    }
+
+    private function unauthorized(Response $response, string $message): void
+    {
+        $response->withStatus(401)->json([
+            'success' => false,
+            'message' => $message,
+            'error' => 'Authentication required',
+            'login_url' => $this->requiredLoginUrl(),
+        ]);
+    }
+
+    private function requiredLoginUrl(): string
+    {
+        $loginUrl = trim((string) ($_ENV['WEBHATCHERY_LOGIN_URL'] ?? ''));
+        if ($loginUrl === '') {
+            throw new \RuntimeException('WEBHATCHERY_LOGIN_URL environment variable is not set');
+        }
+
+        return $loginUrl;
     }
 }

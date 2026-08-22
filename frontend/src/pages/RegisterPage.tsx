@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../stores/authStore';
+import { getAuthRedirectTarget } from '../utils/authRedirect';
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       await register(formData);
-      navigate('/');
+      navigate(getAuthRedirectTarget());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
