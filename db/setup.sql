@@ -69,7 +69,6 @@ INSERT INTO projects (title, path, description, stage, status, version, group_na
 -- Web Applications
 INSERT INTO projects (title, path, description, stage, status, version, group_name, repository_type, repository_url, hidden, created_at, updated_at) VALUES
 ('Is It Done Yet?', 'apps/isitdoneyet/', 'A full-stack web application for project tracking and status monitoring with real-time updates.', 'Fullstack', 'MVP', '1.0.0', 'apps', 'git', 'https://github.com/Kalaith/isitdoneyet', FALSE, NOW(), NOW()),
-('Auth Portal', 'apps/auth/', 'User Authentication Portal for managing user accounts, roles, and permissions with secure login and registration features.', 'Auth', 'MVP', '1.0.0', 'apps', 'git', 'https://github.com/Kalaith/auth', FALSE, NOW(), NOW()),
 ('Meme Generator', 'apps/meme_generator/', 'Interactive tool for creating custom memes with various templates and text customization options.', 'React', 'MVP', '0.8.0', 'apps', 'git', 'https://github.com/Kalaith/meme_generator', FALSE, NOW(), NOW()),
 ('Project Management', 'apps/project_management/', 'Comprehensive project management dashboard with stakeholder tracking and report generation features.', 'Dashboard', 'MVP', '1.0.0', 'apps', NULL, NULL, FALSE, NOW(), NOW()),
 ('Writers Studio', 'apps/writers_studio/', 'Creative writing studio for drafting, organizing, and refining long-form stories.', 'Tool', 'MVP', '1.0.0', 'apps', NULL, NULL, FALSE, NOW(), NOW()),

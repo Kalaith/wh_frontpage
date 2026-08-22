@@ -55,13 +55,6 @@
           "version": "1.0.0"
         },
         {
-          "title": "Auth Portal",
-          "description": "User Authentication Portal for managing user accounts, roles, and permissions with secure login and registration features.",
-          "stage": "Auth",
-          "status": "MVP",
-          "version": "1.0.0"
-        },
-        {
           "title": "Meme Generator",
           "path": "apps/meme_generator/",
           "description": "Interactive tool for creating custom memes with various templates and text customization options.",
