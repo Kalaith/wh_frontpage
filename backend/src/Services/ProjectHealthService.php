@@ -96,8 +96,10 @@ class ProjectHealthService
 
         // Check if git information is present
         if (empty($project['gitCommit'])) {
-            $this->addIssue($health, 'warning', 'git_missing', 'No git commit information available');
-            $checks[] = ['name' => 'Git Integration', 'status' => 'warning', 'message' => 'Git data missing'];
+            // Git metadata is optional telemetry. It is not an indication
+            // that a deployed project is unhealthy, especially because the
+            // production API cannot access development-machine repositories.
+            $checks[] = ['name' => 'Git Integration', 'status' => 'info', 'message' => 'Git metadata unavailable'];
         } else {
             $checks[] = ['name' => 'Git Integration', 'status' => 'healthy', 'message' => 'Git tracking active'];
         }
@@ -179,7 +181,6 @@ class ProjectHealthService
                 break;
 
             default:
-                $this->addIssue($health, 'info', 'unknown_activity', 'Cannot determine update activity');
                 $checks[] = ['name' => 'Update Frequency', 'status' => 'info', 'message' => 'Activity unknown'];
         }
 
@@ -193,10 +194,17 @@ class ProjectHealthService
     {
         $checks = [];
         $projectPath = $project['path'] ?? '';
+        $hasRegisteredDeployment = trim((string)($project['productionUrl'] ?? '')) !== ''
+            || trim((string)($project['previewUrl'] ?? '')) !== '';
+
+        if ($hasRegisteredDeployment) {
+            $checks[] = ['name' => 'Project Files', 'status' => 'healthy', 'message' => 'Registered deployment available'];
+            $health['checks'] = array_merge($health['checks'], $checks);
+            return;
+        }
 
         if (empty($projectPath) || !is_dir($projectPath)) {
-            $this->addIssue($health, 'critical', 'missing_files', 'Project directory not found');
-            $checks[] = ['name' => 'Project Files', 'status' => 'critical', 'message' => 'Directory missing'];
+            $checks[] = ['name' => 'Project Files', 'status' => 'info', 'message' => 'Source path unavailable to health runtime'];
             $health['checks'] = array_merge($health['checks'], $checks);
             return;
         }
@@ -239,6 +247,10 @@ class ProjectHealthService
                 $this->addIssue($health, 'info', 'single_env', 'Only deployed to preview environment');
                 $checks[] = ['name' => 'Environment Sync', 'status' => 'info', 'message' => 'Single environment'];
             }
+        } elseif (trim((string)($project['productionUrl'] ?? '')) !== '') {
+            $checks[] = ['name' => 'Environment Sync', 'status' => 'healthy', 'message' => 'Production deployment'];
+        } elseif (trim((string)($project['previewUrl'] ?? '')) !== '') {
+            $checks[] = ['name' => 'Environment Sync', 'status' => 'info', 'message' => 'Preview deployment'];
         } else {
             $this->addIssue($health, 'warning', 'no_env', 'No environment information available');
             $checks[] = ['name' => 'Environment Sync', 'status' => 'warning', 'message' => 'Environment data missing'];

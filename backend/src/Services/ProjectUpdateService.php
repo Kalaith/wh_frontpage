@@ -49,6 +49,11 @@ final class ProjectUpdateService
                 'branch' => $git['branch'] ?? null,
                 'gitCommit' => $git['git_commit'] ?? null,
                 'environments' => json_decode($git['environments'] ?? '[]', true),
+                // Catalog URLs are authoritative in production. The stored
+                // filesystem path points to a development machine and cannot
+                // be checked by the production health endpoint.
+                'previewUrl' => $project['profile_preview_url'] ?? null,
+                'productionUrl' => $project['profile_production_url'] ?? null,
                 'repository' => [
                     'url' => $project['repository_url'],
                     'type' => $project['repository_type'] ?: 'git'
@@ -143,16 +148,18 @@ final class ProjectUpdateService
         $environments = $project['environments'] ?? [];
         $hasProduction = in_array('production', $environments);
         $hasPreview = in_array('preview', $environments);
+        $hasProductionUrl = trim((string)($project['productionUrl'] ?? '')) !== '';
+        $hasPreviewUrl = trim((string)($project['previewUrl'] ?? '')) !== '';
 
         // Also check deployment timestamps for backward compatibility
         $hasProductionDeploy = isset($project['deployment']['production']);
         $hasPreviewDeploy = isset($project['deployment']['development']);
 
-        if ($hasProduction || $hasProductionDeploy) {
+        if ($hasProduction || $hasProductionDeploy || $hasProductionUrl) {
             return 'production';
         }
 
-        if ($hasPreview || $hasPreviewDeploy) {
+        if ($hasPreview || $hasPreviewDeploy || $hasPreviewUrl) {
             return 'development_only';
         }
 

@@ -79,10 +79,10 @@
           "version": "1.0.0"
         },
         {
-          "title": "Monster Maker",
-          "path": "apps/monster_maker/",
-          "description": "D&D monster creation tool with challenge rating calculator and stat progression charts.",
-          "stage": "Tool",
+          "title": "D&D Sheet",
+          "path": "apps/dnd_sheet/",
+          "description": "D&D character sheets, campaigns, and DM tools.",
+          "stage": "Fullstack",
           "status": "MVP",
           "version": "1.0.0"
         },
@@ -127,9 +127,9 @@
           "version": "1.0.0"
         },
         {
-          "title": "WH Tracker",
-          "path": "apps/wh_tracker/frontend/",
-          "description": "WebHatchery project tracking and monitoring application with real-time status updates and analytics dashboard.",
+          "title": "Project Roost",
+          "path": "apps/project_roost/",
+          "description": "Every WebHatchery project, roosting in one place. Browse the full catalog, track deployments, and watch each app grow from fresh hatchling to fully fledged.",
           "stage": "Dashboard",
           "status": "MVP",
           "version": "1.0.0"
