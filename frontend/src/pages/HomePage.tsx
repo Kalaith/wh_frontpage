@@ -1,16 +1,19 @@
-import React, { useEffect } from 'react';
-import { ProjectLegend } from '../components/ProjectLegend';
+import React, { useEffect, useState } from 'react';
 import { ProjectShowcase } from '../components/ProjectShowcase';
 import { ArchiveSection } from '../components/ArchiveSection';
 import { Footer } from '../components/Footer';
 import ProjectHealthDashboard from '../components/ProjectHealthDashboard';
+import { LatestUpdates } from '../components/LatestUpdates';
 import { useHomepageProjects } from '../hooks/useProjectsQuery';
 
 const HomePage: React.FC = () => {
+  const [showHealth, setShowHealth] = useState(false);
   const {
     data: projectsData,
     isLoading: loading,
     error,
+    refetch,
+    isFetching,
   } = useHomepageProjects();
 
   // Inject Ko-fi overlay widget
@@ -33,7 +36,7 @@ const HomePage: React.FC = () => {
           kofi.draw('webhatchery', {
             type: 'floating-chat',
             'floating-chat.donateButton.text': 'Support me',
-            'floating-chat.donateButton.background-color': '#00b9fe',
+            'floating-chat.donateButton.background-color': '#277C72',
             'floating-chat.donateButton.text-color': '#fff',
           });
         }
@@ -62,48 +65,50 @@ const HomePage: React.FC = () => {
     };
   }, []);
 
-  if (error) {
-    return (
-      <div className="max-w-6xl mx-auto p-8">
-        <div className="text-center py-8">
-          <p className="text-lg text-red-600">
-            Error: {error?.message ?? 'Failed to load projects data'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full mx-auto px-4 md:px-8 lg:px-12 py-8">
-      <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
-        {/* Main Content Area (Left side on XL screens) */}
-        <div className="flex-1 min-w-0">
-          <p className="text-center text-lg text-slate-700 max-w-3xl mx-auto mb-10">
-            Web Hatchery is a collection of vibe-coded prototypes built to
-            quickly explore new ideas and iterate on each prototype.
-          </p>
-
-          <div className="mb-8">
-            <ProjectHealthDashboard />
-          </div>
-
-          {/* Project Portfolio - Full Width within main area */}
-          <ProjectShowcase data={projectsData} isLoading={loading} />
-
-          {/* Archived / retired projects (project_roost archived = true) */}
-          <ArchiveSection
-            projects={projectsData?.archived}
+    <div className="hatchery-home">
+      <div className="hatchery-container">
+        {error ? (
+          <section id="explore" className="hatchery-empty" role="status">
+            <h2>The collection couldn’t be loaded.</h2>
+            <p>Please try again in a moment.</p>
+            <button
+              type="button"
+              className="hatchery-button"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+            >
+              {isFetching ? 'Trying again…' : 'Try again'}
+            </button>
+          </section>
+        ) : (
+          <ProjectShowcase
+            data={projectsData}
             isLoading={loading}
+            recentUpdates={<LatestUpdates />}
           />
-
-          <Footer data={projectsData} isLoading={loading} />
+        )}
+        <div className="hatchery-growing-note">
+          <span aria-hidden="true">✳</span>
+          <p>
+            <strong>A hatchery, always in progress.</strong> Some ideas are just
+            taking shape. Others are ready to play. Have a look around.
+          </p>
+          <a href="/project_roost/">
+            Visit Project Roost <span aria-hidden="true">↗</span>
+          </a>
         </div>
-
-        {/* Sidebar Area (Right side on XL screens) */}
-        <div className="w-full xl:w-[350px] shrink-0 space-y-6">
-          <ProjectLegend />
-        </div>
+        <ArchiveSection projects={projectsData?.archived} isLoading={loading} />
+        <details
+          className="hatchery-health"
+          onToggle={event => setShowHealth(event.currentTarget.open)}
+        >
+          <summary>
+            Behind the scenes <span>Ecosystem health</span>
+          </summary>
+          {showHealth && <ProjectHealthDashboard />}
+        </details>
+        <Footer data={projectsData} isLoading={loading} />
       </div>
     </div>
   );

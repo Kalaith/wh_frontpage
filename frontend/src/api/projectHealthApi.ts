@@ -1,8 +1,9 @@
 import api from './api';
 import type {
-  HealthResponse,
-  HealthSummaryResponse,
-  CriticalProjectsResponse,
+  SystemHealth,
+  HealthSummary,
+  ProjectHealth,
+  HealthRecommendation,
 } from '../types/projectHealth';
 import type { ApiResponse } from '../types/common';
 
@@ -10,15 +11,15 @@ export class ProjectHealthApi {
   /**
    * Get comprehensive system health report
    */
-  static async getSystemHealth(): Promise<ApiResponse<HealthResponse>> {
-    return api.request<HealthResponse>('/health/system');
+  static async getSystemHealth(): Promise<ApiResponse<SystemHealth>> {
+    return api.request<SystemHealth>('/health/system');
   }
 
   /**
    * Get health summary for dashboard display
    */
-  static async getHealthSummary(): Promise<ApiResponse<HealthSummaryResponse>> {
-    return api.request<HealthSummaryResponse>('/health/summary');
+  static async getHealthSummary(): Promise<ApiResponse<HealthSummary>> {
+    return api.request<HealthSummary>('/health/summary');
   }
 
   /**
@@ -26,8 +27,8 @@ export class ProjectHealthApi {
    */
   static async getProjectHealth(
     projectName: string
-  ): Promise<ApiResponse<HealthResponse>> {
-    return api.request<HealthResponse>(
+  ): Promise<ApiResponse<ProjectHealth>> {
+    return api.request<ProjectHealth>(
       `/health/project/${encodeURIComponent(projectName)}`
     );
   }
@@ -35,23 +36,23 @@ export class ProjectHealthApi {
   /**
    * Get projects with critical issues
    */
-  static async getCriticalProjects(): Promise<
-    ApiResponse<CriticalProjectsResponse>
-  > {
-    return api.request<CriticalProjectsResponse>('/health/critical');
+  static async getCriticalProjects(): Promise<ApiResponse<ProjectHealth[]>> {
+    return api.request<ProjectHealth[]>('/health/critical');
   }
 
   /**
    * Get system recommendations
    */
-  static async getRecommendations(): Promise<ApiResponse<HealthResponse>> {
-    return api.request<HealthResponse>('/health/recommendations');
+  static async getRecommendations(): Promise<
+    ApiResponse<HealthRecommendation[]>
+  > {
+    return api.request<HealthRecommendation[]>('/health/recommendations');
   }
 
   /**
    * Run health check on demand
    */
-  static async runHealthCheck(): Promise<ApiResponse<HealthResponse>> {
-    return api.request<HealthResponse>('/health/check', { method: 'POST' });
+  static async runHealthCheck(): Promise<ApiResponse<SystemHealth>> {
+    return api.request<SystemHealth>('/health/check', { method: 'POST' });
   }
 }

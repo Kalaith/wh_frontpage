@@ -60,13 +60,15 @@ $router->get('/api/debug', function (Request $request, Response $response) {
 // Public Projects Routes
 $router->get('/api/projects', [ProjectController::class, 'getProjects']);
 $router->get('/api/projects/homepage', [ProjectController::class, 'getHomepageProjects']);
-$router->get('/api/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
 
 // Public Project Update Routes
 $router->get('/api/projects/updates', [ProjectUpdateController::class, 'getAllUpdates']);
 $router->get('/api/projects/updates/recent', [ProjectUpdateController::class, 'getRecentUpdates']);
 $router->get('/api/projects/updates/stats', [ProjectUpdateController::class, 'getStatistics']);
 $router->get('/api/projects/updates/attention', [ProjectUpdateController::class, 'getProjectsNeedingAttention']);
+
+// Keep the dynamic group route after named project routes such as updates.
+$router->get('/api/projects/{group}', [ProjectController::class, 'getProjectsByGroup']);
 
 // Public Quest Routes (Gamification)
 $router->get('/api/quests', [\App\Controllers\QuestController::class, 'index']);

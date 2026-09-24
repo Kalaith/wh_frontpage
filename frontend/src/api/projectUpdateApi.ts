@@ -1,5 +1,6 @@
 import api from './api';
 import type {
+  ProjectUpdate,
   ProjectUpdateResponse,
   ProjectUpdateStatsResponse,
   ProjectUpdateAttentionResponse,
@@ -10,8 +11,8 @@ export class ProjectUpdateApi {
   /**
    * Get all project updates with status information
    */
-  static async getAllUpdates(): Promise<ApiResponse<ProjectUpdateResponse>> {
-    return api.request<ProjectUpdateResponse>('/projects/updates');
+  static async getAllUpdates(): Promise<ApiResponse<ProjectUpdate[]>> {
+    return api.request<ProjectUpdate[]>('/projects/updates');
   }
 
   /**

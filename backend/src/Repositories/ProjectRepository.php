@@ -37,6 +37,33 @@ final class ProjectRepository
         return $project ?: null;
     }
 
+    /** Latest successful public deployment for catalogs without git metadata. */
+    public function latestDeploymentDates(array $projectIds): array
+    {
+        if ($projectIds === []) {
+            return [];
+        }
+
+        // Older installations may not have Project Roost deployment tracking.
+        $table = $this->db->query("SHOW TABLES LIKE 'project_roost_deployments'");
+        if ($table->fetchColumn() === false) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($projectIds), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT project_id, MAX(deployed_at) AS last_deployed
+             FROM project_roost_deployments
+             WHERE project_id IN ({$placeholders})
+               AND status = 'success'
+               AND environment IN ('preview', 'production')
+             GROUP BY project_id"
+        );
+        $stmt->execute($projectIds);
+
+        return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    }
+
     /**
      * Projects for the public homepage: project_roost catalog entries that are
      * not hidden. Includes archived projects (the caller separates them into the
@@ -243,12 +270,14 @@ final class ProjectRepository
     private function selectProjectsSql(string $where = '', string $orderBy = '', bool $requireProfile = false): string
     {
         $profileSelect = 'NULL AS display_name, NULL AS profile_slug, NULL AS profile_category, '
+            . 'NULL AS profile_source, '
             . 'NULL AS profile_summary, NULL AS profile_preview_url, NULL AS profile_production_url, 0 AS archived';
         $join = '';
 
         if ($this->hasProjectRoostProfilesTable()) {
             $archivedExpr = $this->archivedExpr();
             $profileSelect = 'pr.display_name AS display_name, pr.slug AS profile_slug, pr.category AS profile_category, '
+                . 'pr.source AS profile_source, '
                 . 'pr.summary AS profile_summary, pr.preview_url AS profile_preview_url, '
                 . "pr.production_url AS profile_production_url, {$archivedExpr} AS archived";
             $joinType = $requireProfile ? 'INNER JOIN' : 'LEFT JOIN';

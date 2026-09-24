@@ -4,6 +4,7 @@ import { AppHeader } from './components/layout/AppHeader';
 import { ToastContainer } from './components/ui/Toast';
 import { useToastStore } from './stores/toastStore';
 import HomePage from './pages/HomePage';
+import UpdatesPage from './pages/UpdatesPage';
 import { FeatureRequestDashboard } from './pages/FeatureRequestDashboard';
 import { UserProfile } from './pages/UserProfile';
 import LoginPage from './pages/LoginPage';
@@ -18,6 +19,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import AboutPage from './pages/AboutPage';
 import QuestManagementPage from './pages/QuestManagementPage';
 import './styles/global.css';
+import './styles/hatchery.css';
 
 import IdeasPage from './pages/IdeasPage';
 import { useAuth } from './stores/authStore';
@@ -53,6 +55,7 @@ const App: React.FC = () => {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/updates" element={<UpdatesPage />} />
             <Route path="/projects" element={<ProjectRoostRedirect />} />
             <Route path="/quests" element={<QuestBoardPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />

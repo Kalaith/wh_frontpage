@@ -1,5 +1,9 @@
 export class ProjectUpdate {
   name!: string;
+  displayName?: string;
+  publicUrl?: string | null;
+  productionUrl?: string | null;
+  previewUrl?: string | null;
   version?: string;
   lastUpdated?: string;
   lastBuild?: string;
@@ -11,7 +15,7 @@ export class ProjectUpdate {
     production?: string;
     development?: string;
   };
-  type!: 'apps' | 'game_apps' | 'frontpage';
+  type!: 'apps' | 'game_apps' | 'games' | 'rust_games' | 'frontpage';
   path!: string;
   daysSinceUpdate?: number;
   daysSinceBuild?: number;

@@ -12,6 +12,8 @@ const ProjectHealthDashboard: React.FC = () => {
     data: summaryData,
     isLoading: summaryLoading,
     error: summaryError,
+    refetch: refetchSummary,
+    isFetching: summaryFetching,
   } = useHealthSummary();
   const { data: criticalData } = useCriticalProjects();
   const runHealthCheck = useRunHealthCheck();
@@ -29,21 +31,27 @@ const ProjectHealthDashboard: React.FC = () => {
     );
   }
 
-  if (summaryError) {
+  if (summaryError || !summaryData) {
     return (
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold mb-4">Ecosystem Health</h3>
-        <div className="text-red-600 text-sm">Unable to load health data</div>
+        <div role="alert" className="text-red-600 text-sm">
+          Unable to load health data
+        </div>
+        <button
+          type="button"
+          onClick={() => void refetchSummary()}
+          disabled={summaryFetching}
+          className="mt-3 px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded hover:bg-blue-100 disabled:opacity-50"
+        >
+          {summaryFetching ? 'Trying again...' : 'Try again'}
+        </button>
       </div>
     );
   }
 
-  const summary = summaryData?.data;
-  const criticalProjects: ProjectHealth[] = criticalData?.data ?? [];
-
-  if (!summary) {
-    return null;
-  }
+  const summary = summaryData;
+  const criticalProjects: ProjectHealth[] = criticalData ?? [];
 
   return (
     <motion.div
@@ -65,6 +73,12 @@ const ProjectHealthDashboard: React.FC = () => {
           {runHealthCheck.isPending ? 'Checking...' : 'Refresh'}
         </button>
       </div>
+
+      {runHealthCheck.isError && (
+        <p role="alert" className="text-red-600 text-sm mb-4">
+          Unable to refresh health data. Please try again.
+        </p>
+      )}
 
       {/* Overall Status */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

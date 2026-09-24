@@ -30,6 +30,7 @@ export interface Project {
   type?: string;
   repository?: ProjectRepository;
   repository_url?: string;
+  repositoryUrl?: string;
   deployment?: ProjectDeployment;
 }
 

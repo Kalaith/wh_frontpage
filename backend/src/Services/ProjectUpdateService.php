@@ -16,15 +16,30 @@ final class ProjectUpdateService
     ) {}
 
     /**
-     * Scan all projects and aggregate their manifests from SQL
+     * Aggregate public, active Project Roost catalog entries from SQL.
      */
     public function getAllProjectUpdates(): array
     {
-        $rows = $this->catalogNormalizer->deduplicateRows($this->projectRepository->all(), true);
+        // Match Project Roost's active list before deduplication and metadata
+        // lookups, so hidden/archived rows cannot displace a visible project.
+        // A missing profile must not expose legacy rows when the catalog table
+        // is unavailable and the repository falls back to the projects table.
+        $visibleRows = array_filter(
+            $this->projectRepository->all(),
+            fn (array $project): bool => isset($project['profile_slug'])
+                && empty($project['hidden'])
+                && empty($project['archived'])
+                && !$this->isPathlessDeploymentPlaceholder($project)
+                && $this->catalogNormalizer->normalizeGroupName(
+                    (string)($project['group_name'] ?? '')
+                ) !== 'private'
+        );
+        $rows = $this->catalogNormalizer->deduplicateRows($visibleRows, true);
         
         // Batch fetch all git metadata
         $projectIds = array_column($rows, 'id');
         $gitData = $this->projectGitRepository->findByProjectIds($projectIds);
+        $deploymentDates = $this->projectRepository->latestDeploymentDates($projectIds);
         
         $projects = [];
 
@@ -36,6 +51,8 @@ final class ProjectUpdateService
             
             $manifest = [
                 'name' => $project['title'],
+                'displayName' => $this->catalogNormalizer->publicDisplayName($project['display_name'] ?? null, (string)$project['title']),
+                'publicUrl' => $this->catalogNormalizer->publicPathForRow($project),
                 'title' => $project['title'],
                 'description' => $project['description'],
                 'stage' => $this->catalogNormalizer->publicStage((string)$project['stage'], $groupName),
@@ -43,7 +60,7 @@ final class ProjectUpdateService
                 'version' => $project['version'],
                 'type' => $groupName,
                 'path' => $project['path'],
-                'lastUpdated' => $git['last_updated'] ?? null,
+                'lastUpdated' => $git['last_updated'] ?? $deploymentDates[$project['id']] ?? null,
                 'lastBuild' => $git['last_build'] ?? null,
                 'lastCommitMessage' => $git['last_commit_message'] ?? null,
                 'branch' => $git['branch'] ?? null,
@@ -64,6 +81,18 @@ final class ProjectUpdateService
         }
 
         return $this->processProjectData($projects);
+    }
+
+    /**
+     * A publish event without a source path is not a real catalog update.
+     * Project Roost used to turn missing project names into an
+     * "unknown_project" deployment, which could otherwise displace a real
+     * project in the public feed.
+     */
+    private function isPathlessDeploymentPlaceholder(array $project): bool
+    {
+        return trim((string)($project['path'] ?? '')) === ''
+            && strtolower(trim((string)($project['profile_source'] ?? ''))) === 'deployment';
     }
 
     /**
